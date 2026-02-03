@@ -3,11 +3,16 @@ import { cn } from '@/lib/utils';
 import { ShiftCard } from '@/components/ShiftCard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { WorkerCard } from '@/components/WorkerCard';
+import { WeeklyCalendar } from '@/components/WeeklyCalendar';
+import { AttendanceOverrideModal } from '@/components/AttendanceOverrideModal';
+import { ShiftMessaging } from '@/components/ShiftMessaging';
 import { 
   shifts, 
   workers,
   attendanceRecords,
-  getSuggestedReplacements
+  getSuggestedReplacements,
+  shiftMessages,
+  currentManager,
 } from '@/data/mockData';
 import { 
   ChevronLeft, 
@@ -15,11 +20,15 @@ import {
   Plus,
   User,
   Check,
-  Filter
+  Filter,
+  LayoutGrid,
+  List,
+  MessageCircle,
+  UserCheck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shift } from '@/types/align';
+import { Shift, AttendanceStatus, ShiftMessage } from '@/types/align';
 import {
   Dialog,
   DialogContent,
@@ -28,12 +37,18 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
+type ViewMode = 'list' | 'calendar';
+
 export const ManagerShifts = () => {
   const navigate = useNavigate();
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [showMessaging, setShowMessaging] = useState(false);
   const [assignmentDone, setAssignmentDone] = useState(false);
   const [filter, setFilter] = useState<'all' | 'vacant'>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [messages, setMessages] = useState<ShiftMessage[]>(shiftMessages);
 
   const suggestedWorkers = getSuggestedReplacements('');
 
@@ -69,6 +84,33 @@ export const ManagerShifts = () => {
     }, 1500);
   };
 
+  const handleAttendanceOverride = (status: AttendanceStatus, notes: string, timestamp: string) => {
+    console.log('Attendance override:', { status, notes, timestamp, shift: selectedShift });
+    // In real app, this would update the backend
+  };
+
+  const handleSendMessage = (message: string) => {
+    if (!selectedShift) return;
+    const newMessage: ShiftMessage = {
+      id: `msg_${Date.now()}`,
+      shiftId: selectedShift.id,
+      senderId: currentManager.id,
+      senderName: currentManager.name,
+      message,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, newMessage]);
+  };
+
+  const handleShiftClick = (shift: Shift) => {
+    setSelectedShift(shift);
+    if (shift.isVacant) {
+      setShowAssignDialog(true);
+    }
+  };
+
+  const shiftMessages_filtered = messages.filter(m => m.shiftId === selectedShift?.id);
+
   return (
     <div className="min-h-screen bg-background pb-8">
       {/* Header */}
@@ -87,6 +129,25 @@ export const ManagerShifts = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* View Mode Toggle */}
+            <div className="flex items-center border border-border rounded-lg p-0.5">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setViewMode('calendar')}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+            </div>
             <Button
               variant={filter === 'vacant' ? 'default' : 'outline'}
               size="sm"
@@ -94,90 +155,127 @@ export const ManagerShifts = () => {
               className="gap-1.5"
             >
               <Filter className="w-4 h-4" />
-              {filter === 'vacant' ? 'Vacant Only' : 'All'}
+              {filter === 'vacant' ? 'Vacant' : 'All'}
             </Button>
           </div>
         </div>
       </header>
 
       <div className="px-4 py-6 lg:px-8 space-y-6">
-        {Object.entries(shiftsByDate).map(([date, dateShifts]) => (
-          <section key={date}>
-            <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              {formatDate(date)}
-            </h2>
-            <div className="space-y-3">
-              {dateShifts.map(shift => {
-                const attendance = attendanceRecords.find(a => a.shiftId === shift.id);
-                return (
-                  <div
-                    key={shift.id}
-                    onClick={() => {
-                      setSelectedShift(shift);
-                      if (shift.isVacant) {
-                        setShowAssignDialog(true);
-                      }
-                    }}
-                    className={cn(
-                      'card-elevated rounded-xl p-4 cursor-pointer hover:shadow-md transition-all',
-                      shift.isVacant && 'border-warning/40 bg-warning-muted/20'
-                    )}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-foreground">{shift.position}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {shift.startTime} - {shift.endTime} • {shift.location}
-                        </p>
-                      </div>
-                      {shift.isVacant ? (
-                        <span className="px-2.5 py-1 text-xs font-medium text-warning bg-warning/10 rounded-full border border-warning/20">
-                          Needs Coverage
-                        </span>
-                      ) : attendance ? (
-                        <StatusBadge status={attendance.status} />
-                      ) : (
-                        <StatusBadge status="not_checked_in" />
-                      )}
-                    </div>
-                    {shift.assignedWorker && (
-                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
-                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                          <User className="w-3.5 h-3.5 text-primary" />
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {shift.assignedWorker.name}
-                        </span>
-                      </div>
-                    )}
-                    {shift.isVacant && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full mt-3 gap-1.5"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedShift(shift);
-                          setShowAssignDialog(true);
-                        }}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Assign Worker
-                      </Button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        ))}
+        {/* Calendar View */}
+        {viewMode === 'calendar' && (
+          <WeeklyCalendar 
+            shifts={shifts} 
+            onShiftClick={handleShiftClick}
+          />
+        )}
 
-        {filteredShifts.length === 0 && (
-          <div className="text-center py-12">
-            <Calendar className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-            <p className="text-muted-foreground">No shifts found</p>
-          </div>
+        {/* List View */}
+        {viewMode === 'list' && (
+          <>
+            {Object.entries(shiftsByDate).map(([date, dateShifts]) => (
+              <section key={date}>
+                <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  {formatDate(date)}
+                </h2>
+                <div className="space-y-3">
+                  {dateShifts.map(shift => {
+                    const attendance = attendanceRecords.find(a => a.shiftId === shift.id);
+                    return (
+                      <div
+                        key={shift.id}
+                        className={cn(
+                          'card-elevated rounded-xl p-4',
+                          shift.isVacant && 'border-warning/40 bg-warning-muted/20'
+                        )}
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="font-semibold text-foreground">{shift.position}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {shift.startTime} - {shift.endTime} • {shift.location}
+                            </p>
+                          </div>
+                          {shift.isVacant ? (
+                            <span className="px-2.5 py-1 text-xs font-medium text-warning bg-warning/10 rounded-full border border-warning/20">
+                              Needs Coverage
+                            </span>
+                          ) : attendance ? (
+                            <StatusBadge status={attendance.status} />
+                          ) : (
+                            <StatusBadge status="not_checked_in" />
+                          )}
+                        </div>
+                        {shift.assignedWorker && (
+                          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
+                            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                              <User className="w-3.5 h-3.5 text-primary" />
+                            </div>
+                            <span className="text-sm text-muted-foreground">
+                              {shift.assignedWorker.name}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 mt-3">
+                          {shift.isVacant ? (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="flex-1 gap-1.5"
+                              onClick={() => {
+                                setSelectedShift(shift);
+                                setShowAssignDialog(true);
+                              }}
+                            >
+                              <Plus className="w-4 h-4" />
+                              Assign Worker
+                            </Button>
+                          ) : (
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex-1 gap-1.5"
+                                onClick={() => {
+                                  setSelectedShift(shift);
+                                  setShowOverrideModal(true);
+                                }}
+                              >
+                                <UserCheck className="w-4 h-4" />
+                                Attendance
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex-1 gap-1.5"
+                                onClick={() => {
+                                  setSelectedShift(shift);
+                                  setShowMessaging(true);
+                                }}
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                                Message
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+
+            {filteredShifts.length === 0 && (
+              <div className="text-center py-12">
+                <Calendar className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-muted-foreground">No shifts found</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -235,6 +333,27 @@ export const ManagerShifts = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Attendance Override Modal */}
+      <AttendanceOverrideModal
+        open={showOverrideModal}
+        onOpenChange={setShowOverrideModal}
+        shift={selectedShift}
+        worker={selectedShift?.assignedWorker || null}
+        currentStatus={attendanceRecords.find(a => a.shiftId === selectedShift?.id)?.status}
+        onOverride={handleAttendanceOverride}
+      />
+
+      {/* Shift Messaging */}
+      <ShiftMessaging
+        open={showMessaging}
+        onOpenChange={setShowMessaging}
+        shift={selectedShift}
+        messages={shiftMessages_filtered}
+        currentUserId={currentManager.id}
+        currentUserName={currentManager.name}
+        onSendMessage={handleSendMessage}
+      />
     </div>
   );
 };

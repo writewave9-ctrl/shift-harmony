@@ -1,11 +1,14 @@
 import { currentWorker } from '@/data/mockData';
-import { ChevronLeft, User, Clock, TrendingUp, Star, Settings, LogOut } from 'lucide-react';
+import { ChevronLeft, User, Clock, TrendingUp, Star, Settings, LogOut, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { useTheme } from '@/components/ThemeProvider';
 
 export const WorkerProfile = () => {
   const navigate = useNavigate();
   const { setUserRole } = useApp();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   const hoursRemaining = currentWorker.weeklyHoursTarget - currentWorker.weeklyHoursWorked;
 
@@ -109,6 +112,21 @@ export const WorkerProfile = () => {
                 </div>
                 <span className="text-sm font-medium">{currentWorker.reliabilityScore}%</span>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Appearance */}
+        <section className="card-elevated rounded-2xl p-5">
+          <h3 className="text-sm font-semibold text-foreground mb-4">Appearance</h3>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-muted-foreground">
+              {resolvedTheme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              Theme
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm capitalize">{theme}</span>
+              <ThemeToggle />
             </div>
           </div>
         </section>

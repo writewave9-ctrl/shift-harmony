@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 // Pages
 import RoleSelect from "./pages/RoleSelect";
@@ -26,36 +27,38 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AppProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Role Selection */}
-            <Route path="/" element={<RoleSelect />} />
+    <ThemeProvider>
+      <TooltipProvider>
+        <AppProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Role Selection */}
+              <Route path="/" element={<RoleSelect />} />
 
-            {/* Worker Routes */}
-            <Route path="/worker" element={<WorkerLayout />}>
-              <Route index element={<WorkerHome />} />
-              <Route path="shifts" element={<WorkerShifts />} />
-              <Route path="profile" element={<WorkerProfile />} />
-              <Route path="notifications" element={<WorkerNotifications />} />
-            </Route>
+              {/* Worker Routes */}
+              <Route path="/worker" element={<WorkerLayout />}>
+                <Route index element={<WorkerHome />} />
+                <Route path="shifts" element={<WorkerShifts />} />
+                <Route path="profile" element={<WorkerProfile />} />
+                <Route path="notifications" element={<WorkerNotifications />} />
+              </Route>
 
-            {/* Manager Routes */}
-            <Route path="/manager" element={<ManagerLayout />}>
-              <Route index element={<ManagerDashboard />} />
-              <Route path="shifts" element={<ManagerShifts />} />
-              <Route path="team" element={<ManagerTeam />} />
-            </Route>
+              {/* Manager Routes */}
+              <Route path="/manager" element={<ManagerLayout />}>
+                <Route index element={<ManagerDashboard />} />
+                <Route path="shifts" element={<ManagerShifts />} />
+                <Route path="team" element={<ManagerTeam />} />
+              </Route>
 
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AppProvider>
-    </TooltipProvider>
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AppProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
