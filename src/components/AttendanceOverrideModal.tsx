@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { AttendanceStatus, Shift, Worker } from '@/types/align';
 import { Check, Clock, User, FileText } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -53,6 +54,12 @@ export const AttendanceOverrideModal: React.FC<AttendanceOverrideModalProps> = (
     const timestamp = new Date().toISOString();
     onOverride(selectedStatus, notes, timestamp);
     setSubmitted(true);
+    
+    // Show toast notification
+    toast({
+      title: 'Attendance Override Applied',
+      description: `${worker?.name}'s status updated to ${selectedStatus.replace('_', ' ')}.`,
+    });
     
     setTimeout(() => {
       onOpenChange(false);

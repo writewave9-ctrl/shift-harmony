@@ -4,9 +4,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { Loader2 } from "lucide-react";
 
 // Pages
+import Auth from "./pages/Auth";
+import Onboarding from "./pages/Onboarding";
 import RoleSelect from "./pages/RoleSelect";
 import NotFound from "./pages/NotFound";
 
@@ -16,6 +21,7 @@ import { WorkerHome } from "./pages/worker/WorkerHome";
 import { WorkerShifts } from "./pages/worker/WorkerShifts";
 import { WorkerProfile } from "./pages/worker/WorkerProfile";
 import { WorkerNotifications } from "./pages/worker/WorkerNotifications";
+import WorkerShiftHistory from "./pages/worker/WorkerShiftHistory";
 
 // Manager Pages
 import { ManagerLayout } from "./layouts/ManagerLayout";
@@ -25,38 +31,148 @@ import { ManagerTeam } from "./pages/manager/ManagerTeam";
 
 const queryClient = new QueryClient();
 
+// Protected route wrapper
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, profile, userRole } = useAuth();
+  
+  // Enable realtime notifications for authenticated users
+  useRealtimeNotifications();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Check if user needs onboarding (manager without organization)
+  if (userRole?.role === 'manager' && !profile?.organization_id) {
+    return <Navigate to="/onboarding" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Route based on role
+const RoleRouter = () => {
+  const { userRole, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  if (userRole?.role === 'manager' || userRole?.role === 'admin') {
+    return <Navigate to="/manager" replace />;
+  }
+  
+  return <Navigate to="/worker" replace />;
+};
+
+// Public route (redirects to app if already logged in)
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, userRole, profile } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  if (user) {
+    // Check if needs onboarding
+    if (userRole?.role === 'manager' && !profile?.organization_id) {
+      return <Navigate to="/onboarding" replace />;
+    }
+    
+    // Redirect based on role
+    if (userRole?.role === 'manager' || userRole?.role === 'admin') {
+      return <Navigate to="/manager" replace />;
+    }
+    return <Navigate to="/worker" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+const AppRoutes = () => (
+  <Routes>
+    {/* Public Routes */}
+    <Route path="/auth" element={
+      <PublicRoute>
+        <Auth />
+      </PublicRoute>
+    } />
+
+    {/* Onboarding (requires auth) */}
+    <Route path="/onboarding" element={
+      <ProtectedRoute>
+        <Onboarding />
+      </ProtectedRoute>
+    } />
+
+    {/* Role Router (redirects based on user role) */}
+    <Route path="/" element={
+      <ProtectedRoute>
+        <RoleRouter />
+      </ProtectedRoute>
+    } />
+
+    {/* Demo Mode - Role Selection */}
+    <Route path="/demo" element={<RoleSelect />} />
+
+    {/* Worker Routes */}
+    <Route path="/worker" element={
+      <ProtectedRoute>
+        <WorkerLayout />
+      </ProtectedRoute>
+    }>
+      <Route index element={<WorkerHome />} />
+      <Route path="shifts" element={<WorkerShifts />} />
+      <Route path="history" element={<WorkerShiftHistory />} />
+      <Route path="profile" element={<WorkerProfile />} />
+      <Route path="notifications" element={<WorkerNotifications />} />
+    </Route>
+
+    {/* Manager Routes */}
+    <Route path="/manager" element={
+      <ProtectedRoute>
+        <ManagerLayout />
+      </ProtectedRoute>
+    }>
+      <Route index element={<ManagerDashboard />} />
+      <Route path="shifts" element={<ManagerShifts />} />
+      <Route path="team" element={<ManagerTeam />} />
+    </Route>
+
+    {/* Catch-all */}
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <TooltipProvider>
-        <AppProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Role Selection */}
-              <Route path="/" element={<RoleSelect />} />
-
-              {/* Worker Routes */}
-              <Route path="/worker" element={<WorkerLayout />}>
-                <Route index element={<WorkerHome />} />
-                <Route path="shifts" element={<WorkerShifts />} />
-                <Route path="profile" element={<WorkerProfile />} />
-                <Route path="notifications" element={<WorkerNotifications />} />
-              </Route>
-
-              {/* Manager Routes */}
-              <Route path="/manager" element={<ManagerLayout />}>
-                <Route index element={<ManagerDashboard />} />
-                <Route path="shifts" element={<ManagerShifts />} />
-                <Route path="team" element={<ManagerTeam />} />
-              </Route>
-
-              {/* Catch-all */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </AppProvider>
+        <AuthProvider>
+          <AppProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </AppProvider>
+        </AuthProvider>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

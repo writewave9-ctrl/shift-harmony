@@ -1,16 +1,24 @@
 import { currentWorker } from '@/data/mockData';
-import { ChevronLeft, User, Clock, TrendingUp, Star, Settings, LogOut, Moon, Sun } from 'lucide-react';
+import { ChevronLeft, User, Clock, TrendingUp, Star, Settings, LogOut, Moon, Sun, Calendar, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTheme } from '@/components/ThemeProvider';
+import { AvailabilitySettings } from '@/components/AvailabilitySettings';
+import { toast } from '@/hooks/use-toast';
 
 export const WorkerProfile = () => {
   const navigate = useNavigate();
   const { setUserRole } = useApp();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { profile, signOut, user } = useAuth();
+  const { theme, resolvedTheme } = useTheme();
 
-  const hoursRemaining = currentWorker.weeklyHoursTarget - currentWorker.weeklyHoursWorked;
+  // Use auth profile if available, otherwise fall back to mock
+  const displayProfile = profile || currentWorker;
+  const hoursRemaining = (displayProfile as any).weekly_hours_target 
+    ? (displayProfile as any).weekly_hours_target - ((displayProfile as any).weeklyHoursWorked || 0)
+    : currentWorker.weeklyHoursTarget - currentWorker.weeklyHoursWorked;
 
   const willingnessLabels = {
     high: 'Always available',
@@ -22,6 +30,15 @@ export const WorkerProfile = () => {
     high: 'text-success',
     medium: 'text-warning-foreground',
     low: 'text-muted-foreground',
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: 'Signed out',
+      description: 'You have been signed out successfully.',
+    });
+    navigate('/auth');
   };
 
   return (
@@ -45,9 +62,15 @@ export const WorkerProfile = () => {
           <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <User className="w-10 h-10 text-primary" />
           </div>
-          <h2 className="text-xl font-bold text-foreground">{currentWorker.name}</h2>
-          <p className="text-muted-foreground">{currentWorker.position}</p>
-          <p className="text-sm text-muted-foreground mt-1">{currentWorker.email}</p>
+          <h2 className="text-xl font-bold text-foreground">
+            {profile?.full_name || currentWorker.name}
+          </h2>
+          <p className="text-muted-foreground">
+            {profile?.position || currentWorker.position}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {profile?.email || currentWorker.email}
+          </p>
         </section>
 
         {/* Stats */}
@@ -133,21 +156,48 @@ export const WorkerProfile = () => {
 
         {/* Actions */}
         <section className="space-y-2">
+          <AvailabilitySettings
+            trigger={
+              <button className="w-full card-elevated rounded-xl p-4 flex items-center gap-3 hover:bg-accent/50 transition-colors">
+                <Calendar className="w-5 h-5 text-muted-foreground" />
+                <span className="font-medium">Availability Settings</span>
+              </button>
+            }
+          />
+
+          <button 
+            onClick={() => navigate('/worker/history')}
+            className="w-full card-elevated rounded-xl p-4 flex items-center gap-3 hover:bg-accent/50 transition-colors"
+          >
+            <History className="w-5 h-5 text-muted-foreground" />
+            <span className="font-medium">Shift History</span>
+          </button>
+
           <button className="w-full card-elevated rounded-xl p-4 flex items-center gap-3 hover:bg-accent/50 transition-colors">
             <Settings className="w-5 h-5 text-muted-foreground" />
             <span className="font-medium">Settings</span>
           </button>
           
-          <button 
-            onClick={() => {
-              setUserRole('manager');
-              navigate('/manager');
-            }}
-            className="w-full card-elevated rounded-xl p-4 flex items-center gap-3 hover:bg-accent/50 transition-colors"
-          >
-            <LogOut className="w-5 h-5 text-muted-foreground" />
-            <span className="font-medium">Switch to Manager View</span>
-          </button>
+          {user ? (
+            <button 
+              onClick={handleSignOut}
+              className="w-full card-elevated rounded-xl p-4 flex items-center gap-3 hover:bg-destructive/10 transition-colors text-destructive"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">Sign Out</span>
+            </button>
+          ) : (
+            <button 
+              onClick={() => {
+                setUserRole('manager');
+                navigate('/manager');
+              }}
+              className="w-full card-elevated rounded-xl p-4 flex items-center gap-3 hover:bg-accent/50 transition-colors"
+            >
+              <LogOut className="w-5 h-5 text-muted-foreground" />
+              <span className="font-medium">Switch to Manager View (Demo)</span>
+            </button>
+          )}
         </section>
       </div>
     </div>
