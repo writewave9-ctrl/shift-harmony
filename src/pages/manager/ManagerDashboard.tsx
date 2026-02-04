@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -61,10 +62,23 @@ export const ManagerDashboard = () => {
 
   const handleApproveSwap = () => {
     setApprovalDone(true);
+    toast({
+      title: 'Swap Approved! ✓',
+      description: 'Both workers have been notified of the shift change.',
+    });
     setTimeout(() => {
       setShowSwapApproval(false);
       setApprovalDone(false);
     }, 1500);
+  };
+
+  const handleDeclineSwap = () => {
+    toast({
+      title: 'Swap Declined',
+      description: 'The worker has been notified.',
+      variant: 'destructive',
+    });
+    setShowSwapApproval(false);
   };
 
   return (
@@ -292,7 +306,7 @@ export const ManagerDashboard = () => {
                 <Button 
                   variant="outline" 
                   className="flex-1"
-                  onClick={() => setShowSwapApproval(false)}
+                  onClick={handleDeclineSwap}
                 >
                   <X className="w-4 h-4 mr-2" />
                   Decline

@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Home, Calendar, User } from 'lucide-react';
+import { Home, Calendar, User, History } from 'lucide-react';
 
 const navItems = [
   { path: '/worker', icon: Home, label: 'Home' },
   { path: '/worker/shifts', icon: Calendar, label: 'Shifts' },
+  { path: '/worker/history', icon: History, label: 'History' },
   { path: '/worker/profile', icon: User, label: 'Profile' },
 ];
 
@@ -23,7 +24,7 @@ export const WorkerNav = () => {
               key={item.path}
               to={item.path}
               className={cn(
-                'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors',
+                'flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors',
                 isActive 
                   ? 'text-primary' 
                   : 'text-muted-foreground hover:text-foreground'
