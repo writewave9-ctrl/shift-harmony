@@ -2,6 +2,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { LayoutDashboard, Calendar, Users, LogOut } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+ import { useAuth } from '@/contexts/AuthContext';
+ import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
   { path: '/manager', icon: LayoutDashboard, label: 'Dashboard' },
@@ -13,12 +15,18 @@ export const ManagerNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { setUserRole } = useApp();
+   const { signOut } = useAuth();
 
   const handleSwitchRole = () => {
     setUserRole('worker');
     navigate('/worker');
   };
 
+   const handleSignOut = async () => {
+     await signOut();
+     navigate('/auth');
+   };
+ 
   return (
     <>
       {/* Desktop Sidebar */}
@@ -26,9 +34,12 @@ export const ManagerNav = () => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
-            <h1 className="text-xl font-bold text-sidebar-foreground">
-              <span className="text-sidebar-primary">Align</span>
-            </h1>
+             <div className="flex items-center justify-between w-full">
+               <h1 className="text-xl font-bold text-sidebar-foreground">
+                 <span className="text-sidebar-primary">Align</span>
+               </h1>
+               <ThemeToggle />
+             </div>
           </div>
 
           {/* Navigation */}
@@ -58,11 +69,11 @@ export const ManagerNav = () => {
           {/* Footer */}
           <div className="p-3 border-t border-sidebar-border">
             <button
-              onClick={handleSwitchRole}
+               onClick={handleSignOut}
               className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
             >
               <LogOut className="w-5 h-5" />
-              <span>Switch to Worker</span>
+               <span>Sign Out</span>
             </button>
           </div>
         </div>

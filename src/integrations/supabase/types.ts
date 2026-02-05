@@ -355,12 +355,15 @@ export type Database = {
       shifts: {
         Row: {
           assigned_worker_id: string | null
+          check_in_radius_meters: number | null
           created_at: string
           date: string
           end_time: string
           id: string
           is_vacant: boolean
+          latitude: number | null
           location: string
+          longitude: number | null
           notes: string | null
           position: string
           start_time: string
@@ -370,12 +373,15 @@ export type Database = {
         }
         Insert: {
           assigned_worker_id?: string | null
+          check_in_radius_meters?: number | null
           created_at?: string
           date: string
           end_time: string
           id?: string
           is_vacant?: boolean
+          latitude?: number | null
           location: string
+          longitude?: number | null
           notes?: string | null
           position: string
           start_time: string
@@ -385,12 +391,15 @@ export type Database = {
         }
         Update: {
           assigned_worker_id?: string | null
+          check_in_radius_meters?: number | null
           created_at?: string
           date?: string
           end_time?: string
           id?: string
           is_vacant?: boolean
+          latitude?: number | null
           location?: string
+          longitude?: number | null
           notes?: string | null
           position?: string
           start_time?: string
@@ -483,11 +492,61 @@ export type Database = {
           },
         ]
       }
+      team_invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          status: string
+          team_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          status?: string
+          team_id: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          status?: string
+          team_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invitations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           created_at: string
           id: string
+          latitude: number | null
           location: string | null
+          longitude: number | null
           name: string
           organization_id: string
           updated_at: string
@@ -495,7 +554,9 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           name: string
           organization_id: string
           updated_at?: string
@@ -503,7 +564,9 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           name?: string
           organization_id?: string
           updated_at?: string
