@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Home, Calendar, User, History } from 'lucide-react';
+ import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
   { path: '/worker', icon: Home, label: 'Home' },
@@ -14,7 +15,11 @@ export const WorkerNav = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border/50 px-4 pb-safe">
-      <div className="flex items-center justify-around h-16 max-w-md mx-auto">
+       <div className="flex items-center h-16 max-w-md mx-auto relative">
+         <div className="absolute left-0">
+           <ThemeToggle />
+         </div>
+         <div className="flex items-center justify-around flex-1 pl-10">
         {navItems.map(item => {
           const isActive = location.pathname === item.path || 
             (item.path !== '/worker' && location.pathname.startsWith(item.path));
@@ -35,6 +40,7 @@ export const WorkerNav = () => {
             </Link>
           );
         })}
+         </div>
       </div>
     </nav>
   );

@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { WorkerCard } from '@/components/WorkerCard';
-import { workers } from '@/data/mockData';
+ import { InviteWorkerModal } from '@/components/InviteWorkerModal';
+ import { useTeamMembers, TeamMember } from '@/hooks/useTeamMembers';
 import { 
   ChevronLeft, 
   Users,
   Search,
   TrendingUp,
   TrendingDown,
-  Minus
+   Minus,
+   UserPlus,
+   Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
-import { Worker } from '@/types/align';
+ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -23,24 +26,49 @@ import {
 export const ManagerTeam = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
+   const [selectedWorker, setSelectedWorker] = useState<TeamMember | null>(null);
+   const [showInviteModal, setShowInviteModal] = useState(false);
+   const { workers, loading } = useTeamMembers();
 
   const filteredWorkers = workers.filter(w => 
-    w.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    w.position.toLowerCase().includes(searchQuery.toLowerCase())
+     w.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     (w.position?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
   // Categorize workers
-  const overloaded = filteredWorkers.filter(w => w.weeklyHoursWorked >= w.weeklyHoursTarget);
+   const overloaded = filteredWorkers.filter(w => 
+     (w.willingness_for_extra === 'low')
+   );
   const available = filteredWorkers.filter(w => 
-    w.weeklyHoursWorked < w.weeklyHoursTarget && 
-    w.willingnessForExtra !== 'low'
+     w.willingness_for_extra === 'high'
   );
   const balanced = filteredWorkers.filter(w => 
-    w.weeklyHoursWorked < w.weeklyHoursTarget && 
-    w.willingnessForExtra === 'low'
+     w.willingness_for_extra === 'medium' || !w.willingness_for_extra
   );
 
+   // Convert TeamMember to Worker-like structure for WorkerCard
+   const toWorkerCardData = (member: TeamMember) => ({
+     id: member.id,
+     name: member.full_name,
+     role: 'worker' as const,
+     email: member.email,
+     phone: member.phone || undefined,
+     avatar: member.avatar_url || undefined,
+     weeklyHoursWorked: 0, // Would need to calculate from shifts
+     weeklyHoursTarget: member.weekly_hours_target || 40,
+     willingnessForExtra: member.willingness_for_extra || 'medium',
+     reliabilityScore: member.reliability_score || 80,
+     position: member.position || 'Team Member',
+   });
+ 
+   if (loading) {
+     return (
+       <div className="min-h-screen bg-background flex items-center justify-center">
+         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+       </div>
+     );
+   }
+ 
   return (
     <div className="min-h-screen bg-background pb-8">
       {/* Header */}
@@ -56,6 +84,14 @@ export const ManagerTeam = () => {
             <h1 className="text-lg font-semibold text-foreground">Team</h1>
             <p className="text-xs text-muted-foreground">{workers.length} members</p>
           </div>
+           <Button
+             size="sm"
+             className="ml-auto gap-1.5"
+             onClick={() => setShowInviteModal(true)}
+           >
+             <UserPlus className="w-4 h-4" />
+             <span className="hidden sm:inline">Invite</span>
+           </Button>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -105,7 +141,7 @@ export const ManagerTeam = () => {
               {available.map(worker => (
                 <WorkerCard
                   key={worker.id}
-                  worker={worker}
+                   worker={toWorkerCardData(worker)}
                   showReliability
                   onClick={() => setSelectedWorker(worker)}
                 />
@@ -125,7 +161,7 @@ export const ManagerTeam = () => {
               {balanced.map(worker => (
                 <WorkerCard
                   key={worker.id}
-                  worker={worker}
+                   worker={toWorkerCardData(worker)}
                   showReliability
                   onClick={() => setSelectedWorker(worker)}
                 />
@@ -145,7 +181,7 @@ export const ManagerTeam = () => {
               {overloaded.map(worker => (
                 <WorkerCard
                   key={worker.id}
-                  worker={worker}
+                   worker={toWorkerCardData(worker)}
                   showReliability
                   onClick={() => setSelectedWorker(worker)}
                 />
@@ -165,14 +201,14 @@ export const ManagerTeam = () => {
       {/* Worker Detail Dialog */}
       <Dialog open={!!selectedWorker} onOpenChange={() => setSelectedWorker(null)}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{selectedWorker?.name}</DialogTitle>
-          </DialogHeader>
+           <DialogHeader>
+             <DialogTitle>{selectedWorker?.full_name}</DialogTitle>
+           </DialogHeader>
           
           {selectedWorker && (
             <div className="space-y-4 pt-4">
               <WorkerCard
-                worker={selectedWorker}
+                 worker={toWorkerCardData(selectedWorker)}
                 showReliability
                 showHours
               />
@@ -188,6 +224,12 @@ export const ManagerTeam = () => {
           )}
         </DialogContent>
       </Dialog>
+ 
+       {/* Invite Modal */}
+       <InviteWorkerModal
+         open={showInviteModal}
+         onOpenChange={setShowInviteModal}
+       />
     </div>
   );
 };
