@@ -1,4 +1,4 @@
- import { useState } from 'react';
+ import { useState, useEffect } from 'react';
  import { Button } from '@/components/ui/button';
  import { Input } from '@/components/ui/input';
  import { Label } from '@/components/ui/label';
@@ -22,44 +22,67 @@
  import { CreateShiftData, DatabaseShift } from '@/hooks/useShifts';
  import { TeamMember } from '@/hooks/useTeamMembers';
  
- interface CreateShiftModalProps {
-   open: boolean;
-   onOpenChange: (open: boolean) => void;
-   onSubmit: (data: CreateShiftData) => Promise<DatabaseShift | null>;
-   workers: TeamMember[];
-   editingShift?: DatabaseShift | null;
- }
- 
- export const CreateShiftModal = ({
-   open,
-   onOpenChange,
-   onSubmit,
-   workers,
-   editingShift,
- }: CreateShiftModalProps) => {
-   const [loading, setLoading] = useState(false);
-   const [formData, setFormData] = useState<CreateShiftData>(() => 
-     editingShift ? {
-       date: editingShift.date,
-       start_time: editingShift.start_time,
-       end_time: editingShift.end_time,
-       position: editingShift.position,
-       location: editingShift.location,
-       notes: editingShift.notes || '',
-       assigned_worker_id: editingShift.assigned_worker_id || undefined,
-       latitude: editingShift.latitude || undefined,
-       longitude: editingShift.longitude || undefined,
-       check_in_radius_meters: editingShift.check_in_radius_meters || 100,
-     } : {
-       date: new Date().toISOString().split('T')[0],
-       start_time: '09:00',
-       end_time: '17:00',
-       position: '',
-       location: '',
-       notes: '',
-       check_in_radius_meters: 100,
-     }
-   );
+interface CreateShiftModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: CreateShiftData) => Promise<DatabaseShift | null>;
+  workers: TeamMember[];
+  editingShift?: DatabaseShift | null;
+  prefillData?: Partial<CreateShiftData> | null;
+}
+
+export const CreateShiftModal = ({
+  open,
+  onOpenChange,
+  onSubmit,
+  workers,
+  editingShift,
+  prefillData,
+}: CreateShiftModalProps) => {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState<CreateShiftData>(() => {
+    const defaultData: CreateShiftData = {
+      date: new Date().toISOString().split('T')[0],
+      start_time: '09:00',
+      end_time: '17:00',
+      position: '',
+      location: '',
+      notes: '',
+      check_in_radius_meters: 100,
+    };
+
+    if (editingShift) {
+      return {
+        date: editingShift.date,
+        start_time: editingShift.start_time,
+        end_time: editingShift.end_time,
+        position: editingShift.position,
+        location: editingShift.location,
+        notes: editingShift.notes || '',
+        assigned_worker_id: editingShift.assigned_worker_id || undefined,
+        latitude: editingShift.latitude || undefined,
+        longitude: editingShift.longitude || undefined,
+        check_in_radius_meters: editingShift.check_in_radius_meters || 100,
+      };
+    }
+
+    if (prefillData) {
+      return { ...defaultData, ...prefillData };
+    }
+
+    return defaultData;
+  });
+
+  // Update form when prefillData changes
+  useEffect(() => {
+    if (prefillData && !editingShift) {
+      setFormData(prev => ({
+        ...prev,
+        ...prefillData,
+        date: prev.date, // Keep the date
+      }));
+    }
+  }, [prefillData, editingShift]);
  
    const handleSubmit = async (e: React.FormEvent) => {
      e.preventDefault();

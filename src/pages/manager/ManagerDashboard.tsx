@@ -1,18 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { ShiftCard } from '@/components/ShiftCard';
 import { StaffingIndicator } from '@/components/StaffingIndicator';
 import { StatusBadge } from '@/components/StatusBadge';
-import { NotificationItem } from '@/components/NotificationItem';
-import { 
-  currentManager, 
-  getTodayShifts, 
-  todayStaffingHealth, 
-  managerNotifications,
-  attendanceRecords,
-  workers,
-  swapRequests
-} from '@/data/mockData';
+import { useShifts, DatabaseShift } from '@/hooks/useShifts';
+import { useTeamMembers } from '@/hooks/useTeamMembers';
+import { useNotifications } from '@/hooks/useNotifications';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Bell, 
   Users, 
@@ -23,11 +17,15 @@ import {
   User,
   ArrowRightLeft,
   Check,
-  X
+  X,
+  Calendar,
+  Loader2,
+  Plus,
+  TrendingUp
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -35,24 +33,93 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { StaffingHealth } from '@/types/align';
+
+interface SwapRequest {
+  id: string;
+  shift_id: string;
+  requester_id: string;
+  reason: string;
+  status: string;
+  requester?: {
+    full_name: string;
+    avatar_url: string | null;
+  };
+  shift?: {
+    date: string;
+    start_time: string;
+    end_time: string;
+    position: string;
+  };
+}
 
 export const ManagerDashboard = () => {
   const navigate = useNavigate();
+  const { profile } = useAuth();
+  const { shifts, loading: shiftsLoading } = useShifts();
+  const { workers } = useTeamMembers();
+  const { unreadCount } = useNotifications();
+  
+  const [swapRequests, setSwapRequests] = useState<SwapRequest[]>([]);
   const [showSwapApproval, setShowSwapApproval] = useState(false);
+  const [selectedSwap, setSelectedSwap] = useState<SwapRequest | null>(null);
   const [approvalDone, setApprovalDone] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const todayShifts = getTodayShifts();
-  const vacantShifts = todayShifts.filter(s => s.isVacant);
-  const filledShifts = todayShifts.filter(s => !s.isVacant);
-  const unreadNotifications = managerNotifications.filter(n => !n.read);
-
+  const today = new Date().toISOString().split('T')[0];
+  const todayShifts = shifts.filter(s => s.date === today);
+  const vacantShifts = todayShifts.filter(s => s.is_vacant);
+  const filledShifts = todayShifts.filter(s => !s.is_vacant);
   const pendingSwaps = swapRequests.filter(s => s.status === 'pending');
 
-  // Build attendance summary
+  // Fetch swap requests
+  useEffect(() => {
+    const fetchSwapRequests = async () => {
+      if (!profile?.team_id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('swap_requests')
+          .select(`
+            *,
+            requester:profiles!swap_requests_requester_id_fkey(full_name, avatar_url),
+            shift:shifts!swap_requests_shift_id_fkey(date, start_time, end_time, position)
+          `)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setSwapRequests(data || []);
+      } catch (err) {
+        console.error('Error fetching swap requests:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSwapRequests();
+  }, [profile?.team_id]);
+
+  // Calculate staffing health
+  const staffingHealth: StaffingHealth = {
+    totalShifts: todayShifts.length,
+    filledShifts: filledShifts.length,
+    vacantShifts: vacantShifts.length,
+    status: vacantShifts.length === 0 
+      ? 'fully_staffed' 
+      : vacantShifts.length <= 1 
+        ? 'near_capacity'
+        : vacantShifts.length <= 3 
+          ? 'understaffed' 
+          : 'critical',
+    shortBy: vacantShifts.length,
+  };
+
+  // Build attendance summary (mock for now - would need real attendance data)
   const attendanceSummary = {
-    present: attendanceRecords.filter(a => a.status === 'present').length,
-    late: attendanceRecords.filter(a => a.status === 'late').length,
-    notCheckedIn: filledShifts.length - attendanceRecords.filter(a => a.status === 'present' || a.status === 'late').length,
+    present: Math.floor(filledShifts.length * 0.7),
+    late: Math.floor(filledShifts.length * 0.2),
+    notCheckedIn: Math.ceil(filledShifts.length * 0.1),
   };
 
   const formatTime = () => {
@@ -60,39 +127,77 @@ export const ManagerDashboard = () => {
     return now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   };
 
-  const handleApproveSwap = () => {
-    setApprovalDone(true);
-    toast({
-      title: 'Swap Approved! ✓',
-      description: 'Both workers have been notified of the shift change.',
-    });
-    setTimeout(() => {
-      setShowSwapApproval(false);
-      setApprovalDone(false);
-    }, 1500);
+  const handleApproveSwap = async () => {
+    if (!selectedSwap || !profile?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('swap_requests')
+        .update({ 
+          status: 'approved',
+          approved_by: profile.id,
+        })
+        .eq('id', selectedSwap.id);
+
+      if (error) throw error;
+
+      setApprovalDone(true);
+      toast.success('Swap Approved! Both workers have been notified.');
+      
+      setSwapRequests(prev => prev.filter(s => s.id !== selectedSwap.id));
+      
+      setTimeout(() => {
+        setShowSwapApproval(false);
+        setApprovalDone(false);
+        setSelectedSwap(null);
+      }, 1500);
+    } catch (err) {
+      console.error('Error approving swap:', err);
+      toast.error('Failed to approve swap');
+    }
   };
 
-  const handleDeclineSwap = () => {
-    toast({
-      title: 'Swap Declined',
-      description: 'The worker has been notified.',
-      variant: 'destructive',
-    });
-    setShowSwapApproval(false);
+  const handleDeclineSwap = async () => {
+    if (!selectedSwap) return;
+
+    try {
+      const { error } = await supabase
+        .from('swap_requests')
+        .update({ status: 'declined' })
+        .eq('id', selectedSwap.id);
+
+      if (error) throw error;
+
+      toast.error('Swap declined. The worker has been notified.');
+      setSwapRequests(prev => prev.filter(s => s.id !== selectedSwap.id));
+      setShowSwapApproval(false);
+      setSelectedSwap(null);
+    } catch (err) {
+      console.error('Error declining swap:', err);
+      toast.error('Failed to decline swap');
+    }
   };
+
+  if (shiftsLoading || loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-8">
       {/* Header */}
       <header className="px-4 pt-8 pb-6 lg:px-8">
         <div className="flex items-center justify-between mb-1">
-          <p className="text-sm text-muted-foreground">{currentManager.location}</p>
+          <p className="text-sm text-muted-foreground">{profile?.position || 'Manager'}</p>
           <button 
             onClick={() => navigate('/manager/notifications')}
             className="relative p-2 rounded-lg hover:bg-accent transition-colors"
           >
             <Bell className="w-5 h-5 text-muted-foreground" />
-            {unreadNotifications.length > 0 && (
+            {unreadCount > 0 && (
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
             )}
           </button>
@@ -103,9 +208,9 @@ export const ManagerDashboard = () => {
         </p>
       </header>
 
-      <div className="px-4 lg:px-8 space-y-6 stagger-children">
+      <div className="px-4 lg:px-8 space-y-6">
         {/* Staffing Health */}
-        <StaffingIndicator health={todayStaffingHealth} />
+        <StaffingIndicator health={staffingHealth} />
 
         {/* Quick Stats Row */}
         <div className="grid grid-cols-3 gap-3">
@@ -132,6 +237,32 @@ export const ManagerDashboard = () => {
           </div>
         </div>
 
+        {/* Team Overview */}
+        <section className="card-elevated rounded-xl p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-foreground flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary" />
+              Team Overview
+            </h2>
+            <button 
+              onClick={() => navigate('/manager/team')}
+              className="text-xs text-primary font-medium"
+            >
+              Manage
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 rounded-lg bg-accent/50">
+              <p className="text-2xl font-bold text-foreground">{workers.length}</p>
+              <p className="text-xs text-muted-foreground">Team members</p>
+            </div>
+            <div className="p-3 rounded-lg bg-accent/50">
+              <p className="text-2xl font-bold text-foreground">{shifts.length}</p>
+              <p className="text-xs text-muted-foreground">Total shifts</p>
+            </div>
+          </div>
+        </section>
+
         {/* Pending Actions */}
         {pendingSwaps.length > 0 && (
           <section className="card-elevated rounded-xl p-4 border-l-4 border-l-primary">
@@ -144,27 +275,27 @@ export const ManagerDashboard = () => {
                 {pendingSwaps.length} request{pendingSwaps.length > 1 ? 's' : ''}
               </span>
             </div>
-            {pendingSwaps.slice(0, 1).map(swap => {
-              const requester = workers.find(w => w.id === swap.requesterId);
-              return (
-                <button
-                  key={swap.id}
-                  onClick={() => setShowSwapApproval(true)}
-                  className="w-full flex items-center justify-between p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-sm">{requester?.name}</p>
-                      <p className="text-xs text-muted-foreground">{swap.reason}</p>
-                    </div>
+            {pendingSwaps.slice(0, 2).map(swap => (
+              <button
+                key={swap.id}
+                onClick={() => {
+                  setSelectedSwap(swap);
+                  setShowSwapApproval(true);
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors mb-2 last:mb-0"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="w-4 h-4 text-primary" />
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </button>
-              );
-            })}
+                  <div className="text-left">
+                    <p className="font-medium text-sm">{swap.requester?.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{swap.reason}</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            ))}
           </section>
         )}
 
@@ -182,11 +313,23 @@ export const ManagerDashboard = () => {
             </div>
             <div className="space-y-3">
               {vacantShifts.map(shift => (
-                <ShiftCard
+                <div
                   key={shift.id}
-                  shift={shift}
                   onClick={() => navigate('/manager/shifts')}
-                />
+                  className="card-elevated rounded-xl p-4 border-l-4 border-l-warning cursor-pointer hover:bg-accent/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-semibold text-foreground">{shift.position}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {shift.start_time} - {shift.end_time} • {shift.location}
+                      </p>
+                    </div>
+                    <span className="px-2.5 py-1 text-xs font-medium text-warning bg-warning/10 rounded-full border border-warning/20">
+                      Vacant
+                    </span>
+                  </div>
+                </div>
               ))}
             </div>
           </section>
@@ -203,10 +346,9 @@ export const ManagerDashboard = () => {
               View All
             </button>
           </div>
-          <div className="space-y-2">
-            {filledShifts.slice(0, 4).map(shift => {
-              const attendance = attendanceRecords.find(a => a.shiftId === shift.id);
-              return (
+          {filledShifts.length > 0 ? (
+            <div className="space-y-2">
+              {filledShifts.slice(0, 4).map(shift => (
                 <div
                   key={shift.id}
                   className="card-elevated rounded-xl p-4 flex items-center justify-between"
@@ -216,21 +358,31 @@ export const ManagerDashboard = () => {
                       <User className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">{shift.assignedWorker?.name}</p>
+                      <p className="font-medium text-foreground">{shift.assigned_worker?.full_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {shift.position} • {shift.startTime} - {shift.endTime}
+                        {shift.position} • {shift.start_time} - {shift.end_time}
                       </p>
                     </div>
                   </div>
-                  {attendance ? (
-                    <StatusBadge status={attendance.status} />
-                  ) : (
-                    <StatusBadge status="not_checked_in" />
-                  )}
+                  <StatusBadge status="not_checked_in" />
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="card-elevated rounded-xl p-8 text-center">
+              <Calendar className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+              <p className="text-muted-foreground">No filled shifts today</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-4"
+                onClick={() => navigate('/manager/shifts')}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Shift
+              </Button>
+            </div>
+          )}
         </section>
 
         {/* Quick Actions */}
@@ -272,7 +424,7 @@ export const ManagerDashboard = () => {
               <p className="font-semibold text-foreground">Swap Approved!</p>
               <p className="text-sm text-muted-foreground mt-1">Both workers have been notified</p>
             </div>
-          ) : (
+          ) : selectedSwap && (
             <div className="space-y-4 pt-4">
               <div className="p-4 rounded-xl bg-accent/50 border border-border/50">
                 <div className="flex items-center gap-3 mb-3">
@@ -280,26 +432,15 @@ export const ManagerDashboard = () => {
                     <User className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium">Sarah Chen</p>
-                    <p className="text-xs text-muted-foreground">Wants to swap tomorrow's shift</p>
+                    <p className="font-medium">{selectedSwap.requester?.full_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedSwap.shift?.position} • {selectedSwap.shift?.start_time} - {selectedSwap.shift?.end_time}
+                    </p>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">Reason:</span> Doctor appointment
+                  <span className="font-medium text-foreground">Reason:</span> {selectedSwap.reason}
                 </p>
-              </div>
-
-              <div className="p-4 rounded-xl border border-border/50">
-                <p className="text-xs font-medium text-muted-foreground mb-2">SUGGESTED REPLACEMENT</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center">
-                    <User className="w-5 h-5 text-success" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Emily Rodriguez</p>
-                    <p className="text-xs text-muted-foreground">High availability • 96% reliability</p>
-                  </div>
-                </div>
               </div>
 
               <div className="flex gap-3">
@@ -326,3 +467,5 @@ export const ManagerDashboard = () => {
     </div>
   );
 };
+
+export default ManagerDashboard;
