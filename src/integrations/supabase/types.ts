@@ -182,6 +182,7 @@ export type Database = {
           created_at: string
           id: string
           message: string
+          priority: string | null
           read: boolean
           related_shift_id: string | null
           title: string
@@ -193,6 +194,7 @@ export type Database = {
           created_at?: string
           id?: string
           message: string
+          priority?: string | null
           read?: boolean
           related_shift_id?: string | null
           title: string
@@ -204,6 +206,7 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string
+          priority?: string | null
           read?: boolean
           related_shift_id?: string | null
           title?: string
@@ -348,6 +351,78 @@ export type Database = {
             columns: ["shift_id"]
             isOneToOne: false
             referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_templates: {
+        Row: {
+          check_in_radius_meters: number | null
+          created_at: string
+          created_by: string | null
+          days_of_week: number[] | null
+          end_time: string
+          id: string
+          is_active: boolean | null
+          latitude: number | null
+          location: string
+          longitude: number | null
+          name: string
+          notes: string | null
+          position: string
+          start_time: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          check_in_radius_meters?: number | null
+          created_at?: string
+          created_by?: string | null
+          days_of_week?: number[] | null
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          latitude?: number | null
+          location: string
+          longitude?: number | null
+          name: string
+          notes?: string | null
+          position: string
+          start_time: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          check_in_radius_meters?: number | null
+          created_at?: string
+          created_by?: string | null
+          days_of_week?: number[] | null
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          latitude?: number | null
+          location?: string
+          longitude?: number | null
+          name?: string
+          notes?: string | null
+          position?: string
+          start_time?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_templates_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
