@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckInButton } from '@/components/CheckInButton';
+import { OpenShiftsSection } from '@/components/OpenShiftsSection';
 import { Calendar, Bell, ChevronRight, Loader2, MapPin, Clock, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -278,6 +279,9 @@ export const WorkerHome = () => {
             </div>
           </section>
         )}
+
+        {/* Open Shifts */}
+        <OpenShiftsSection />
 
         {/* Upcoming Shifts */}
         {nextShifts.length > 0 && (
