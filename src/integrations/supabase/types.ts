@@ -355,6 +355,64 @@ export type Database = {
           },
         ]
       }
+      shift_requests: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shift_id: string
+          status: string
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shift_id: string
+          status?: string
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shift_id?: string
+          status?: string
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_requests_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_requests_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shift_templates: {
         Row: {
           check_in_radius_meters: number | null
@@ -610,6 +668,53 @@ export type Database = {
             foreignKeyName: "team_invitations_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_settings: {
+        Row: {
+          allow_worker_shift_requests: boolean | null
+          auto_approve_swaps: boolean | null
+          created_at: string
+          default_check_in_radius_meters: number | null
+          id: string
+          notification_attendance_alerts: boolean | null
+          notification_shift_reminder_hours: number | null
+          notification_swap_requests: boolean | null
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          allow_worker_shift_requests?: boolean | null
+          auto_approve_swaps?: boolean | null
+          created_at?: string
+          default_check_in_radius_meters?: number | null
+          id?: string
+          notification_attendance_alerts?: boolean | null
+          notification_shift_reminder_hours?: number | null
+          notification_swap_requests?: boolean | null
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          allow_worker_shift_requests?: boolean | null
+          auto_approve_swaps?: boolean | null
+          created_at?: string
+          default_check_in_radius_meters?: number | null
+          id?: string
+          notification_attendance_alerts?: boolean | null
+          notification_shift_reminder_hours?: number | null
+          notification_swap_requests?: boolean | null
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_settings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },

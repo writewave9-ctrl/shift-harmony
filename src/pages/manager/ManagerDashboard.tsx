@@ -21,7 +21,9 @@ import {
   Calendar,
   Loader2,
   Plus,
-  TrendingUp
+  TrendingUp,
+  Rocket,
+  Settings,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -182,6 +184,37 @@ export const ManagerDashboard = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show setup prompt if manager doesn't have a team yet
+  if (!profile?.team_id) {
+    return (
+      <div className="min-h-screen bg-background pb-8">
+        <header className="px-4 pt-8 pb-6 lg:px-8 text-center">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+            <Rocket className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground">Welcome to Align!</h1>
+          <p className="text-muted-foreground mt-2">
+            Complete your workspace setup to start managing your team.
+          </p>
+        </header>
+        
+        <div className="px-4 lg:px-8 max-w-md mx-auto">
+          <div className="card-elevated rounded-2xl p-6 text-center">
+            <Settings className="w-12 h-12 mx-auto text-primary/50 mb-4" />
+            <h2 className="text-lg font-semibold mb-2">Set Up Your Workspace</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Create your organization and team to start scheduling shifts and managing your workers.
+            </p>
+            <Button onClick={() => navigate('/manager/settings')} className="w-full" size="lg">
+              <Settings className="w-4 h-4 mr-2" />
+              Complete Setup
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }

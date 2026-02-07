@@ -11,7 +11,6 @@ import { Loader2 } from "lucide-react";
 
 // Pages
 import Auth from "./pages/Auth";
-import Onboarding from "./pages/Onboarding";
 import RoleSelect from "./pages/RoleSelect";
 import NotFound from "./pages/NotFound";
 
@@ -28,12 +27,15 @@ import { ManagerLayout } from "./layouts/ManagerLayout";
 import { ManagerDashboard } from "./pages/manager/ManagerDashboard";
 import { ManagerShifts } from "./pages/manager/ManagerShifts";
 import { ManagerTeam } from "./pages/manager/ManagerTeam";
+import { ManagerSettings } from "./pages/manager/ManagerSettings";
+import { ManagerAnalytics } from "./pages/manager/ManagerAnalytics";
+import { ManagerShiftRequests } from "./pages/manager/ManagerShiftRequests";
 
 const queryClient = new QueryClient();
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, profile, userRole } = useAuth();
+  const { user, loading } = useAuth();
   
   // Enable realtime notifications for authenticated users
   useRealtimeNotifications();
@@ -48,11 +50,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (!user) {
     return <Navigate to="/auth" replace />;
-  }
-
-  // Check if user needs onboarding (manager without organization)
-  if (userRole?.role === 'manager' && !profile?.organization_id) {
-    return <Navigate to="/onboarding" replace />;
   }
   
   return <>{children}</>;
@@ -79,7 +76,7 @@ const RoleRouter = () => {
 
 // Public route (redirects to app if already logged in)
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, userRole, profile } = useAuth();
+  const { user, loading, userRole } = useAuth();
   
   if (loading) {
     return (
@@ -90,11 +87,6 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (user) {
-    // Check if needs onboarding
-    if (userRole?.role === 'manager' && !profile?.organization_id) {
-      return <Navigate to="/onboarding" replace />;
-    }
-    
     // Redirect based on role
     if (userRole?.role === 'manager' || userRole?.role === 'admin') {
       return <Navigate to="/manager" replace />;
@@ -112,13 +104,6 @@ const AppRoutes = () => (
       <PublicRoute>
         <Auth />
       </PublicRoute>
-    } />
-
-    {/* Onboarding (requires auth) */}
-    <Route path="/onboarding" element={
-      <ProtectedRoute>
-        <Onboarding />
-      </ProtectedRoute>
     } />
 
     {/* Role Router (redirects based on user role) */}
@@ -153,6 +138,9 @@ const AppRoutes = () => (
       <Route index element={<ManagerDashboard />} />
       <Route path="shifts" element={<ManagerShifts />} />
       <Route path="team" element={<ManagerTeam />} />
+      <Route path="analytics" element={<ManagerAnalytics />} />
+      <Route path="requests" element={<ManagerShiftRequests />} />
+      <Route path="settings" element={<ManagerSettings />} />
     </Route>
 
     {/* Catch-all */}
