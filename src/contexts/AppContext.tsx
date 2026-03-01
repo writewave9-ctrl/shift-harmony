@@ -1,11 +1,9 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { UserRole, Worker, Manager } from '@/types/align';
-import { currentWorker, currentManager } from '@/data/mockData';
+import { UserRole } from '@/types/align';
 
 interface AppContextType {
   userRole: UserRole;
   setUserRole: (role: UserRole) => void;
-  currentUser: Worker | Manager;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -13,10 +11,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [userRole, setUserRole] = useState<UserRole>('worker');
 
-  const currentUser = userRole === 'worker' ? currentWorker : currentManager;
-
   return (
-    <AppContext.Provider value={{ userRole, setUserRole, currentUser }}>
+    <AppContext.Provider value={{ userRole, setUserRole }}>
       {children}
     </AppContext.Provider>
   );
