@@ -1,5 +1,4 @@
-import { currentWorker } from '@/data/mockData';
-import { ChevronLeft, User, Clock, TrendingUp, Star, Settings, LogOut, Moon, Sun, Calendar, History, Bell, ChevronRight, Edit2 } from 'lucide-react';
+import { User, Clock, TrendingUp, Star, LogOut, Moon, Sun, Calendar, History, Bell, ChevronRight, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,21 +16,19 @@ export const WorkerProfile = () => {
   const { theme, resolvedTheme } = useTheme();
   const { unreadCount } = useNotifications();
 
-  // Use auth profile if available, otherwise fall back to mock
-  const displayProfile = profile || currentWorker;
-  const weeklyTarget = profile?.weekly_hours_target || currentWorker.weeklyHoursTarget;
-  const hoursWorked = (displayProfile as any).weeklyHoursWorked || 0;
+  const weeklyTarget = profile?.weekly_hours_target || 40;
+  const hoursWorked = 0; // Would calculate from attendance records
   const hoursRemaining = weeklyTarget - hoursWorked;
-  const reliabilityScore = profile?.reliability_score || currentWorker.reliabilityScore;
-  const willingness = profile?.willingness_for_extra || currentWorker.willingnessForExtra;
+  const reliabilityScore = profile?.reliability_score || 80;
+  const willingness = profile?.willingness_for_extra || 'medium';
 
-  const willingnessLabels = {
+  const willingnessLabels: Record<string, string> = {
     high: 'Always available',
     medium: 'Sometimes available',
     low: 'Prefer not',
   };
 
-  const willingnessColors = {
+  const willingnessColors: Record<string, string> = {
     high: 'text-success',
     medium: 'text-warning-foreground',
     low: 'text-muted-foreground',
@@ -39,34 +36,17 @@ export const WorkerProfile = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    toast({
-      title: 'Signed out',
-      description: 'You have been signed out successfully.',
-    });
+    toast({ title: 'Signed out', description: 'You have been signed out successfully.' });
     navigate('/auth');
   };
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50 px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => navigate('/worker')}
-              className="p-2 -ml-2 rounded-lg hover:bg-accent transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <h1 className="text-lg font-semibold text-foreground">Profile</h1>
-          </div>
-          <Button variant="ghost" size="icon" className="relative">
-            <Edit2 className="w-5 h-5" />
-          </Button>
-        </div>
+      <header className="px-4 pt-6 pb-4">
+        <h1 className="text-lg font-semibold text-foreground">Profile</h1>
       </header>
 
-      <div className="px-4 py-6 space-y-6">
+      <div className="px-4 space-y-6">
         {/* Profile Card */}
         <section className="card-elevated rounded-2xl p-6">
           <div className="flex items-center gap-4">
@@ -74,15 +54,9 @@ export const WorkerProfile = () => {
               <User className="w-10 h-10 text-primary" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-foreground">
-                {profile?.full_name || currentWorker.name}
-              </h2>
-              <p className="text-muted-foreground">
-                {profile?.position || currentWorker.position}
-              </p>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {profile?.email || currentWorker.email}
-              </p>
+              <h2 className="text-xl font-bold text-foreground">{profile?.full_name || 'Worker'}</h2>
+              <p className="text-muted-foreground">{profile?.position || 'Team Member'}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{profile?.email}</p>
             </div>
           </div>
         </section>
@@ -111,14 +85,12 @@ export const WorkerProfile = () => {
             <h3 className="text-sm font-semibold text-foreground">Weekly Hours</h3>
             <span className="text-sm text-muted-foreground">{hoursWorked} / {weeklyTarget}h</span>
           </div>
-          
           <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500"
               style={{ width: `${Math.min((hoursWorked / weeklyTarget) * 100, 100)}%` }}
             />
           </div>
-
           {hoursRemaining > 0 && (
             <p className="text-sm text-success font-medium mt-3 flex items-center gap-1">
               <TrendingUp className="w-4 h-4" />
@@ -130,7 +102,6 @@ export const WorkerProfile = () => {
         {/* Preferences */}
         <section className="card-elevated rounded-2xl p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Preferences</h3>
-          
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2 text-muted-foreground">
               <TrendingUp className="w-4 h-4" />
@@ -171,9 +142,7 @@ export const WorkerProfile = () => {
             </span>
             <div className="flex items-center gap-2">
               {unreadCount > 0 && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-primary text-primary-foreground rounded-full">
-                  {unreadCount}
-                </span>
+                <span className="px-2 py-0.5 text-xs font-medium bg-primary text-primary-foreground rounded-full">{unreadCount}</span>
               )}
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </div>
@@ -205,20 +174,10 @@ export const WorkerProfile = () => {
             </span>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
-
-          <button className="w-full card-elevated rounded-xl p-4 flex items-center justify-between hover:bg-accent/50 transition-colors">
-            <span className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                <Settings className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <span className="font-medium">Settings</span>
-            </span>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </button>
         </section>
 
         {/* Sign Out */}
-        <section className="pt-4">
+        <section className="pt-4 pb-4">
           {user ? (
             <button 
               onClick={handleSignOut}
@@ -231,10 +190,7 @@ export const WorkerProfile = () => {
             </button>
           ) : (
             <button 
-              onClick={() => {
-                setUserRole('manager');
-                navigate('/manager');
-              }}
+              onClick={() => { setUserRole('manager'); navigate('/manager'); }}
               className="w-full card-elevated rounded-xl p-4 flex items-center gap-3 hover:bg-accent/50 transition-colors"
             >
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">

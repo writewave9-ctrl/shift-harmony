@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { ThemeToggle } from '@/components/ThemeToggle';
+
 import { useShiftRequests } from '@/hooks/useShiftRequests';
 
 const navItems = [
@@ -47,12 +47,9 @@ export const ManagerNav = () => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
-            <div className="flex items-center justify-between w-full">
-              <h1 className="text-xl font-bold text-sidebar-foreground">
-                <span className="text-sidebar-primary">Align</span>
-              </h1>
-              <ThemeToggle />
-            </div>
+            <h1 className="text-xl font-bold text-sidebar-foreground">
+              <span className="text-sidebar-primary">Align</span>
+            </h1>
           </div>
 
           {/* Navigation */}

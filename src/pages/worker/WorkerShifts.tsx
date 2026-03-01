@@ -1,11 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { ShiftCard } from '@/components/ShiftCard';
-import { 
-  currentWorker, 
-  getUpcomingWorkerShifts, 
-  getSuggestedReplacements 
-} from '@/data/mockData';
 import { 
   Calendar, 
   ChevronLeft, 
@@ -14,12 +8,17 @@ import {
   ChevronRight,
   User,
   Users,
-  Check
+  Check,
+  Loader2,
+  Clock,
+  MapPin,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { WorkerCard } from '@/components/WorkerCard';
-import { Shift, CallOffReason } from '@/types/align';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { CallOffReason } from '@/types/align';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +26,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+
+interface WorkerShift {
+  id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  position: string;
+  location: string;
+  status: string;
+  is_vacant: boolean;
+}
 
 const callOffReasons: { value: CallOffReason; label: string }[] = [
   { value: 'sick', label: 'Feeling unwell' },
@@ -38,93 +48,171 @@ const callOffReasons: { value: CallOffReason; label: string }[] = [
 
 export const WorkerShifts = () => {
   const navigate = useNavigate();
-  const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
+  const { profile } = useAuth();
+  const [shifts, setShifts] = useState<WorkerShift[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedShift, setSelectedShift] = useState<WorkerShift | null>(null);
   const [showSwapDialog, setShowSwapDialog] = useState(false);
   const [showCallOffDialog, setShowCallOffDialog] = useState(false);
   const [swapType, setSwapType] = useState<'specific' | 'open' | null>(null);
   const [selectedReason, setSelectedReason] = useState<CallOffReason | null>(null);
   const [requestSent, setRequestSent] = useState(false);
+  const [teammates, setTeammates] = useState<any[]>([]);
 
-  const upcomingShifts = getUpcomingWorkerShifts(currentWorker.id);
-  const suggestedWorkers = getSuggestedReplacements(currentWorker.id);
+  useEffect(() => {
+    const fetchShifts = async () => {
+      if (!profile?.id) return;
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { data, error } = await supabase
+          .from('shifts')
+          .select('*')
+          .eq('assigned_worker_id', profile.id)
+          .gte('date', today)
+          .order('date', { ascending: true })
+          .order('start_time', { ascending: true });
+
+        if (error) throw error;
+        setShifts(data || []);
+      } catch (err) {
+        console.error('Error fetching shifts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchTeammates = async () => {
+      if (!profile?.team_id) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name, position, avatar_url')
+        .eq('team_id', profile.team_id)
+        .neq('id', profile.id);
+      setTeammates(data || []);
+    };
+
+    fetchShifts();
+    fetchTeammates();
+  }, [profile?.id, profile?.team_id]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-
     if (date.toDateString() === today.toDateString()) return 'Today';
     if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
     return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   };
 
-  const handleSwapRequest = () => {
-    setRequestSent(true);
-    setTimeout(() => {
-      setShowSwapDialog(false);
-      setSwapType(null);
-      setRequestSent(false);
-      setSelectedShift(null);
-    }, 1500);
+  const handleSwapRequest = async (targetWorkerId?: string) => {
+    if (!selectedShift || !profile?.id) return;
+    try {
+      const { error } = await supabase.from('swap_requests').insert({
+        shift_id: selectedShift.id,
+        requester_id: profile.id,
+        requested_worker_id: targetWorkerId || null,
+        reason: 'Shift swap request',
+        is_open_to_all: !targetWorkerId,
+      });
+      if (error) throw error;
+      setRequestSent(true);
+      toast.success('Swap request sent!');
+      setTimeout(() => {
+        setShowSwapDialog(false);
+        setSwapType(null);
+        setRequestSent(false);
+        setSelectedShift(null);
+      }, 1500);
+    } catch (err) {
+      console.error('Error creating swap request:', err);
+      toast.error('Failed to send swap request');
+    }
   };
 
-  const handleCallOff = () => {
-    setRequestSent(true);
-    setTimeout(() => {
-      setShowCallOffDialog(false);
-      setSelectedReason(null);
-      setRequestSent(false);
-      setSelectedShift(null);
-    }, 1500);
+  const handleCallOff = async () => {
+    if (!selectedShift || !profile?.id || !selectedReason) return;
+    try {
+      const { error } = await supabase.from('call_off_requests').insert({
+        shift_id: selectedShift.id,
+        worker_id: profile.id,
+        reason: selectedReason,
+      });
+      if (error) throw error;
+      setRequestSent(true);
+      toast.success('Call-off submitted');
+      setTimeout(() => {
+        setShowCallOffDialog(false);
+        setSelectedReason(null);
+        setRequestSent(false);
+        setSelectedShift(null);
+      }, 1500);
+    } catch (err) {
+      console.error('Error creating call-off:', err);
+      toast.error('Failed to submit call-off');
+    }
   };
 
-  // Group shifts by date
-  const shiftsByDate = upcomingShifts.reduce((acc, shift) => {
+  const shiftsByDate = shifts.reduce((acc, shift) => {
     const date = shift.date;
     if (!acc[date]) acc[date] = [];
     acc[date].push(shift);
     return acc;
-  }, {} as Record<string, Shift[]>);
+  }, {} as Record<string, WorkerShift[]>);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50 px-4 py-4">
+      <header className="sticky top-12 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50 px-4 py-4">
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate('/worker')}
-            className="p-2 -ml-2 rounded-lg hover:bg-accent transition-colors"
-          >
+          <button onClick={() => navigate('/worker')} className="p-2 -ml-2 rounded-lg hover:bg-accent transition-colors">
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div>
             <h1 className="text-lg font-semibold text-foreground">My Shifts</h1>
-            <p className="text-xs text-muted-foreground">{upcomingShifts.length} upcoming</p>
+            <p className="text-xs text-muted-foreground">{shifts.length} upcoming</p>
           </div>
         </div>
       </header>
 
       <div className="px-4 py-6 space-y-6">
-        {Object.entries(shiftsByDate).map(([date, shifts]) => (
+        {Object.entries(shiftsByDate).map(([date, dateShifts]) => (
           <section key={date}>
             <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               {formatDate(date)}
             </h2>
             <div className="space-y-3">
-              {shifts.map(shift => (
-                <ShiftCard
+              {dateShifts.map(shift => (
+                <button
                   key={shift.id}
-                  shift={shift}
                   onClick={() => setSelectedShift(shift)}
-                />
+                  className="w-full card-elevated rounded-xl p-4 text-left hover:bg-accent/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-semibold text-foreground">{shift.position}</h3>
+                      <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{shift.start_time} - {shift.end_time}</span>
+                        <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{shift.location}</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground mt-1" />
+                  </div>
+                </button>
               ))}
             </div>
           </section>
         ))}
 
-        {upcomingShifts.length === 0 && (
+        {shifts.length === 0 && (
           <div className="text-center py-12">
             <Calendar className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
             <p className="text-muted-foreground">No upcoming shifts</p>
@@ -138,30 +226,18 @@ export const WorkerShifts = () => {
           <DialogHeader>
             <DialogTitle>Shift Options</DialogTitle>
             <DialogDescription>
-              {selectedShift && `${formatDate(selectedShift.date)} • ${selectedShift.startTime} - ${selectedShift.endTime}`}
+              {selectedShift && `${formatDate(selectedShift.date)} • ${selectedShift.start_time} - ${selectedShift.end_time}`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-4">
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3 h-14"
-              onClick={() => {
-                setShowSwapDialog(true);
-              }}
-            >
+            <Button variant="outline" className="w-full justify-start gap-3 h-14" onClick={() => setShowSwapDialog(true)}>
               <ArrowRightLeft className="w-5 h-5 text-primary" />
               <div className="text-left">
                 <p className="font-medium">Request Swap</p>
                 <p className="text-xs text-muted-foreground">Find someone to cover</p>
               </div>
             </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3 h-14 border-destructive/30 hover:bg-destructive/5"
-              onClick={() => {
-                setShowCallOffDialog(true);
-              }}
-            >
+            <Button variant="outline" className="w-full justify-start gap-3 h-14 border-destructive/30 hover:bg-destructive/5" onClick={() => setShowCallOffDialog(true)}>
               <XCircle className="w-5 h-5 text-destructive" />
               <div className="text-left">
                 <p className="font-medium text-destructive">Call Off</p>
@@ -173,15 +249,10 @@ export const WorkerShifts = () => {
       </Dialog>
 
       {/* Swap Dialog */}
-      <Dialog open={showSwapDialog} onOpenChange={(open) => {
-        setShowSwapDialog(open);
-        if (!open) setSwapType(null);
-      }}>
+      <Dialog open={showSwapDialog} onOpenChange={(open) => { setShowSwapDialog(open); if (!open) setSwapType(null); }}>
         <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {swapType === null ? 'Request Swap' : swapType === 'specific' ? 'Choose Coworker' : 'Open Request'}
-            </DialogTitle>
+            <DialogTitle>{swapType === null ? 'Request Swap' : swapType === 'specific' ? 'Choose Coworker' : 'Open Request'}</DialogTitle>
             <DialogDescription>
               {swapType === null && 'How would you like to find coverage?'}
               {swapType === 'specific' && 'Select who you\'d like to swap with'}
@@ -199,11 +270,7 @@ export const WorkerShifts = () => {
             </div>
           ) : swapType === null ? (
             <div className="space-y-3 pt-4">
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-3 h-14"
-                onClick={() => setSwapType('specific')}
-              >
+              <Button variant="outline" className="w-full justify-start gap-3 h-14" onClick={() => setSwapType('specific')}>
                 <User className="w-5 h-5 text-primary" />
                 <div className="text-left">
                   <p className="font-medium">Ask Specific Person</p>
@@ -211,11 +278,7 @@ export const WorkerShifts = () => {
                 </div>
                 <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
               </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-3 h-14"
-                onClick={() => setSwapType('open')}
-              >
+              <Button variant="outline" className="w-full justify-start gap-3 h-14" onClick={() => setSwapType('open')}>
                 <Users className="w-5 h-5 text-primary" />
                 <div className="text-left">
                   <p className="font-medium">Open to All</p>
@@ -226,33 +289,36 @@ export const WorkerShifts = () => {
             </div>
           ) : swapType === 'specific' ? (
             <div className="space-y-4 pt-4">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-2">SUGGESTED BASED ON AVAILABILITY</p>
-                <div className="space-y-2">
-                  {suggestedWorkers.map(worker => (
-                    <WorkerCard
-                      key={worker.id}
-                      worker={worker}
-                      compact
-                      onClick={handleSwapRequest}
-                    />
-                  ))}
-                </div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">AVAILABLE TEAMMATES</p>
+              <div className="space-y-2">
+                {teammates.map(worker => (
+                  <button
+                    key={worker.id}
+                    onClick={() => handleSwapRequest(worker.id)}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-sm text-foreground">{worker.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{worker.position || 'Team Member'}</p>
+                    </div>
+                  </button>
+                ))}
+                {teammates.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No teammates found</p>
+                )}
               </div>
             </div>
           ) : (
             <div className="space-y-4 pt-4">
               <div className="p-4 rounded-xl bg-accent/50 border border-border/50">
                 <p className="text-sm text-foreground">
-                  This shift will be offered to {suggestedWorkers.length} eligible workers based on:
+                  This shift will be offered to all eligible workers on your team.
                 </p>
-                <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                  <li>• Available hours remaining this week</li>
-                  <li>• Willingness for extra shifts</li>
-                  <li>• Position compatibility</li>
-                </ul>
               </div>
-              <Button className="w-full" onClick={handleSwapRequest}>
+              <Button className="w-full" onClick={() => handleSwapRequest()}>
                 Post Open Request
               </Button>
             </div>
@@ -261,16 +327,11 @@ export const WorkerShifts = () => {
       </Dialog>
 
       {/* Call Off Dialog */}
-      <Dialog open={showCallOffDialog} onOpenChange={(open) => {
-        setShowCallOffDialog(open);
-        if (!open) setSelectedReason(null);
-      }}>
+      <Dialog open={showCallOffDialog} onOpenChange={(open) => { setShowCallOffDialog(open); if (!open) setSelectedReason(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Call Off Shift</DialogTitle>
-            <DialogDescription>
-              Please select a reason. Your manager will be notified.
-            </DialogDescription>
+            <DialogDescription>Please select a reason. Your manager will be notified.</DialogDescription>
           </DialogHeader>
 
           {requestSent ? (
@@ -299,12 +360,7 @@ export const WorkerShifts = () => {
                   </button>
                 ))}
               </div>
-              <Button 
-                className="w-full" 
-                variant="destructive"
-                disabled={!selectedReason}
-                onClick={handleCallOff}
-              >
+              <Button className="w-full" variant="destructive" disabled={!selectedReason} onClick={handleCallOff}>
                 Submit Call-Off
               </Button>
             </div>
