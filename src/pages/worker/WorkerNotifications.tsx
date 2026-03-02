@@ -1,4 +1,5 @@
 import { ChevronLeft, Bell, CheckCheck, Loader2 } from 'lucide-react';
+import { WorkerNotificationsSkeleton } from '@/components/PageSkeletons';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -40,13 +41,7 @@ export const WorkerNotifications = () => {
   const navigate = useNavigate();
   const { notifications, loading, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <WorkerNotificationsSkeleton />;
 
   return (
     <div className="min-h-screen bg-background pb-24">

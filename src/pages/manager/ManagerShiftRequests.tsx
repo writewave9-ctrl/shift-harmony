@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ManagerRequestsSkeleton } from '@/components/PageSkeletons';
 import { useShiftRequests } from '@/hooks/useShiftRequests';
 import { Button } from '@/components/ui/button';
 import {
@@ -73,13 +74,7 @@ export const ManagerShiftRequests = () => {
     return format(date, 'EEE, MMM d');
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <ManagerRequestsSkeleton />;
 
   const pendingList = requests.filter(r => r.status === 'pending');
   const reviewedList = requests.filter(r => r.status !== 'pending');

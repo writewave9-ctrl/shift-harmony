@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { PullToRefresh } from '@/components/PullToRefresh';
+import { WorkerShiftsSkeleton } from '@/components/PageSkeletons';
+import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { 
   Calendar, 
@@ -59,41 +62,41 @@ export const WorkerShifts = () => {
   const [requestSent, setRequestSent] = useState(false);
   const [teammates, setTeammates] = useState<any[]>([]);
 
+  const fetchShifts = useCallback(async () => {
+    if (!profile?.id) return;
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('shifts')
+        .select('*')
+        .eq('assigned_worker_id', profile.id)
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true });
+
+      if (error) throw error;
+      setShifts(data || []);
+    } catch (err) {
+      console.error('Error fetching shifts:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [profile?.id]);
+
+  const fetchTeammates = useCallback(async () => {
+    if (!profile?.team_id) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, position, avatar_url')
+      .eq('team_id', profile.team_id)
+      .neq('id', profile.id);
+    setTeammates(data || []);
+  }, [profile?.team_id, profile?.id]);
+
   useEffect(() => {
-    const fetchShifts = async () => {
-      if (!profile?.id) return;
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const { data, error } = await supabase
-          .from('shifts')
-          .select('*')
-          .eq('assigned_worker_id', profile.id)
-          .gte('date', today)
-          .order('date', { ascending: true })
-          .order('start_time', { ascending: true });
-
-        if (error) throw error;
-        setShifts(data || []);
-      } catch (err) {
-        console.error('Error fetching shifts:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchTeammates = async () => {
-      if (!profile?.team_id) return;
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, full_name, position, avatar_url')
-        .eq('team_id', profile.team_id)
-        .neq('id', profile.id);
-      setTeammates(data || []);
-    };
-
     fetchShifts();
     fetchTeammates();
-  }, [profile?.id, profile?.team_id]);
+  }, [fetchShifts, fetchTeammates]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -160,15 +163,10 @@ export const WorkerShifts = () => {
     return acc;
   }, {} as Record<string, WorkerShift[]>);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <WorkerShiftsSkeleton />;
 
   return (
+    <PullToRefresh onRefresh={async () => { haptics.medium(); await fetchShifts(); }}>
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-12 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50 px-4 py-4">
         <div className="flex items-center gap-3">
@@ -368,5 +366,6 @@ export const WorkerShifts = () => {
         </DialogContent>
       </Dialog>
     </div>
+    </PullToRefresh>
   );
 };

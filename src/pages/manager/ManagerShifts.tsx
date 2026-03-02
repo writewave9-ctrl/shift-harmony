@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ManagerShiftsSkeleton } from '@/components/PageSkeletons';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/StatusBadge';
 import { WorkerCard } from '@/components/WorkerCard';
@@ -230,13 +231,7 @@ export const ManagerShifts = () => {
     }
   }, [showCreateModal]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <ManagerShiftsSkeleton />;
 
   return (
     <div className="min-h-screen bg-background pb-8">

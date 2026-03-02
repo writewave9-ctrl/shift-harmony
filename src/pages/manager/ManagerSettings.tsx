@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ManagerSettingsSkeleton } from '@/components/PageSkeletons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTeamSettings } from '@/hooks/useTeamSettings';
 import { supabase } from '@/integrations/supabase/client';
@@ -214,13 +215,7 @@ export const ManagerSettings = () => {
     }
   };
 
-  if (settingsLoading && !isNewSetup) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (settingsLoading && !isNewSetup) return <ManagerSettingsSkeleton />;
 
   // New workspace setup view
   if (isNewSetup) {
