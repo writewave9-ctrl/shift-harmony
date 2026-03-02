@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { PullToRefresh } from '@/components/PullToRefresh';
+import { WorkerHistorySkeleton } from '@/components/PageSkeletons';
+import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/StatusBadge';
 import { 
@@ -42,56 +45,47 @@ export const WorkerShiftHistory = () => {
   const [shifts, setShifts] = useState<ShiftHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      if (!profile?.id) return;
-      try {
-        const { data, error } = await supabase
+  const fetchHistory = useCallback(async () => {
+    if (!profile?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from('shifts')
+        .select(`
+          id, date, start_time, end_time, position, location, status,
+          attendance_records!inner(status, check_in_time, check_out_time, is_proximity_based, override_notes)
+        `)
+        .eq('assigned_worker_id', profile.id)
+        .eq('status', 'completed')
+        .order('date', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        const { data: shiftsOnly } = await supabase
           .from('shifts')
-          .select(`
-            id, date, start_time, end_time, position, location, status,
-            attendance_records!inner(status, check_in_time, check_out_time, is_proximity_based, override_notes)
-          `)
+          .select('*')
           .eq('assigned_worker_id', profile.id)
           .eq('status', 'completed')
           .order('date', { ascending: false })
           .limit(20);
 
-        if (error) {
-          // If inner join fails (no attendance), try without inner
-          const { data: shiftsOnly } = await supabase
-            .from('shifts')
-            .select('*')
-            .eq('assigned_worker_id', profile.id)
-            .eq('status', 'completed')
-            .order('date', { ascending: false })
-            .limit(20);
-
-          setShifts((shiftsOnly || []).map(s => ({
-            ...s,
-            attendance: null,
-          })));
-        } else {
-          setShifts((data || []).map((s: any) => ({
-            id: s.id,
-            date: s.date,
-            start_time: s.start_time,
-            end_time: s.end_time,
-            position: s.position,
-            location: s.location,
-            status: s.status,
-            attendance: s.attendance_records?.[0] || null,
-          })));
-        }
-      } catch (err) {
-        console.error('Error fetching history:', err);
-      } finally {
-        setLoading(false);
+        setShifts((shiftsOnly || []).map(s => ({ ...s, attendance: null })));
+      } else {
+        setShifts((data || []).map((s: any) => ({
+          id: s.id, date: s.date, start_time: s.start_time, end_time: s.end_time,
+          position: s.position, location: s.location, status: s.status,
+          attendance: s.attendance_records?.[0] || null,
+        })));
       }
-    };
-
-    fetchHistory();
+    } catch (err) {
+      console.error('Error fetching history:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [profile?.id]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -122,15 +116,10 @@ export const WorkerShiftHistory = () => {
     return new Date(isoTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <WorkerHistorySkeleton />;
 
   return (
+    <PullToRefresh onRefresh={async () => { haptics.medium(); await fetchHistory(); }}>
     <div className="min-h-screen bg-background pb-24">
       <header className="px-4 pt-6 pb-4">
         <div className="flex items-center gap-2 mb-1">
@@ -222,6 +211,7 @@ export const WorkerShiftHistory = () => {
         )}
       </div>
     </div>
+    </PullToRefresh>
   );
 };
 

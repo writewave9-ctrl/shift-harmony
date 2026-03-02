@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ManagerAnalyticsSkeleton } from '@/components/PageSkeletons';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,13 +53,7 @@ export const ManagerAnalytics = () => {
   const [period, setPeriod] = useState<'week' | 'month'>('week');
   const { shiftCoverage, attendance, teamPerformance, summary, loading } = useAnalytics(period);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <ManagerAnalyticsSkeleton />;
 
   // Prepare pie chart data for coverage
   const coveragePieData = summary ? [

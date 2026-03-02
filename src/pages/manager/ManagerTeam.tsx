@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ManagerTeamSkeleton } from '@/components/PageSkeletons';
 import { cn } from '@/lib/utils';
 import { WorkerCard } from '@/components/WorkerCard';
  import { InviteWorkerModal } from '@/components/InviteWorkerModal';
@@ -61,13 +62,7 @@ export const ManagerTeam = () => {
      position: member.position || 'Team Member',
    });
  
-   if (loading) {
-     return (
-       <div className="min-h-screen bg-background flex items-center justify-center">
-         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-       </div>
-     );
-   }
+  if (loading) return <ManagerTeamSkeleton />;
  
   return (
     <div className="min-h-screen bg-background pb-8">

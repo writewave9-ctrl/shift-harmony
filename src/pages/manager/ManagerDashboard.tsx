@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ManagerDashboardSkeleton } from '@/components/PageSkeletons';
 import { cn } from '@/lib/utils';
 import { StaffingIndicator } from '@/components/StaffingIndicator';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -180,13 +181,7 @@ export const ManagerDashboard = () => {
     }
   };
 
-  if (shiftsLoading || loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (shiftsLoading || loading) return <ManagerDashboardSkeleton />;
 
   // Show setup prompt if manager doesn't have a team yet
   if (!profile?.team_id) {

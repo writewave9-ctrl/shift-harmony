@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CheckInButton } from '@/components/CheckInButton';
 import { OpenShiftsSection } from '@/components/OpenShiftsSection';
+import { PullToRefresh } from '@/components/PullToRefresh';
+import { WorkerHomeSkeleton } from '@/components/PageSkeletons';
 import { Calendar, Bell, ChevronRight, Loader2, MapPin, Clock, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useNotifications } from '@/hooks/useNotifications';
+import { haptics } from '@/lib/haptics';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -37,51 +40,51 @@ export const WorkerHome = () => {
   const { isWithinRadius, loading: checkingLocation } = useGeolocation();
   const { notifications, unreadCount } = useNotifications();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!profile?.id) return;
+  const fetchData = useCallback(async () => {
+    if (!profile?.id) return;
 
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const { data: shiftsData } = await supabase
-          .from('shifts')
-          .select('*')
-          .eq('assigned_worker_id', profile.id)
-          .gte('date', today)
-          .order('date', { ascending: true })
-          .order('start_time', { ascending: true })
-          .limit(5);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: shiftsData } = await supabase
+        .from('shifts')
+        .select('*')
+        .eq('assigned_worker_id', profile.id)
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true })
+        .limit(5);
 
-        setShifts(shiftsData || []);
+      setShifts(shiftsData || []);
 
-        if (shiftsData && shiftsData.length > 0) {
-          const todayShift = shiftsData.find(s => s.date === today);
-          if (todayShift) {
-            const { data: attendance } = await supabase
-              .from('attendance_records')
-              .select('*')
-              .eq('shift_id', todayShift.id)
-              .eq('worker_id', profile.id)
-              .maybeSingle();
+      if (shiftsData && shiftsData.length > 0) {
+        const todayShift = shiftsData.find(s => s.date === today);
+        if (todayShift) {
+          const { data: attendance } = await supabase
+            .from('attendance_records')
+            .select('*')
+            .eq('shift_id', todayShift.id)
+            .eq('worker_id', profile.id)
+            .maybeSingle();
 
-            if (attendance?.check_in_time) {
-              setIsCheckedIn(true);
-              setCheckInTime(new Date(attendance.check_in_time).toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              }));
-            }
+          if (attendance?.check_in_time) {
+            setIsCheckedIn(true);
+            setCheckInTime(new Date(attendance.check_in_time).toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }));
           }
         }
-      } catch (err) {
-        console.error('Error fetching data:', err);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [profile?.id]);
 
+  useEffect(() => {
     fetchData();
-  }, [profile?.id, user?.id]);
+  }, [fetchData]);
 
   const todayStr = new Date().toISOString().split('T')[0];
   const todayShift = shifts.find(s => s.date === todayStr);
@@ -156,15 +159,15 @@ export const WorkerHome = () => {
     return 'Good evening';
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (loading) return <WorkerHomeSkeleton />;
+
+  const handleRefresh = async () => {
+    haptics.medium();
+    await fetchData();
+  };
 
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="px-4 pt-8 pb-6 bg-gradient-to-b from-primary/5 to-transparent">
@@ -343,6 +346,7 @@ export const WorkerHome = () => {
         )}
       </div>
     </div>
+    </PullToRefresh>
   );
 };
 
