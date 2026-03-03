@@ -10,12 +10,12 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from '@/components/ui/drawer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import {
@@ -199,96 +199,54 @@ export const ManagerShiftRequests = () => {
         </Tabs>
       </div>
 
-      {/* Request Detail Dialog */}
-      <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Shift Request</DialogTitle>
-            <DialogDescription>
-              Review and respond to this shift request
-            </DialogDescription>
-          </DialogHeader>
+      {/* Request Detail Drawer */}
+      <Drawer open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Shift Request</DrawerTitle>
+            <DrawerDescription>Review and respond to this shift request</DrawerDescription>
+          </DrawerHeader>
 
           {selectedRequest && (
-            <div className="space-y-4 pt-4">
-              {/* Worker Info */}
+            <div className="px-4 pb-8 space-y-4">
               <div className="flex items-center gap-3 p-4 rounded-xl bg-accent/50">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <User className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <p className="font-semibold">{selectedRequest.worker?.full_name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedRequest.worker?.position || 'Team Member'}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{selectedRequest.worker?.position || 'Team Member'}</p>
                 </div>
               </div>
-
-              {/* Shift Info */}
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">REQUESTED SHIFT</p>
                 <div className="p-4 rounded-xl border border-border/50">
                   <p className="font-medium">{selectedRequest.shift?.position}</p>
                   <div className="mt-2 space-y-1 text-sm text-muted-foreground">
-                    <p className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      {selectedRequest.shift && formatDate(selectedRequest.shift.date)}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      {selectedRequest.shift?.start_time} - {selectedRequest.shift?.end_time}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      {selectedRequest.shift?.location}
-                    </p>
+                    <p className="flex items-center gap-2"><Calendar className="w-4 h-4" />{selectedRequest.shift && formatDate(selectedRequest.shift.date)}</p>
+                    <p className="flex items-center gap-2"><Clock className="w-4 h-4" />{selectedRequest.shift?.start_time} - {selectedRequest.shift?.end_time}</p>
+                    <p className="flex items-center gap-2"><MapPin className="w-4 h-4" />{selectedRequest.shift?.location}</p>
                   </div>
                 </div>
               </div>
-
               {selectedRequest.notes && (
                 <div className="p-3 rounded-lg bg-muted/50">
                   <p className="text-xs font-medium text-muted-foreground mb-1">Note from worker:</p>
                   <p className="text-sm">"{selectedRequest.notes}"</p>
                 </div>
               )}
-
-              {/* Actions */}
               <div className="flex gap-3 pt-2">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={handleDecline}
-                  disabled={processing}
-                >
-                  {processing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <X className="w-4 h-4 mr-2" />
-                      Decline
-                    </>
-                  )}
+                <Button variant="outline" className="flex-1" onClick={handleDecline} disabled={processing}>
+                  {processing ? <span className="animate-spin">⏳</span> : <><X className="w-4 h-4 mr-2" />Decline</>}
                 </Button>
-                <Button 
-                  className="flex-1"
-                  onClick={handleApprove}
-                  disabled={processing}
-                >
-                  {processing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Approve
-                    </>
-                  )}
+                <Button className="flex-1" onClick={handleApprove} disabled={processing}>
+                  {processing ? <span className="animate-spin">⏳</span> : <><Check className="w-4 h-4 mr-2" />Approve</>}
                 </Button>
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };

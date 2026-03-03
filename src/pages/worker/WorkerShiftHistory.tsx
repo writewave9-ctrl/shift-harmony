@@ -1,26 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { WorkerHistorySkeleton } from '@/components/PageSkeletons';
+import { MotionItem } from '@/components/MotionWrapper';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/StatusBadge';
-import { 
-  Calendar, 
-  Clock, 
-  ChevronDown,
-  History,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Loader2,
-} from 'lucide-react';
+import { Calendar, Clock, ChevronDown, History, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface ShiftHistoryItem {
   id: string;
@@ -50,10 +38,7 @@ export const WorkerShiftHistory = () => {
     try {
       const { data, error } = await supabase
         .from('shifts')
-        .select(`
-          id, date, start_time, end_time, position, location, status,
-          attendance_records!inner(status, check_in_time, check_out_time, is_proximity_based, override_notes)
-        `)
+        .select(`id, date, start_time, end_time, position, location, status, attendance_records!inner(status, check_in_time, check_out_time, is_proximity_based, override_notes)`)
         .eq('assigned_worker_id', profile.id)
         .eq('status', 'completed')
         .order('date', { ascending: false })
@@ -61,13 +46,7 @@ export const WorkerShiftHistory = () => {
 
       if (error) {
         const { data: shiftsOnly } = await supabase
-          .from('shifts')
-          .select('*')
-          .eq('assigned_worker_id', profile.id)
-          .eq('status', 'completed')
-          .order('date', { ascending: false })
-          .limit(20);
-
+          .from('shifts').select('*').eq('assigned_worker_id', profile.id).eq('status', 'completed').order('date', { ascending: false }).limit(20);
         setShifts((shiftsOnly || []).map(s => ({ ...s, attendance: null })));
       } else {
         setShifts((data || []).map((s: any) => ({
@@ -83,20 +62,14 @@ export const WorkerShiftHistory = () => {
     }
   }, [profile?.id]);
 
-  useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
+  useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  };
+  const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
   const calculateHours = (start: string, end: string) => {
     const [startH, startM] = start.split(':').map(Number);
     const [endH, endM] = end.split(':').map(Number);
-    let hours = endH - startH;
-    let minutes = endM - startM;
+    let hours = endH - startH, minutes = endM - startM;
     if (minutes < 0) { hours -= 1; minutes += 60; }
     if (hours < 0) hours += 24;
     return `${hours}h ${minutes > 0 ? `${minutes}m` : ''}`;
@@ -129,80 +102,52 @@ export const WorkerShiftHistory = () => {
         <h1 className="text-2xl font-bold text-foreground">Completed Shifts</h1>
       </header>
 
-      <div className="px-4 space-y-3 stagger-children">
-        {shifts.map(shift => (
-          <Collapsible
-            key={shift.id}
-            open={expandedShift === shift.id}
-            onOpenChange={(open) => setExpandedShift(open ? shift.id : null)}
-          >
-            <div className="card-elevated rounded-xl overflow-hidden">
-              <CollapsibleTrigger className="w-full p-4 flex items-center justify-between text-left hover:bg-accent/30 transition-colors">
-                <div className="flex items-center gap-3">
-                  {shift.attendance && getAttendanceIcon(shift.attendance.status)}
-                  <div>
-                    <p className="font-medium text-foreground">{shift.position} • {shift.location}</p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
-                      <span>{formatDate(shift.date)}</span>
-                      <span>•</span>
-                      <Clock className="w-3 h-3" />
-                      <span>{shift.start_time} - {shift.end_time}</span>
+      <div className="px-4 space-y-3">
+        {shifts.map((shift, index) => (
+          <MotionItem key={shift.id} index={index}>
+            <Collapsible open={expandedShift === shift.id} onOpenChange={(open) => setExpandedShift(open ? shift.id : null)}>
+              <div className="card-elevated rounded-xl overflow-hidden">
+                <CollapsibleTrigger className="w-full p-4 flex items-center justify-between text-left hover:bg-accent/30 transition-colors">
+                  <div className="flex items-center gap-3">
+                    {shift.attendance && getAttendanceIcon(shift.attendance.status)}
+                    <div>
+                      <p className="font-medium text-foreground">{shift.position} • {shift.location}</p>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="w-3 h-3" /><span>{formatDate(shift.date)}</span><span>•</span>
+                        <Clock className="w-3 h-3" /><span>{shift.start_time} - {shift.end_time}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <ChevronDown className={cn("w-5 h-5 text-muted-foreground transition-transform", expandedShift === shift.id && "rotate-180")} />
-              </CollapsibleTrigger>
-              
-              <CollapsibleContent>
-                <div className="px-4 pb-4 pt-2 border-t border-border/50">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Duration</p>
-                      <p className="font-medium text-foreground">{calculateHours(shift.start_time, shift.end_time)}</p>
+                  <ChevronDown className={cn("w-5 h-5 text-muted-foreground transition-transform", expandedShift === shift.id && "rotate-180")} />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="px-4 pb-4 pt-2 border-t border-border/50">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div><p className="text-xs text-muted-foreground mb-1">Duration</p><p className="font-medium text-foreground">{calculateHours(shift.start_time, shift.end_time)}</p></div>
+                      <div><p className="text-xs text-muted-foreground mb-1">Status</p>{shift.attendance && <StatusBadge status={shift.attendance.status as any} />}</div>
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Status</p>
-                      {shift.attendance && <StatusBadge status={shift.attendance.status as any} />}
-                    </div>
+                    {shift.attendance && (
+                      <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div><p className="text-xs text-muted-foreground">Check In</p><p className="font-medium text-foreground">{formatTime(shift.attendance.check_in_time)}</p></div>
+                          <div className="text-right"><p className="text-xs text-muted-foreground">Check Out</p><p className="font-medium text-foreground">{formatTime(shift.attendance.check_out_time)}</p></div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className={cn("px-2 py-1 rounded-full", shift.attendance.is_proximity_based ? "bg-primary/10 text-primary" : "bg-info-muted text-info")}>
+                            {shift.attendance.is_proximity_based ? 'Auto Check-in' : 'Manual Entry'}
+                          </span>
+                        </div>
+                        {shift.attendance.override_notes && (
+                          <div className="p-3 rounded-lg bg-accent/50"><p className="text-xs text-muted-foreground mb-1">Notes</p><p className="text-sm text-foreground">{shift.attendance.override_notes}</p></div>
+                        )}
+                      </div>
+                    )}
                   </div>
-
-                  {shift.attendance && (
-                    <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Check In</p>
-                          <p className="font-medium text-foreground">{formatTime(shift.attendance.check_in_time)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground">Check Out</p>
-                          <p className="font-medium text-foreground">{formatTime(shift.attendance.check_out_time)}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className={cn(
-                          "px-2 py-1 rounded-full",
-                          shift.attendance.is_proximity_based ? "bg-primary/10 text-primary" : "bg-info-muted text-info"
-                        )}>
-                          {shift.attendance.is_proximity_based ? 'Auto Check-in' : 'Manual Entry'}
-                        </span>
-                      </div>
-
-                      {shift.attendance.override_notes && (
-                        <div className="p-3 rounded-lg bg-accent/50">
-                          <p className="text-xs text-muted-foreground mb-1">Notes</p>
-                          <p className="text-sm text-foreground">{shift.attendance.override_notes}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </CollapsibleContent>
-            </div>
-          </Collapsible>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
+          </MotionItem>
         ))}
-
         {shifts.length === 0 && (
           <div className="text-center py-12">
             <History className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />

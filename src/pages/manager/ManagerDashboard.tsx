@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ManagerDashboardSkeleton } from '@/components/PageSkeletons';
+import { MotionCard, MotionSection, MotionItem } from '@/components/MotionWrapper';
 import { cn } from '@/lib/utils';
 import { StaffingIndicator } from '@/components/StaffingIndicator';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -8,34 +9,21 @@ import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { haptics } from '@/lib/haptics';
 import { 
-  Bell, 
-  Users, 
-  Clock, 
-  ChevronRight,
-  AlertCircle,
-  CheckCircle,
-  User,
-  ArrowRightLeft,
-  Check,
-  X,
-  Calendar,
-  Loader2,
-  Plus,
-  TrendingUp,
-  Rocket,
-  Settings,
+  Bell, Users, Clock, ChevronRight, AlertCircle, CheckCircle, User,
+  ArrowRightLeft, Check, X, Calendar, Plus, TrendingUp, Rocket, Settings,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from '@/components/ui/drawer';
 import { StaffingHealth } from '@/types/align';
 
 interface SwapRequest {
@@ -434,64 +422,54 @@ export const ManagerDashboard = () => {
         </section>
       </div>
 
-      {/* Swap Approval Dialog */}
-      <Dialog open={showSwapApproval} onOpenChange={setShowSwapApproval}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Swap Request</DialogTitle>
-            <DialogDescription>
-              Review and approve this shift swap request
-            </DialogDescription>
-          </DialogHeader>
+      {/* Swap Approval Drawer */}
+      <Drawer open={showSwapApproval} onOpenChange={setShowSwapApproval}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Swap Request</DrawerTitle>
+            <DrawerDescription>Review and approve this shift swap request</DrawerDescription>
+          </DrawerHeader>
 
-          {approvalDone ? (
-            <div className="py-8 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full bg-success-muted flex items-center justify-center mb-4">
-                <Check className="w-8 h-8 text-success" />
-              </div>
-              <p className="font-semibold text-foreground">Swap Approved!</p>
-              <p className="text-sm text-muted-foreground mt-1">Both workers have been notified</p>
-            </div>
-          ) : selectedSwap && (
-            <div className="space-y-4 pt-4">
-              <div className="p-4 rounded-xl bg-accent/50 border border-border/50">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{selectedSwap.requester?.full_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedSwap.shift?.position} • {selectedSwap.shift?.start_time} - {selectedSwap.shift?.end_time}
-                    </p>
-                  </div>
+          <div className="px-4 pb-8">
+            {approvalDone ? (
+              <div className="py-8 text-center">
+                <div className="w-16 h-16 mx-auto rounded-full bg-success-muted flex items-center justify-center mb-4">
+                  <Check className="w-8 h-8 text-success" />
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">Reason:</span> {selectedSwap.reason}
-                </p>
+                <p className="font-semibold text-foreground">Swap Approved!</p>
+                <p className="text-sm text-muted-foreground mt-1">Both workers have been notified</p>
               </div>
-
-              <div className="flex gap-3">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={handleDeclineSwap}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Decline
-                </Button>
-                <Button 
-                  className="flex-1"
-                  onClick={handleApproveSwap}
-                >
-                  <Check className="w-4 h-4 mr-2" />
-                  Approve
-                </Button>
+            ) : selectedSwap && (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-accent/50 border border-border/50">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{selectedSwap.requester?.full_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedSwap.shift?.position} • {selectedSwap.shift?.start_time} - {selectedSwap.shift?.end_time}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">Reason:</span> {selectedSwap.reason}
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <Button variant="outline" className="flex-1" onClick={handleDeclineSwap}>
+                    <X className="w-4 h-4 mr-2" />Decline
+                  </Button>
+                  <Button className="flex-1" onClick={handleApproveSwap}>
+                    <Check className="w-4 h-4 mr-2" />Approve
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };

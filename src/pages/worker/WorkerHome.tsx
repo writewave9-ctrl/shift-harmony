@@ -3,7 +3,8 @@ import { CheckInButton } from '@/components/CheckInButton';
 import { OpenShiftsSection } from '@/components/OpenShiftsSection';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { WorkerHomeSkeleton } from '@/components/PageSkeletons';
-import { Calendar, Bell, ChevronRight, Loader2, MapPin, Clock, AlertCircle } from 'lucide-react';
+import { MotionCard, MotionSection } from '@/components/MotionWrapper';
+import { Calendar, Bell, ChevronRight, MapPin, Clock, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,7 +43,6 @@ export const WorkerHome = () => {
 
   const fetchData = useCallback(async () => {
     if (!profile?.id) return;
-
     try {
       const today = new Date().toISOString().split('T')[0];
       const { data: shiftsData } = await supabase
@@ -82,9 +82,7 @@ export const WorkerHome = () => {
     }
   }, [profile?.id]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const todayStr = new Date().toISOString().split('T')[0];
   const todayShift = shifts.find(s => s.date === todayStr);
@@ -93,20 +91,12 @@ export const WorkerHome = () => {
 
   const handleCheckLocation = async () => {
     if (!todayShift?.latitude || !todayShift?.longitude) return;
-    
     setLocationError(null);
     try {
-      const result = await isWithinRadius(
-        todayShift.latitude,
-        todayShift.longitude,
-        todayShift.check_in_radius_meters || 100
-      );
+      const result = await isWithinRadius(todayShift.latitude, todayShift.longitude, todayShift.check_in_radius_meters || 100);
       setIsWithinProximity(result.withinRadius);
       setDistanceMeters(result.distance);
-      
-      if (!result.withinRadius) {
-        toast.error(`You are ${Math.round(result.distance)}m away. Move closer to check in.`);
-      }
+      if (!result.withinRadius) toast.error(`You are ${Math.round(result.distance)}m away. Move closer to check in.`);
     } catch (err: any) {
       setLocationError(err.message);
       toast.error(err.message);
@@ -115,25 +105,17 @@ export const WorkerHome = () => {
 
   const handleCheckIn = async () => {
     if (!todayShift || !profile?.id) return;
-
     const now = new Date();
     const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    
     try {
-      const { error } = await supabase
-        .from('attendance_records')
-        .insert({
-          shift_id: todayShift.id,
-          worker_id: profile.id,
-          check_in_time: now.toISOString(),
-          status: 'present',
-          is_proximity_based: requiresProximity,
-        });
-
+      const { error } = await supabase.from('attendance_records').insert({
+        shift_id: todayShift.id, worker_id: profile.id,
+        check_in_time: now.toISOString(), status: 'present', is_proximity_based: requiresProximity,
+      });
       if (error) throw error;
-
       setCheckInTime(time);
       setIsCheckedIn(true);
+      haptics.success();
       toast.success('Checked in successfully!');
     } catch (err: any) {
       console.error('Error checking in:', err);
@@ -146,7 +128,6 @@ export const WorkerHome = () => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-
     if (date.toDateString() === today.toDateString()) return 'Today';
     if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -161,15 +142,9 @@ export const WorkerHome = () => {
 
   if (loading) return <WorkerHomeSkeleton />;
 
-  const handleRefresh = async () => {
-    haptics.medium();
-    await fetchData();
-  };
-
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
+    <PullToRefresh onRefresh={async () => { haptics.medium(); await fetchData(); }}>
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
       <header className="px-4 pt-8 pb-6 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="flex items-center justify-between mb-1">
           <p className="text-sm text-muted-foreground">{getGreeting()}</p>
@@ -178,9 +153,7 @@ export const WorkerHome = () => {
             className="relative p-2 rounded-lg hover:bg-accent transition-colors"
           >
             <Bell className="w-5 h-5 text-muted-foreground" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
-            )}
+            {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />}
           </button>
         </div>
         <h1 className="text-2xl font-bold text-foreground">{profile?.full_name || 'Worker'}</h1>
@@ -189,160 +162,118 @@ export const WorkerHome = () => {
 
       <div className="px-4 space-y-6">
         {/* Today's Shift Card */}
-        {todayShift ? (
-          <section className="card-elevated rounded-2xl overflow-hidden">
-            <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-5 py-3 border-b border-border/50">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-foreground">Today's Shift</span>
-              </div>
-            </div>
-
-            <div className="p-5">
-              <div className="text-center mb-6">
-                <p className="text-4xl font-bold text-foreground tracking-tight">
-                  {todayShift.start_time}
-                  <span className="text-muted-foreground mx-2">—</span>
-                  {todayShift.end_time}
-                </p>
-                <div className="flex items-center justify-center gap-4 mt-3 text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4" />
-                    {todayShift.position}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4" />
-                    {todayShift.location}
-                  </span>
+        <MotionSection>
+          {todayShift ? (
+            <div className="card-elevated rounded-2xl overflow-hidden">
+              <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-5 py-3 border-b border-border/50">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-foreground">Today's Shift</span>
                 </div>
               </div>
-
-              <CheckInButton
-                isCheckedIn={isCheckedIn}
-                checkInTime={checkInTime}
-                onCheckIn={handleCheckIn}
-                requiresProximity={requiresProximity}
-                isWithinProximity={isWithinProximity}
-                distanceMeters={distanceMeters}
-                checkingLocation={checkingLocation}
-                locationError={locationError}
-                onCheckLocation={handleCheckLocation}
-              />
-
-              <button 
-                onClick={() => navigate('/worker/shifts')}
-                className="w-full mt-5 pt-4 border-t border-border/50 flex items-center justify-center gap-2 text-sm text-primary font-medium hover:underline"
-              >
-                Request Shift Change
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              <div className="p-5">
+                <div className="text-center mb-6">
+                  <p className="text-4xl font-bold text-foreground tracking-tight">
+                    {todayShift.start_time}<span className="text-muted-foreground mx-2">—</span>{todayShift.end_time}
+                  </p>
+                  <div className="flex items-center justify-center gap-4 mt-3 text-muted-foreground">
+                    <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" />{todayShift.position}</span>
+                    <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{todayShift.location}</span>
+                  </div>
+                </div>
+                <CheckInButton
+                  isCheckedIn={isCheckedIn} checkInTime={checkInTime} onCheckIn={handleCheckIn}
+                  requiresProximity={requiresProximity} isWithinProximity={isWithinProximity}
+                  distanceMeters={distanceMeters} checkingLocation={checkingLocation}
+                  locationError={locationError} onCheckLocation={handleCheckLocation}
+                />
+                <button 
+                  onClick={() => navigate('/worker/shifts')}
+                  className="w-full mt-5 pt-4 border-t border-border/50 flex items-center justify-center gap-2 text-sm text-primary font-medium hover:underline"
+                >
+                  Request Shift Change<ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          </section>
-        ) : (
-          <section className="card-elevated rounded-2xl p-6 text-center">
-            <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
-              <Calendar className="w-8 h-8 text-muted-foreground" />
+          ) : (
+            <div className="card-elevated rounded-2xl p-6 text-center">
+              <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
+                <Calendar className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <p className="font-semibold text-foreground text-lg">No shift today</p>
+              <p className="text-muted-foreground mt-1">Enjoy your day off!</p>
+              {nextShifts.length > 0 && <p className="text-sm text-primary mt-3">Next shift: {formatDate(nextShifts[0].date)}</p>}
             </div>
-            <p className="font-semibold text-foreground text-lg">No shift today</p>
-            <p className="text-muted-foreground mt-1">Enjoy your day off!</p>
-            {nextShifts.length > 0 && (
-              <p className="text-sm text-primary mt-3">
-                Next shift: {formatDate(nextShifts[0].date)}
-              </p>
-            )}
-          </section>
-        )}
+          )}
+        </MotionSection>
 
         {/* Recent Notifications */}
         {unreadCount > 0 && notifications.filter(n => !n.read).length > 0 && (
-          <section>
+          <MotionSection delay={0.1}>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-primary" />
-                New Notifications
+                <AlertCircle className="w-4 h-4 text-primary" />New Notifications
               </h2>
-              <button 
-                onClick={() => navigate('/worker/notifications')}
-                className="text-xs text-primary font-medium"
-              >
-                View All
-              </button>
+              <button onClick={() => navigate('/worker/notifications')} className="text-xs text-primary font-medium">View All</button>
             </div>
             <div className="space-y-2">
-              {notifications.filter(n => !n.read).slice(0, 2).map(notification => (
-                <button
+              {notifications.filter(n => !n.read).slice(0, 2).map((notification, i) => (
+                <MotionCard
                   key={notification.id}
                   onClick={() => navigate('/worker/notifications')}
-                  className="w-full card-elevated rounded-xl p-4 text-left hover:bg-accent/30 transition-colors"
+                  className="w-full card-elevated rounded-xl p-4 text-left cursor-pointer"
                 >
                   <p className="font-medium text-foreground text-sm">{notification.title}</p>
                   <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{notification.message}</p>
-                </button>
+                </MotionCard>
               ))}
             </div>
-          </section>
+          </MotionSection>
         )}
 
         {/* Open Shifts */}
-        <OpenShiftsSection />
+        <MotionSection delay={0.2}>
+          <OpenShiftsSection />
+        </MotionSection>
 
         {/* Upcoming Shifts */}
         {nextShifts.length > 0 && (
-          <section>
+          <MotionSection delay={0.3}>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-foreground">Upcoming Shifts</h2>
-              <button 
-                onClick={() => navigate('/worker/shifts')}
-                className="text-xs text-primary font-medium"
-              >
-                View All
-              </button>
+              <button onClick={() => navigate('/worker/shifts')} className="text-xs text-primary font-medium">View All</button>
             </div>
             <div className="space-y-2">
               {nextShifts.map((shift, index) => (
-                <div 
-                  key={shift.id} 
-                  className={cn(
-                    "card-elevated rounded-xl p-4 transition-all",
-                    index === 0 && "border-l-4 border-l-primary"
-                  )}
+                <MotionCard
+                  key={shift.id}
+                  className={cn("card-elevated rounded-xl p-4", index === 0 && "border-l-4 border-l-primary")}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={cn(
-                          "text-xs font-medium px-2 py-0.5 rounded-full",
-                          index === 0 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                        )}>
+                        <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", index === 0 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
                           {formatDate(shift.date)}
                         </span>
                       </div>
-                      <p className="font-semibold text-foreground">
-                        {shift.start_time} - {shift.end_time}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {shift.position} • {shift.location}
-                      </p>
+                      <p className="font-semibold text-foreground">{shift.start_time} - {shift.end_time}</p>
+                      <p className="text-sm text-muted-foreground">{shift.position} • {shift.location}</p>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground" />
                   </div>
-                </div>
+                </MotionCard>
               ))}
             </div>
-          </section>
+          </MotionSection>
         )}
 
-        {/* Empty State */}
         {!todayShift && nextShifts.length === 0 && (
-          <section className="text-center py-8">
+          <MotionSection className="text-center py-8">
             <p className="text-muted-foreground">No upcoming shifts scheduled</p>
-            <button 
-              onClick={() => navigate('/worker/shifts')}
-              className="text-sm text-primary font-medium mt-2 hover:underline"
-            >
+            <button onClick={() => navigate('/worker/shifts')} className="text-sm text-primary font-medium mt-2 hover:underline">
               View available shifts
             </button>
-          </section>
+          </MotionSection>
         )}
       </div>
     </div>
