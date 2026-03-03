@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { WorkerShiftsSkeleton } from '@/components/PageSkeletons';
+import { MotionCard, MotionItem, MotionSection } from '@/components/MotionWrapper';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
 import { 
@@ -12,7 +13,6 @@ import {
   User,
   Users,
   Check,
-  Loader2,
   Clock,
   MapPin,
 } from 'lucide-react';
@@ -23,12 +23,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { CallOffReason } from '@/types/align';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from '@/components/ui/drawer';
 
 interface WorkerShift {
   id: string;
@@ -55,8 +55,8 @@ export const WorkerShifts = () => {
   const [shifts, setShifts] = useState<WorkerShift[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedShift, setSelectedShift] = useState<WorkerShift | null>(null);
-  const [showSwapDialog, setShowSwapDialog] = useState(false);
-  const [showCallOffDialog, setShowCallOffDialog] = useState(false);
+  const [showSwapDrawer, setShowSwapDrawer] = useState(false);
+  const [showCallOffDrawer, setShowCallOffDrawer] = useState(false);
   const [swapType, setSwapType] = useState<'specific' | 'open' | null>(null);
   const [selectedReason, setSelectedReason] = useState<CallOffReason | null>(null);
   const [requestSent, setRequestSent] = useState(false);
@@ -120,15 +120,17 @@ export const WorkerShifts = () => {
       });
       if (error) throw error;
       setRequestSent(true);
+      haptics.success();
       toast.success('Swap request sent!');
       setTimeout(() => {
-        setShowSwapDialog(false);
+        setShowSwapDrawer(false);
         setSwapType(null);
         setRequestSent(false);
         setSelectedShift(null);
       }, 1500);
     } catch (err) {
       console.error('Error creating swap request:', err);
+      haptics.error();
       toast.error('Failed to send swap request');
     }
   };
@@ -143,15 +145,17 @@ export const WorkerShifts = () => {
       });
       if (error) throw error;
       setRequestSent(true);
+      haptics.success();
       toast.success('Call-off submitted');
       setTimeout(() => {
-        setShowCallOffDialog(false);
+        setShowCallOffDrawer(false);
         setSelectedReason(null);
         setRequestSent(false);
         setSelectedShift(null);
       }, 1500);
     } catch (err) {
       console.error('Error creating call-off:', err);
+      haptics.error();
       toast.error('Failed to submit call-off');
     }
   };
@@ -181,18 +185,18 @@ export const WorkerShifts = () => {
       </header>
 
       <div className="px-4 py-6 space-y-6">
-        {Object.entries(shiftsByDate).map(([date, dateShifts]) => (
-          <section key={date}>
+        {Object.entries(shiftsByDate).map(([date, dateShifts], groupIdx) => (
+          <MotionSection key={date} delay={groupIdx * 0.1}>
             <h2 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               {formatDate(date)}
             </h2>
             <div className="space-y-3">
-              {dateShifts.map(shift => (
-                <button
+              {dateShifts.map((shift, i) => (
+                <MotionCard
                   key={shift.id}
-                  onClick={() => setSelectedShift(shift)}
-                  className="w-full card-elevated rounded-xl p-4 text-left hover:bg-accent/30 transition-colors"
+                  onClick={() => { haptics.light(); setSelectedShift(shift); }}
+                  className="w-full card-elevated rounded-xl p-4 text-left cursor-pointer"
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -204,38 +208,38 @@ export const WorkerShifts = () => {
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground mt-1" />
                   </div>
-                </button>
+                </MotionCard>
               ))}
             </div>
-          </section>
+          </MotionSection>
         ))}
 
         {shifts.length === 0 && (
-          <div className="text-center py-12">
+          <MotionSection className="text-center py-12">
             <Calendar className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
             <p className="text-muted-foreground">No upcoming shifts</p>
-          </div>
+          </MotionSection>
         )}
       </div>
 
-      {/* Shift Actions Sheet */}
-      <Dialog open={!!selectedShift && !showSwapDialog && !showCallOffDialog} onOpenChange={() => setSelectedShift(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Shift Options</DialogTitle>
-            <DialogDescription>
+      {/* Shift Actions Bottom Sheet */}
+      <Drawer open={!!selectedShift && !showSwapDrawer && !showCallOffDrawer} onOpenChange={(open) => { if (!open) setSelectedShift(null); }}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Shift Options</DrawerTitle>
+            <DrawerDescription>
               {selectedShift && `${formatDate(selectedShift.date)} • ${selectedShift.start_time} - ${selectedShift.end_time}`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 pt-4">
-            <Button variant="outline" className="w-full justify-start gap-3 h-14" onClick={() => setShowSwapDialog(true)}>
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 pb-8 space-y-3">
+            <Button variant="outline" className="w-full justify-start gap-3 h-14" onClick={() => { haptics.light(); setShowSwapDrawer(true); }}>
               <ArrowRightLeft className="w-5 h-5 text-primary" />
               <div className="text-left">
                 <p className="font-medium">Request Swap</p>
                 <p className="text-xs text-muted-foreground">Find someone to cover</p>
               </div>
             </Button>
-            <Button variant="outline" className="w-full justify-start gap-3 h-14 border-destructive/30 hover:bg-destructive/5" onClick={() => setShowCallOffDialog(true)}>
+            <Button variant="outline" className="w-full justify-start gap-3 h-14 border-destructive/30 hover:bg-destructive/5" onClick={() => { haptics.light(); setShowCallOffDrawer(true); }}>
               <XCircle className="w-5 h-5 text-destructive" />
               <div className="text-left">
                 <p className="font-medium text-destructive">Call Off</p>
@@ -243,128 +247,132 @@ export const WorkerShifts = () => {
               </div>
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
 
-      {/* Swap Dialog */}
-      <Dialog open={showSwapDialog} onOpenChange={(open) => { setShowSwapDialog(open); if (!open) setSwapType(null); }}>
-        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{swapType === null ? 'Request Swap' : swapType === 'specific' ? 'Choose Coworker' : 'Open Request'}</DialogTitle>
-            <DialogDescription>
+      {/* Swap Bottom Sheet */}
+      <Drawer open={showSwapDrawer} onOpenChange={(open) => { setShowSwapDrawer(open); if (!open) setSwapType(null); }}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>{swapType === null ? 'Request Swap' : swapType === 'specific' ? 'Choose Coworker' : 'Open Request'}</DrawerTitle>
+            <DrawerDescription>
               {swapType === null && 'How would you like to find coverage?'}
               {swapType === 'specific' && 'Select who you\'d like to swap with'}
               {swapType === 'open' && 'Your shift will be offered to all eligible workers'}
-            </DialogDescription>
-          </DialogHeader>
+            </DrawerDescription>
+          </DrawerHeader>
 
-          {requestSent ? (
-            <div className="py-8 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full bg-success-muted flex items-center justify-center mb-4">
-                <Check className="w-8 h-8 text-success" />
-              </div>
-              <p className="font-semibold text-foreground">Request Sent!</p>
-              <p className="text-sm text-muted-foreground mt-1">You'll be notified when there's a response</p>
-            </div>
-          ) : swapType === null ? (
-            <div className="space-y-3 pt-4">
-              <Button variant="outline" className="w-full justify-start gap-3 h-14" onClick={() => setSwapType('specific')}>
-                <User className="w-5 h-5 text-primary" />
-                <div className="text-left">
-                  <p className="font-medium">Ask Specific Person</p>
-                  <p className="text-xs text-muted-foreground">Choose a coworker to swap with</p>
+          <div className="px-4 pb-8">
+            {requestSent ? (
+              <div className="py-8 text-center">
+                <div className="w-16 h-16 mx-auto rounded-full bg-success-muted flex items-center justify-center mb-4">
+                  <Check className="w-8 h-8 text-success" />
                 </div>
-                <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
-              </Button>
-              <Button variant="outline" className="w-full justify-start gap-3 h-14" onClick={() => setSwapType('open')}>
-                <Users className="w-5 h-5 text-primary" />
-                <div className="text-left">
-                  <p className="font-medium">Open to All</p>
-                  <p className="text-xs text-muted-foreground">Let anyone eligible take it</p>
+                <p className="font-semibold text-foreground">Request Sent!</p>
+                <p className="text-sm text-muted-foreground mt-1">You'll be notified when there's a response</p>
+              </div>
+            ) : swapType === null ? (
+              <div className="space-y-3">
+                <Button variant="outline" className="w-full justify-start gap-3 h-14" onClick={() => setSwapType('specific')}>
+                  <User className="w-5 h-5 text-primary" />
+                  <div className="text-left">
+                    <p className="font-medium">Ask Specific Person</p>
+                    <p className="text-xs text-muted-foreground">Choose a coworker to swap with</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
+                </Button>
+                <Button variant="outline" className="w-full justify-start gap-3 h-14" onClick={() => setSwapType('open')}>
+                  <Users className="w-5 h-5 text-primary" />
+                  <div className="text-left">
+                    <p className="font-medium">Open to All</p>
+                    <p className="text-xs text-muted-foreground">Let anyone eligible take it</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
+                </Button>
+              </div>
+            ) : swapType === 'specific' ? (
+              <div className="space-y-4 max-h-[50vh] overflow-y-auto">
+                <p className="text-xs font-medium text-muted-foreground mb-2">AVAILABLE TEAMMATES</p>
+                <div className="space-y-2">
+                  {teammates.map((worker, i) => (
+                    <MotionCard
+                      key={worker.id}
+                      onClick={() => handleSwapRequest(worker.id)}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:bg-accent/50 transition-colors cursor-pointer"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium text-sm text-foreground">{worker.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{worker.position || 'Team Member'}</p>
+                      </div>
+                    </MotionCard>
+                  ))}
+                  {teammates.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No teammates found</p>
+                  )}
                 </div>
-                <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
-              </Button>
-            </div>
-          ) : swapType === 'specific' ? (
-            <div className="space-y-4 pt-4">
-              <p className="text-xs font-medium text-muted-foreground mb-2">AVAILABLE TEAMMATES</p>
-              <div className="space-y-2">
-                {teammates.map(worker => (
-                  <button
-                    key={worker.id}
-                    onClick={() => handleSwapRequest(worker.id)}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="w-4 h-4 text-primary" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-medium text-sm text-foreground">{worker.full_name}</p>
-                      <p className="text-xs text-muted-foreground">{worker.position || 'Team Member'}</p>
-                    </div>
-                  </button>
-                ))}
-                {teammates.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">No teammates found</p>
-                )}
               </div>
-            </div>
-          ) : (
-            <div className="space-y-4 pt-4">
-              <div className="p-4 rounded-xl bg-accent/50 border border-border/50">
-                <p className="text-sm text-foreground">
-                  This shift will be offered to all eligible workers on your team.
-                </p>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-accent/50 border border-border/50">
+                  <p className="text-sm text-foreground">
+                    This shift will be offered to all eligible workers on your team.
+                  </p>
+                </div>
+                <Button className="w-full" onClick={() => handleSwapRequest()}>
+                  Post Open Request
+                </Button>
               </div>
-              <Button className="w-full" onClick={() => handleSwapRequest()}>
-                Post Open Request
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
 
-      {/* Call Off Dialog */}
-      <Dialog open={showCallOffDialog} onOpenChange={(open) => { setShowCallOffDialog(open); if (!open) setSelectedReason(null); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Call Off Shift</DialogTitle>
-            <DialogDescription>Please select a reason. Your manager will be notified.</DialogDescription>
-          </DialogHeader>
+      {/* Call Off Bottom Sheet */}
+      <Drawer open={showCallOffDrawer} onOpenChange={(open) => { setShowCallOffDrawer(open); if (!open) setSelectedReason(null); }}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Call Off Shift</DrawerTitle>
+            <DrawerDescription>Please select a reason. Your manager will be notified.</DrawerDescription>
+          </DrawerHeader>
 
-          {requestSent ? (
-            <div className="py-8 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full bg-success-muted flex items-center justify-center mb-4">
-                <Check className="w-8 h-8 text-success" />
+          <div className="px-4 pb-8">
+            {requestSent ? (
+              <div className="py-8 text-center">
+                <div className="w-16 h-16 mx-auto rounded-full bg-success-muted flex items-center justify-center mb-4">
+                  <Check className="w-8 h-8 text-success" />
+                </div>
+                <p className="font-semibold text-foreground">Call-Off Submitted</p>
+                <p className="text-sm text-muted-foreground mt-1">Your manager has been notified</p>
               </div>
-              <p className="font-semibold text-foreground">Call-Off Submitted</p>
-              <p className="text-sm text-muted-foreground mt-1">Your manager has been notified</p>
-            </div>
-          ) : (
-            <div className="space-y-4 pt-4">
-              <div className="space-y-2">
-                {callOffReasons.map(reason => (
-                  <button
-                    key={reason.value}
-                    onClick={() => setSelectedReason(reason.value)}
-                    className={cn(
-                      'w-full p-3 rounded-lg border text-left transition-colors',
-                      selectedReason === reason.value
-                        ? 'border-primary bg-accent'
-                        : 'border-border/50 hover:bg-accent/50'
-                    )}
-                  >
-                    <p className="font-medium text-sm">{reason.label}</p>
-                  </button>
-                ))}
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  {callOffReasons.map((reason, i) => (
+                    <MotionCard
+                      key={reason.value}
+                      onClick={() => { haptics.light(); setSelectedReason(reason.value); }}
+                      className={cn(
+                        'w-full p-3 rounded-lg border text-left transition-colors cursor-pointer',
+                        selectedReason === reason.value
+                          ? 'border-primary bg-accent'
+                          : 'border-border/50 hover:bg-accent/50'
+                      )}
+                    >
+                      <p className="font-medium text-sm">{reason.label}</p>
+                    </MotionCard>
+                  ))}
+                </div>
+                <Button className="w-full" variant="destructive" disabled={!selectedReason} onClick={handleCallOff}>
+                  Submit Call-Off
+                </Button>
               </div>
-              <Button className="w-full" variant="destructive" disabled={!selectedReason} onClick={handleCallOff}>
-                Submit Call-Off
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
     </PullToRefresh>
   );

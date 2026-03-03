@@ -7,7 +7,7 @@ import { AppProvider } from "@/contexts/AppContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
-import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -42,8 +42,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <Skeleton className="h-8 w-32 rounded-lg" />
+        <Skeleton className="h-4 w-48 rounded" />
       </div>
     );
   }
@@ -61,8 +62,9 @@ const RoleRouter = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <Skeleton className="h-8 w-32 rounded-lg" />
+        <Skeleton className="h-4 w-48 rounded" />
       </div>
     );
   }
@@ -80,8 +82,9 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+        <Skeleton className="h-8 w-32 rounded-lg" />
+        <Skeleton className="h-4 w-48 rounded" />
       </div>
     );
   }

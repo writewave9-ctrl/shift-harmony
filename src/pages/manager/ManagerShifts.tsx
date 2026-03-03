@@ -35,12 +35,12 @@ import { AttendanceStatus, ShiftMessage, Shift, Worker } from '@/types/align';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from '@/components/ui/drawer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -429,60 +429,61 @@ export const ManagerShifts = () => {
         )}
       </div>
 
-      {/* Assign Worker Dialog */}
-      <Dialog open={showAssignDialog} onOpenChange={(open) => {
+      {/* Assign Worker Drawer */}
+      <Drawer open={showAssignDialog} onOpenChange={(open) => {
         setShowAssignDialog(open);
         if (!open) setSelectedShift(null);
       }}>
-        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Assign Worker</DialogTitle>
-            <DialogDescription>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Assign Worker</DrawerTitle>
+            <DrawerDescription>
               {selectedShift && `${selectedShift.position} • ${selectedShift.start_time} - ${selectedShift.end_time}`}
-            </DialogDescription>
-          </DialogHeader>
+            </DrawerDescription>
+          </DrawerHeader>
 
-          {assignmentDone ? (
-            <div className="py-8 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full bg-success-muted flex items-center justify-center mb-4">
-                <Check className="w-8 h-8 text-success" />
+          <div className="px-4 pb-8 max-h-[60vh] overflow-y-auto">
+            {assignmentDone ? (
+              <div className="py-8 text-center">
+                <div className="w-16 h-16 mx-auto rounded-full bg-success-muted flex items-center justify-center mb-4">
+                  <Check className="w-8 h-8 text-success" />
+                </div>
+                <p className="font-semibold text-foreground">Worker Assigned!</p>
+                <p className="text-sm text-muted-foreground mt-1">They've been notified of their shift</p>
               </div>
-              <p className="font-semibold text-foreground">Worker Assigned!</p>
-              <p className="text-sm text-muted-foreground mt-1">They've been notified of their shift</p>
-            </div>
-          ) : (
-            <div className="space-y-4 pt-4">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-2">RECOMMENDED</p>
-                <div className="space-y-2">
-                  {workers.filter(w => w.willingness_for_extra === 'high').slice(0, 3).map(worker => (
-                    <WorkerCard
-                      key={worker.id}
-                      worker={toWorkerCardData(worker)}
-                      compact
-                      onClick={() => handleAssign(worker.id)}
-                    />
-                  ))}
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">RECOMMENDED</p>
+                  <div className="space-y-2">
+                    {workers.filter(w => w.willingness_for_extra === 'high').slice(0, 3).map(worker => (
+                      <WorkerCard
+                        key={worker.id}
+                        worker={toWorkerCardData(worker)}
+                        compact
+                        onClick={() => handleAssign(worker.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">ALL TEAM</p>
+                  <div className="space-y-2">
+                    {workers.filter(w => w.willingness_for_extra !== 'high').map(worker => (
+                      <WorkerCard
+                        key={worker.id}
+                        worker={toWorkerCardData(worker)}
+                        compact
+                        onClick={() => handleAssign(worker.id)}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
-
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-2">ALL TEAM</p>
-                <div className="space-y-2">
-                  {workers.filter(w => w.willingness_for_extra !== 'high').map(worker => (
-                    <WorkerCard
-                      key={worker.id}
-                      worker={toWorkerCardData(worker)}
-                      compact
-                      onClick={() => handleAssign(worker.id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {/* Attendance Override Modal */}
       <AttendanceOverrideModal
