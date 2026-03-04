@@ -54,8 +54,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (profileResult.error) throw profileResult.error;
       if (roleResult.error) throw roleResult.error;
       
-      if (profileResult.data) setProfile(profileResult.data as Profile);
-      if (roleResult.data) setUserRole(roleResult.data as UserRole);
+      setProfile(profileResult.data ? (profileResult.data as Profile) : null);
+      setUserRole(roleResult.data ? (roleResult.data as UserRole) : null);
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
@@ -70,34 +70,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-          setUserRole(null);
-        }
-        
-        setLoading(false);
-      }
-    );
+    let mounted = true;
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await fetchProfile(session.user.id);
+    const applySession = (nextSession: Session | null) => {
+      if (!mounted) return;
+
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (!nextSession?.user) {
+        setProfile(null);
+        setUserRole(null);
+        setLoading(false);
+        return;
       }
-      
+
+      // Avoid awaiting inside auth state callback to prevent callback deadlocks
       setLoading(false);
+      void fetchProfile(nextSession.user.id);
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      applySession(nextSession);
     });
 
-    return () => subscription.unsubscribe();
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        applySession(session);
+      })
+      .catch((error) => {
+        console.error('Error getting session:', error);
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string, role: 'manager' | 'worker') => {

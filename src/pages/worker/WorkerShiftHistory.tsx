@@ -34,7 +34,12 @@ export const WorkerShiftHistory = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchHistory = useCallback(async () => {
-    if (!profile?.id) return;
+    if (!profile?.id) {
+      setShifts([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('shifts')

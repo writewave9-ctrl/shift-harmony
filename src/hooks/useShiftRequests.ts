@@ -34,7 +34,11 @@ export function useShiftRequests() {
   const [loading, setLoading] = useState(true);
 
   const fetchRequests = async () => {
-    if (!profile?.id) return;
+    if (!profile?.id) {
+      setRequests([]);
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
