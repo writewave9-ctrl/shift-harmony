@@ -1,4 +1,4 @@
-import { User, Clock, TrendingUp, Star, LogOut, Moon, Sun, Calendar, History, Bell, ChevronRight } from 'lucide-react';
+import { User, Clock, TrendingUp, Star, LogOut, Moon, Sun, Calendar, History, Bell, ChevronRight, BellRing } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WorkerProfileSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection } from '@/components/MotionWrapper';
@@ -8,8 +8,10 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTheme } from '@/components/ThemeProvider';
 import { AvailabilitySettings } from '@/components/AvailabilitySettings';
 import { useNotifications } from '@/hooks/useNotifications';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from '@/hooks/use-toast';
 import { haptics } from '@/lib/haptics';
+import { Switch } from '@/components/ui/switch';
 
 export const WorkerProfile = () => {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export const WorkerProfile = () => {
   const { profile, signOut, user, loading } = useAuth();
   const { theme, resolvedTheme } = useTheme();
   const { unreadCount } = useNotifications();
+  const { supported: pushSupported, isSubscribed: pushEnabled, subscribe: enablePush, unsubscribe: disablePush, loading: pushLoading } = usePushNotifications();
 
   if (loading) return <WorkerProfileSkeleton />;
 
@@ -117,6 +120,34 @@ export const WorkerProfile = () => {
             </div>
           </div>
         </MotionSection>
+
+        {pushSupported && (
+          <MotionSection delay={0.27}>
+            <div className="card-elevated rounded-2xl p-5">
+              <h3 className="text-sm font-semibold text-foreground mb-4">Push Notifications</h3>
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <BellRing className="w-4 h-4" />Shift reminders & alerts
+                </span>
+                <Switch
+                  checked={pushEnabled}
+                  disabled={pushLoading}
+                  onCheckedChange={async (checked) => {
+                    haptics.light();
+                    if (checked) {
+                      const ok = await enablePush();
+                      if (ok) toast({ title: 'Push enabled', description: 'You\'ll receive shift reminders.' });
+                      else toast({ title: 'Permission denied', description: 'Allow notifications in your browser settings.', variant: 'destructive' });
+                    } else {
+                      await disablePush();
+                      toast({ title: 'Push disabled', description: 'You won\'t receive push notifications.' });
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </MotionSection>
+        )}
 
         <MotionSection delay={0.3}>
           <div className="space-y-2">
