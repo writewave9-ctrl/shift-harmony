@@ -66,9 +66,14 @@ export const ManagerDashboard = () => {
   // Fetch swap requests
   useEffect(() => {
     const fetchSwapRequests = async () => {
-      if (!profile?.team_id) return;
+      if (!profile?.team_id) {
+        setSwapRequests([]);
+        setLoading(false);
+        return;
+      }
 
       try {
+        setLoading(true);
         const { data, error } = await supabase
           .from('swap_requests')
           .select(`

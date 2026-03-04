@@ -63,7 +63,11 @@ export const WorkerShifts = () => {
   const [teammates, setTeammates] = useState<any[]>([]);
 
   const fetchShifts = useCallback(async () => {
-    if (!profile?.id) return;
+    if (!profile?.id) {
+      setShifts([]);
+      setLoading(false);
+      return;
+    }
     try {
       const today = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
@@ -84,14 +88,29 @@ export const WorkerShifts = () => {
   }, [profile?.id]);
 
   const fetchTeammates = useCallback(async () => {
-    if (!profile?.team_id) return;
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, full_name, position, avatar_url')
-      .eq('team_id', profile.team_id)
-      .neq('id', profile.id);
-    setTeammates(data || []);
-  }, [profile?.team_id, profile?.id]);
+    if (!profile?.id) {
+      setTeammates([]);
+      return;
+    }
+
+    const { data, error } = await supabase.rpc('get_team_member_directory');
+    if (error) {
+      console.error('Error fetching teammates:', error);
+      setTeammates([]);
+      return;
+    }
+
+    const teammatesData = (data || [])
+      .filter((member: any) => member.id !== profile.id)
+      .map((member: any) => ({
+        id: member.id,
+        full_name: member.full_name,
+        position: member.role_position,
+        avatar_url: member.avatar_url,
+      }));
+
+    setTeammates(teammatesData);
+  }, [profile?.id]);
 
   useEffect(() => {
     fetchShifts();

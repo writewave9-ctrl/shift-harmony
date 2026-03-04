@@ -316,6 +316,45 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          is_active: boolean
+          last_seen_at: string
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       shift_messages: {
         Row: {
           created_at: string
@@ -348,6 +387,38 @@ export type Database = {
           },
           {
             foreignKeyName: "shift_messages_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_reminders_sent: {
+        Row: {
+          created_at: string
+          id: string
+          reminder_for: string
+          shift_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reminder_for: string
+          shift_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reminder_for?: string
+          shift_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_reminders_sent_shift_id_fkey"
             columns: ["shift_id"]
             isOneToOne: false
             referencedRelation: "shifts"
@@ -787,7 +858,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      enqueue_due_shift_reminders: { Args: never; Returns: number }
       get_profile_id: { Args: { _user_id: string }; Returns: string }
+      get_team_member_directory: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+          role_position: string
+        }[]
+      }
       get_user_organization: { Args: { _user_id: string }; Returns: string }
       get_user_team: { Args: { _user_id: string }; Returns: string }
       has_role: {

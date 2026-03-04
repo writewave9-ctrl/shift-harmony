@@ -45,7 +45,14 @@ export function useAnalytics(period: 'week' | 'month' = 'week') {
   const [loading, setLoading] = useState(true);
 
   const fetchAnalytics = async () => {
-    if (!profile?.team_id) return;
+    if (!profile?.team_id) {
+      setShiftCoverage([]);
+      setAttendance([]);
+      setTeamPerformance([]);
+      setSummary(null);
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);

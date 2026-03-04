@@ -23,7 +23,12 @@ export const useNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchNotifications = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase

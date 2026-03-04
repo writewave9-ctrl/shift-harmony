@@ -42,7 +42,12 @@ export const WorkerHome = () => {
   const { notifications, unreadCount } = useNotifications();
 
   const fetchData = useCallback(async () => {
-    if (!profile?.id) return;
+    if (!profile?.id) {
+      setShifts([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const today = new Date().toISOString().split('T')[0];
       const { data: shiftsData } = await supabase
