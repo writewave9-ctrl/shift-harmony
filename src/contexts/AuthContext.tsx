@@ -128,28 +128,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (error) throw error;
 
-      // Create profile and role after signup
+      // Profile and role are created automatically via database trigger
+      // Wait briefly for the trigger to complete, then fetch profile
       if (data.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: data.user.id,
-            full_name: fullName,
-            email: email,
-          });
-
-        if (profileError) throw profileError;
-
-        // Create role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: data.user.id,
-            role: role,
-          });
-
-        if (roleError) throw roleError;
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await fetchProfile(data.user.id);
       }
 
       return { error: null };

@@ -191,7 +191,7 @@ export const WorkerShifts = () => {
   return (
     <PullToRefresh onRefresh={async () => { haptics.medium(); await fetchShifts(); }}>
     <div className="min-h-screen bg-background pb-24">
-      <header className="sticky top-12 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50 px-4 py-4">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50 px-4 py-3">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/worker')} className="p-2 -ml-2 rounded-lg hover:bg-accent transition-colors">
             <ChevronLeft className="w-5 h-5" />
