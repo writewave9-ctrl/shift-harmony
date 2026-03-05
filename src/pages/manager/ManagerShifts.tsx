@@ -234,8 +234,8 @@ export const ManagerShifts = () => {
   if (loading) return <ManagerShiftsSkeleton />;
 
   return (
-    <div className="min-h-screen bg-background pb-8">
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50 px-4 py-4 lg:px-8">
+    <div className="min-h-screen bg-background pb-24 lg:pb-8">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border/50 px-4 py-3 lg:px-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 
@@ -249,32 +249,32 @@ export const ManagerShifts = () => {
               <p className="text-xs text-muted-foreground">{filteredShifts.length} total</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap justify-end">
             <div className="flex items-center border border-border rounded-lg p-0.5">
               <Button
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="icon"
-                className="h-8 w-8"
+                className="h-7 w-7"
                 onClick={() => setViewMode('list')}
               >
-                <List className="w-4 h-4" />
+                <List className="w-3.5 h-3.5" />
               </Button>
               <Button
                 variant={viewMode === 'calendar' ? 'default' : 'ghost'}
                 size="icon"
-                className="h-8 w-8"
+                className="h-7 w-7"
                 onClick={() => setViewMode('calendar')}
               >
-                <LayoutGrid className="w-4 h-4" />
+                <LayoutGrid className="w-3.5 h-3.5" />
               </Button>
             </div>
             <Button
               variant={filter === 'vacant' ? 'default' : 'outline'}
               size="sm"
+              className="gap-1 h-8 text-xs"
               onClick={() => setFilter(filter === 'vacant' ? 'all' : 'vacant')}
-              className="gap-1.5"
             >
-              <Filter className="w-4 h-4" />
+              <Filter className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{filter === 'vacant' ? 'Vacant' : 'All'}</span>
             </Button>
             <TemplateSelector
@@ -282,8 +282,8 @@ export const ManagerShifts = () => {
               onSelect={handleSelectTemplate}
               onCreateNew={() => setShowTemplateModal(true)}
             />
-            <Button size="sm" className="gap-1.5" onClick={() => setShowCreateModal(true)}>
-              <Plus className="w-4 h-4" />
+            <Button size="sm" className="gap-1 h-8 text-xs" onClick={() => setShowCreateModal(true)}>
+              <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">New</span>
             </Button>
           </div>
