@@ -65,7 +65,7 @@ export const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/20 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left Panel - Branding (Hidden on mobile) */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary/5 flex-col justify-between p-12">
         <div>
