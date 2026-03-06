@@ -149,41 +149,51 @@ export const WorkerHome = () => {
 
   return (
     <PullToRefresh onRefresh={async () => { haptics.medium(); await fetchData(); }}>
-    <div className="min-h-screen bg-background pb-24">
-      <header className="px-4 pt-8 pb-6 bg-gradient-to-b from-primary/5 to-transparent">
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-sm text-muted-foreground">{getGreeting()}</p>
+    <div className="min-h-screen bg-background">
+      {/* Hero Header */}
+      <header className="px-5 pt-6 pb-5">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-medium text-muted-foreground">{getGreeting()}</p>
           <button 
             onClick={() => navigate('/worker/notifications')}
-            className="relative p-2 rounded-lg hover:bg-accent transition-colors"
+            className="relative p-2.5 rounded-xl hover:bg-accent/80 transition-colors"
           >
             <Bell className="w-5 h-5 text-muted-foreground" />
-            {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />}
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-primary rounded-full ring-2 ring-background" />
+            )}
           </button>
         </div>
-        <h1 className="text-2xl font-bold text-foreground">{profile?.full_name || 'Worker'}</h1>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">{profile?.full_name || 'Worker'}</h1>
         <p className="text-sm text-muted-foreground mt-0.5">{profile?.position || 'Team Member'}</p>
       </header>
 
-      <div className="px-4 space-y-6">
+      <div className="px-5 space-y-5 pb-6">
         {/* Today's Shift Card */}
         <MotionSection>
           {todayShift ? (
-            <div className="card-elevated rounded-2xl overflow-hidden">
-              <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-5 py-3 border-b border-border/50">
+            <div className="rounded-2xl overflow-hidden bg-card border border-border/50 shadow-sm">
+              <div className="bg-gradient-to-r from-primary/8 via-primary/5 to-transparent px-5 py-3 border-b border-border/30">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium text-foreground">Today's Shift</span>
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-xs font-semibold text-primary uppercase tracking-wider">Today's Shift</span>
                 </div>
               </div>
               <div className="p-5">
-                <div className="text-center mb-6">
-                  <p className="text-4xl font-bold text-foreground tracking-tight">
-                    {todayShift.start_time}<span className="text-muted-foreground mx-2">—</span>{todayShift.end_time}
+                <div className="text-center mb-5">
+                  <p className="text-3xl font-bold text-foreground tracking-tight font-mono">
+                    {todayShift.start_time}
+                    <span className="text-muted-foreground/50 mx-2 text-lg">→</span>
+                    {todayShift.end_time}
                   </p>
-                  <div className="flex items-center justify-center gap-4 mt-3 text-muted-foreground">
-                    <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" />{todayShift.position}</span>
-                    <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{todayShift.location}</span>
+                  <div className="flex items-center justify-center gap-4 mt-3">
+                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Clock className="w-3.5 h-3.5" />{todayShift.position}
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-border" />
+                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <MapPin className="w-3.5 h-3.5" />{todayShift.location}
+                    </span>
                   </div>
                 </div>
                 <CheckInButton
@@ -194,20 +204,24 @@ export const WorkerHome = () => {
                 />
                 <button 
                   onClick={() => navigate('/worker/shifts')}
-                  className="w-full mt-5 pt-4 border-t border-border/50 flex items-center justify-center gap-2 text-sm text-primary font-medium hover:underline"
+                  className="w-full mt-4 pt-3 border-t border-border/30 flex items-center justify-center gap-1.5 text-sm text-primary font-medium hover:text-primary/80 transition-colors"
                 >
-                  Request Shift Change<ChevronRight className="w-4 h-4" />
+                  Request Shift Change<ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
           ) : (
-            <div className="card-elevated rounded-2xl p-6 text-center">
-              <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
-                <Calendar className="w-8 h-8 text-muted-foreground" />
+            <div className="rounded-2xl p-8 text-center bg-card border border-border/50 shadow-sm">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-muted/80 flex items-center justify-center mb-4">
+                <Calendar className="w-7 h-7 text-muted-foreground/60" />
               </div>
               <p className="font-semibold text-foreground text-lg">No shift today</p>
-              <p className="text-muted-foreground mt-1">Enjoy your day off!</p>
-              {nextShifts.length > 0 && <p className="text-sm text-primary mt-3">Next shift: {formatDate(nextShifts[0].date)}</p>}
+              <p className="text-muted-foreground text-sm mt-1">Enjoy your day off!</p>
+              {nextShifts.length > 0 && (
+                <p className="text-sm text-primary font-medium mt-4">
+                  Next shift: {formatDate(nextShifts[0].date)}
+                </p>
+              )}
             </div>
           )}
         </MotionSection>
@@ -219,14 +233,14 @@ export const WorkerHome = () => {
               <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-primary" />New Notifications
               </h2>
-              <button onClick={() => navigate('/worker/notifications')} className="text-xs text-primary font-medium">View All</button>
+              <button onClick={() => navigate('/worker/notifications')} className="text-xs text-primary font-medium hover:underline">View All</button>
             </div>
             <div className="space-y-2">
-              {notifications.filter(n => !n.read).slice(0, 2).map((notification, i) => (
+              {notifications.filter(n => !n.read).slice(0, 2).map((notification) => (
                 <MotionCard
                   key={notification.id}
                   onClick={() => navigate('/worker/notifications')}
-                  className="w-full card-elevated rounded-xl p-4 text-left cursor-pointer"
+                  className="w-full rounded-xl p-4 text-left cursor-pointer bg-card border border-border/50 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <p className="font-medium text-foreground text-sm">{notification.title}</p>
                   <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{notification.message}</p>
@@ -246,25 +260,29 @@ export const WorkerHome = () => {
           <MotionSection delay={0.3}>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-foreground">Upcoming Shifts</h2>
-              <button onClick={() => navigate('/worker/shifts')} className="text-xs text-primary font-medium">View All</button>
+              <button onClick={() => navigate('/worker/shifts')} className="text-xs text-primary font-medium hover:underline">View All</button>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {nextShifts.map((shift, index) => (
                 <MotionCard
                   key={shift.id}
-                  className={cn("card-elevated rounded-xl p-4", index === 0 && "border-l-4 border-l-primary")}
+                  className={cn(
+                    "rounded-xl p-4 bg-card border border-border/50 shadow-sm",
+                    index === 0 && "border-l-[3px] border-l-primary"
+                  )}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full", index === 0 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
-                          {formatDate(shift.date)}
-                        </span>
-                      </div>
-                      <p className="font-semibold text-foreground">{shift.start_time} - {shift.end_time}</p>
-                      <p className="text-sm text-muted-foreground">{shift.position} • {shift.location}</p>
+                      <span className={cn(
+                        "inline-block text-xs font-medium px-2 py-0.5 rounded-md mb-1.5",
+                        index === 0 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                      )}>
+                        {formatDate(shift.date)}
+                      </span>
+                      <p className="font-semibold text-foreground text-sm">{shift.start_time} – {shift.end_time}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{shift.position} • {shift.location}</p>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
                   </div>
                 </MotionCard>
               ))}
@@ -274,7 +292,7 @@ export const WorkerHome = () => {
 
         {!todayShift && nextShifts.length === 0 && (
           <MotionSection className="text-center py-8">
-            <p className="text-muted-foreground">No upcoming shifts scheduled</p>
+            <p className="text-muted-foreground text-sm">No upcoming shifts scheduled</p>
             <button onClick={() => navigate('/worker/shifts')} className="text-sm text-primary font-medium mt-2 hover:underline">
               View available shifts
             </button>
