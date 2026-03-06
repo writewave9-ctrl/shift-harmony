@@ -8,7 +8,7 @@ export const WorkerLayout = () => {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-background max-w-md mx-auto relative shadow-xl border-x border-border/30 pt-safe">
+    <div className="min-h-screen bg-background max-w-md mx-auto relative shadow-2xl border-x border-border/20 pt-safe">
       <AppHeader />
       <AnimatePresence mode="wait">
         <PageTransition key={location.pathname} className="pb-20">

@@ -1,5 +1,4 @@
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface AppHeaderProps {
   title?: string;
@@ -7,12 +6,12 @@ interface AppHeaderProps {
 
 export const AppHeader = ({ title = 'Align' }: AppHeaderProps) => {
   return (
-    <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-lg border-b border-border/50 px-4 h-12 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-          <span className="text-xs font-bold text-primary-foreground">A</span>
+    <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border/40 px-4 h-14 flex items-center justify-between">
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-sm">
+          <span className="text-sm font-bold text-primary-foreground">A</span>
         </div>
-        <span className="text-sm font-bold text-foreground">{title}</span>
+        <span className="text-sm font-semibold text-foreground tracking-tight">{title}</span>
       </div>
       <ThemeToggle />
     </header>

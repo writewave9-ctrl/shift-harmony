@@ -33,70 +33,74 @@ import { ManagerShiftRequests } from "./pages/manager/ManagerShiftRequests";
 
 const queryClient = new QueryClient();
 
-// Protected route wrapper
+const LoadingScreen = () => (
+  <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+      <div className="w-6 h-6 rounded-md bg-primary animate-pulse" />
+    </div>
+    <Skeleton className="h-4 w-32 rounded" />
+  </div>
+);
+
+// Protected route wrapper - requires authentication
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  
-  // Enable realtime notifications for authenticated users
+
   useRealtimeNotifications();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <Skeleton className="h-8 w-32 rounded-lg" />
-        <Skeleton className="h-4 w-48 rounded" />
-      </div>
-    );
+
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/auth" replace />;
+
+  return <>{children}</>;
+};
+
+// Role-gated route - requires specific role(s)
+const RoleGate = ({ 
+  children, 
+  allowed, 
+  fallback 
+}: { 
+  children: React.ReactNode; 
+  allowed: Array<'admin' | 'manager' | 'worker'>; 
+  fallback: string;
+}) => {
+  const { userRole, loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+
+  if (!userRole || !allowed.includes(userRole.role)) {
+    return <Navigate to={fallback} replace />;
   }
-  
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-  
+
   return <>{children}</>;
 };
 
 // Route based on role
 const RoleRouter = () => {
   const { userRole, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <Skeleton className="h-8 w-32 rounded-lg" />
-        <Skeleton className="h-4 w-48 rounded" />
-      </div>
-    );
-  }
-  
+
+  if (loading) return <LoadingScreen />;
+
   if (userRole?.role === 'manager' || userRole?.role === 'admin') {
     return <Navigate to="/manager" replace />;
   }
-  
+
   return <Navigate to="/worker" replace />;
 };
 
 // Public route (redirects to app if already logged in)
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, userRole } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
-        <Skeleton className="h-8 w-32 rounded-lg" />
-        <Skeleton className="h-4 w-48 rounded" />
-      </div>
-    );
-  }
-  
+
+  if (loading) return <LoadingScreen />;
+
   if (user) {
-    // Redirect based on role
     if (userRole?.role === 'manager' || userRole?.role === 'admin') {
       return <Navigate to="/manager" replace />;
     }
     return <Navigate to="/worker" replace />;
   }
-  
+
   return <>{children}</>;
 };
 
@@ -104,25 +108,23 @@ const AppRoutes = () => (
   <Routes>
     {/* Public Routes */}
     <Route path="/auth" element={
-      <PublicRoute>
-        <Auth />
-      </PublicRoute>
+      <PublicRoute><Auth /></PublicRoute>
     } />
 
     {/* Role Router (redirects based on user role) */}
     <Route path="/" element={
-      <ProtectedRoute>
-        <RoleRouter />
-      </ProtectedRoute>
+      <ProtectedRoute><RoleRouter /></ProtectedRoute>
     } />
 
     {/* Demo Mode - Role Selection */}
     <Route path="/demo" element={<RoleSelect />} />
 
-    {/* Worker Routes */}
+    {/* Worker Routes - only workers can access */}
     <Route path="/worker" element={
       <ProtectedRoute>
-        <WorkerLayout />
+        <RoleGate allowed={['worker']} fallback="/manager">
+          <WorkerLayout />
+        </RoleGate>
       </ProtectedRoute>
     }>
       <Route index element={<WorkerHome />} />
@@ -132,10 +134,12 @@ const AppRoutes = () => (
       <Route path="notifications" element={<WorkerNotifications />} />
     </Route>
 
-    {/* Manager Routes */}
+    {/* Manager Routes - only managers/admins can access */}
     <Route path="/manager" element={
       <ProtectedRoute>
-        <ManagerLayout />
+        <RoleGate allowed={['manager', 'admin']} fallback="/worker">
+          <ManagerLayout />
+        </RoleGate>
       </ProtectedRoute>
     }>
       <Route index element={<ManagerDashboard />} />
