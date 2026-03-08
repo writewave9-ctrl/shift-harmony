@@ -1,9 +1,10 @@
+import { useState, useEffect } from 'react';
 import { User, Clock, TrendingUp, Star, LogOut, Moon, Sun, Calendar, History, Bell, ChevronRight, BellRing } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WorkerProfileSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection } from '@/components/MotionWrapper';
-import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTheme } from '@/components/ThemeProvider';
 import { AvailabilitySettings } from '@/components/AvailabilitySettings';
@@ -15,16 +16,45 @@ import { Switch } from '@/components/ui/switch';
 
 export const WorkerProfile = () => {
   const navigate = useNavigate();
-  const { setUserRole } = useApp();
   const { profile, signOut, user, loading } = useAuth();
   const { theme, resolvedTheme } = useTheme();
   const { unreadCount } = useNotifications();
   const { supported: pushSupported, isSubscribed: pushEnabled, subscribe: enablePush, unsubscribe: disablePush, loading: pushLoading } = usePushNotifications();
+  const [hoursWorked, setHoursWorked] = useState(0);
+
+  // Calculate hours worked this week from completed shifts
+  useEffect(() => {
+    const fetchHours = async () => {
+      if (!profile?.id) return;
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const { data } = await supabase
+        .from('shifts')
+        .select('start_time, end_time')
+        .eq('assigned_worker_id', profile.id)
+        .gte('date', startOfWeek.toISOString().split('T')[0])
+        .lte('date', now.toISOString().split('T')[0])
+        .in('status', ['completed', 'in_progress']);
+
+      if (data) {
+        const total = data.reduce((acc, shift) => {
+          const [sH, sM] = shift.start_time.split(':').map(Number);
+          const [eH, eM] = shift.end_time.split(':').map(Number);
+          let hours = (eH + eM / 60) - (sH + sM / 60);
+          if (hours < 0) hours += 24;
+          return acc + hours;
+        }, 0);
+        setHoursWorked(Math.round(total));
+      }
+    };
+    fetchHours();
+  }, [profile?.id]);
 
   if (loading) return <WorkerProfileSkeleton />;
-
   const weeklyTarget = profile?.weekly_hours_target || 40;
-  const hoursWorked = 0;
   const hoursRemaining = weeklyTarget - hoursWorked;
   const reliabilityScore = profile?.reliability_score || 80;
   const willingness = profile?.willingness_for_extra || 'medium';
@@ -186,17 +216,10 @@ export const WorkerProfile = () => {
 
         <MotionSection delay={0.35}>
           <div className="pt-4 pb-4">
-            {user ? (
               <MotionCard onClick={handleSignOut} className="w-full card-elevated rounded-xl p-4 flex items-center gap-3 border border-destructive/20 cursor-pointer">
                 <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center"><LogOut className="w-5 h-5 text-destructive" /></div>
                 <span className="font-medium text-destructive">Sign Out</span>
               </MotionCard>
-            ) : (
-              <MotionCard onClick={() => { setUserRole('manager'); navigate('/manager'); }} className="w-full card-elevated rounded-xl p-4 flex items-center gap-3 cursor-pointer">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><LogOut className="w-5 h-5 text-primary" /></div>
-                <span className="font-medium">Switch to Manager View (Demo)</span>
-              </MotionCard>
-            )}
           </div>
         </MotionSection>
       </div>

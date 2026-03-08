@@ -56,6 +56,7 @@ export const ManagerDashboard = () => {
   const [selectedSwap, setSelectedSwap] = useState<SwapRequest | null>(null);
   const [approvalDone, setApprovalDone] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [attendanceSummary, setAttendanceSummary] = useState({ present: 0, late: 0, notCheckedIn: 0 });
 
   const today = new Date().toISOString().split('T')[0];
   const todayShifts = shifts.filter(s => s.date === today);
@@ -63,9 +64,9 @@ export const ManagerDashboard = () => {
   const filledShifts = todayShifts.filter(s => !s.is_vacant);
   const pendingSwaps = swapRequests.filter(s => s.status === 'pending');
 
-  // Fetch swap requests
+  // Fetch swap requests and attendance
   useEffect(() => {
-    const fetchSwapRequests = async () => {
+    const fetchData = async () => {
       if (!profile?.team_id) {
         setSwapRequests([]);
         setLoading(false);
@@ -74,7 +75,9 @@ export const ManagerDashboard = () => {
 
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        
+        // Fetch swap requests
+        const { data: swapData, error: swapError } = await supabase
           .from('swap_requests')
           .select(`
             *,
@@ -84,17 +87,33 @@ export const ManagerDashboard = () => {
           .eq('status', 'pending')
           .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        setSwapRequests(data || []);
+        if (swapError) throw swapError;
+        setSwapRequests(swapData || []);
+
+        // Fetch today's attendance records
+        const todayShiftIds = shifts.filter(s => s.date === today).map(s => s.id);
+        if (todayShiftIds.length > 0) {
+          const { data: attendanceData } = await supabase
+            .from('attendance_records')
+            .select('status')
+            .in('shift_id', todayShiftIds);
+
+          const records = attendanceData || [];
+          setAttendanceSummary({
+            present: records.filter(a => a.status === 'present' || a.status === 'manually_approved').length,
+            late: records.filter(a => a.status === 'late').length,
+            notCheckedIn: filledShifts.length - records.filter(a => a.status === 'present' || a.status === 'manually_approved' || a.status === 'late').length,
+          });
+        }
       } catch (err) {
-        console.error('Error fetching swap requests:', err);
+        console.error('Error fetching dashboard data:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSwapRequests();
-  }, [profile?.team_id]);
+    fetchData();
+  }, [profile?.team_id, shifts]);
 
   // Calculate staffing health
   const staffingHealth: StaffingHealth = {
@@ -109,13 +128,6 @@ export const ManagerDashboard = () => {
           ? 'understaffed' 
           : 'critical',
     shortBy: vacantShifts.length,
-  };
-
-  // Build attendance summary (mock for now - would need real attendance data)
-  const attendanceSummary = {
-    present: Math.floor(filledShifts.length * 0.7),
-    late: Math.floor(filledShifts.length * 0.2),
-    notCheckedIn: Math.ceil(filledShifts.length * 0.1),
   };
 
   const formatTime = () => {

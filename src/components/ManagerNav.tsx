@@ -9,7 +9,6 @@ import {
   BarChart3,
   HandHelping,
 } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -27,14 +26,8 @@ const navItems = [
 export const ManagerNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setUserRole } = useApp();
   const { signOut } = useAuth();
   const { pendingRequests } = useShiftRequests();
-
-  const handleSwitchRole = () => {
-    setUserRole('worker');
-    navigate('/worker');
-  };
 
   const handleSignOut = async () => {
     await signOut();
