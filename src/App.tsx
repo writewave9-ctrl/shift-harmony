@@ -105,16 +105,30 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Landing page - shows landing for unauthed, redirects authed users
+const LandingRoute = () => {
+  const { user, loading, userRole } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+
+  if (user) {
+    if (userRole?.role === 'manager' || userRole?.role === 'admin') {
+      return <Navigate to="/manager" replace />;
+    }
+    return <Navigate to="/worker" replace />;
+  }
+
+  return <Landing />;
+};
+
 const AppRoutes = () => (
   <Routes>
-    {/* Public Routes */}
+    {/* Landing page for unauthenticated visitors */}
+    <Route path="/" element={<LandingRoute />} />
+
+    {/* Auth */}
     <Route path="/auth" element={
       <PublicRoute><Auth /></PublicRoute>
-    } />
-
-    {/* Role Router (redirects based on user role) */}
-    <Route path="/" element={
-      <ProtectedRoute><RoleRouter /></ProtectedRoute>
     } />
 
     {/* Demo Mode - Role Selection */}
