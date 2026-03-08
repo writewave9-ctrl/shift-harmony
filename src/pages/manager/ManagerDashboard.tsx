@@ -130,13 +130,6 @@ export const ManagerDashboard = () => {
     shortBy: vacantShifts.length,
   };
 
-  // Build attendance summary (mock for now - would need real attendance data)
-  const attendanceSummary = {
-    present: Math.floor(filledShifts.length * 0.7),
-    late: Math.floor(filledShifts.length * 0.2),
-    notCheckedIn: Math.ceil(filledShifts.length * 0.1),
-  };
-
   const formatTime = () => {
     const now = new Date();
     return now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
