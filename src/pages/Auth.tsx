@@ -310,19 +310,30 @@ export const Auth = () => {
               </Button>
 
               {/* Toggle Mode */}
-              <div className="text-center pt-2">
-                <button
-                  type="button"
-                  onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {mode === 'login'
-                    ? "Don't have an account? "
-                    : 'Already have an account? '}
-                  <span className="text-primary font-medium">
-                    {mode === 'login' ? 'Sign up' : 'Sign in'}
-                  </span>
-                </button>
+              <div className="text-center pt-2 space-y-2">
+                {mode === 'forgot' ? (
+                  <button
+                    type="button"
+                    onClick={() => setMode('login')}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+                  >
+                    <ArrowLeft className="w-3 h-3" />
+                    Back to sign in
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {mode === 'login'
+                      ? "Don't have an account? "
+                      : 'Already have an account? '}
+                    <span className="text-primary font-medium">
+                      {mode === 'login' ? 'Sign up' : 'Sign in'}
+                    </span>
+                  </button>
+                )}
               </div>
             </form>
           </div>

@@ -131,8 +131,8 @@ const AppRoutes = () => (
     <Route path="/auth" element={
       <PublicRoute><Auth /></PublicRoute>
     } />
+    <Route path="/reset-password" element={<ResetPassword />} />
 
-    {/* Demo Mode - Role Selection */}
     <Route path="/demo" element={<RoleSelect />} />
 
     {/* Worker Routes - only workers can access */}
