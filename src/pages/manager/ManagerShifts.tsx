@@ -368,7 +368,7 @@ export const ManagerShifts = () => {
                         <div>
                           <h3 className="font-semibold text-foreground">{shift.position}</h3>
                           <p className="text-sm text-muted-foreground">
-                            {shift.start_time} - {shift.end_time} • {shift.location}
+                            {formatTimeRange(shift.start_time, shift.end_time)} • {shift.location}
                           </p>
                         </div>
                         {shift.is_vacant ? (
