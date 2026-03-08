@@ -386,7 +386,7 @@ export const Landing = () => {
               {[
                 {
                   q: 'How does GPS check-in work?',
-                  a: 'Workers check in from their phone when they arrive at a shift location. Align uses GPS proximity verification to confirm they're within the configured radius, giving managers real-time attendance visibility.',
+                  a: "Workers check in from their phone when they arrive at a shift location. Align uses GPS proximity verification to confirm they\u2019re within the configured radius, giving managers real-time attendance visibility.",
                 },
                 {
                   q: 'Can workers swap shifts with each other?',
