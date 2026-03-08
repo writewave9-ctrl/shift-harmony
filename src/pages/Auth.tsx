@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users, UserCog, Loader2, Mail, Lock, User, Clock, Shield, Zap } from 'lucide-react';
+import { Users, UserCog, Loader2, Mail, Lock, User, Clock, Shield, Zap, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-type AuthMode = 'login' | 'signup';
+type AuthMode = 'login' | 'signup' | 'forgot';
 type Role = 'worker' | 'manager';
 
 export const Auth = () => {
