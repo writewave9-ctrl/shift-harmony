@@ -263,23 +263,38 @@ export const Auth = () => {
                 </div>
               </div>
 
-              {/* Password */}
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 h-12"
-                    minLength={6}
-                    required
-                  />
+              {/* Password (hidden in forgot mode) */}
+              {mode !== 'forgot' && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 h-12"
+                      minLength={6}
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Forgot password link */}
+              {mode === 'login' && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setMode('forgot')}
+                    className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
 
               {/* Submit Button */}
               <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={loading}>
