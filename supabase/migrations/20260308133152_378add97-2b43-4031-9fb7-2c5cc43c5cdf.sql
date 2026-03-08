@@ -1,0 +1,1 @@
+DELETE FROM organizations WHERE id = '7a377ac6-28e0-4fb0-9836-782d6cae0d38';
