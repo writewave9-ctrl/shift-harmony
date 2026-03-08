@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ManagerDashboardSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection, MotionItem } from '@/components/MotionWrapper';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 import { StaffingIndicator } from '@/components/StaffingIndicator';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useShifts, DatabaseShift } from '@/hooks/useShifts';
