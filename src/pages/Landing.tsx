@@ -244,6 +244,120 @@ export const Landing = () => {
         </div>
       </section>
 
+      {/* Pricing */}
+      <section className="py-20 bg-card/30">
+        <div className="max-w-6xl mx-auto px-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-14"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
+              Simple, transparent pricing
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+              Start free and scale as your team grows. No hidden fees.
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto"
+          >
+            {/* Free */}
+            <motion.div
+              variants={cardVariant}
+              className="rounded-2xl border border-border/50 bg-card p-8 flex flex-col"
+            >
+              <h3 className="text-lg font-semibold mb-1">Starter</h3>
+              <p className="text-sm text-muted-foreground mb-5">For small teams getting started</p>
+              <div className="mb-6">
+                <span className="text-4xl font-bold">$0</span>
+                <span className="text-muted-foreground text-sm ml-1">/month</span>
+              </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                {['Up to 5 workers', 'Basic scheduling', 'Push notifications', 'Mobile PWA access'].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm">
+                    <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/auth')}
+                className="rounded-xl w-full"
+              >
+                Get started free
+              </Button>
+            </motion.div>
+
+            {/* Pro — highlighted */}
+            <motion.div
+              variants={cardVariant}
+              className="rounded-2xl border-2 border-primary bg-card p-8 flex flex-col relative shadow-lg shadow-primary/10"
+            >
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                Most popular
+              </div>
+              <h3 className="text-lg font-semibold mb-1">Pro</h3>
+              <p className="text-sm text-muted-foreground mb-5">For growing teams that need more</p>
+              <div className="mb-6">
+                <span className="text-4xl font-bold">$29</span>
+                <span className="text-muted-foreground text-sm ml-1">/month</span>
+              </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                {['Up to 50 workers', 'Shift templates & auto-fill', 'GPS check-in verification', 'Analytics dashboard', 'Swap & call-off management'].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm">
+                    <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                onClick={() => navigate('/auth')}
+                className="rounded-xl w-full shadow-lg shadow-primary/20"
+              >
+                Start free trial
+              </Button>
+            </motion.div>
+
+            {/* Enterprise */}
+            <motion.div
+              variants={cardVariant}
+              className="rounded-2xl border border-border/50 bg-card p-8 flex flex-col"
+            >
+              <h3 className="text-lg font-semibold mb-1">Enterprise</h3>
+              <p className="text-sm text-muted-foreground mb-5">For large organizations</p>
+              <div className="mb-6">
+                <span className="text-4xl font-bold">$99</span>
+                <span className="text-muted-foreground text-sm ml-1">/month</span>
+              </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                {['Unlimited workers', 'Multi-team support', 'Advanced analytics & reports', 'Priority support', 'Custom integrations'].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm">
+                    <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/auth')}
+                className="rounded-xl w-full"
+              >
+                Contact sales
+              </Button>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-20">
         <div className="max-w-3xl mx-auto px-5">
