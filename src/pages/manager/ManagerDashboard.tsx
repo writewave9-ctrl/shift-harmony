@@ -56,6 +56,7 @@ export const ManagerDashboard = () => {
   const [selectedSwap, setSelectedSwap] = useState<SwapRequest | null>(null);
   const [approvalDone, setApprovalDone] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [attendanceSummary, setAttendanceSummary] = useState({ present: 0, late: 0, notCheckedIn: 0 });
 
   const today = new Date().toISOString().split('T')[0];
   const todayShifts = shifts.filter(s => s.date === today);
