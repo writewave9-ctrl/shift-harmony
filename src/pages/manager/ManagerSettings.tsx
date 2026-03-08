@@ -129,18 +129,7 @@ export const ManagerSettings = () => {
 
       if (orgError) throw orgError;
 
-      // Update profile first so RLS policies for teams work
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ 
-          organization_id: orgId,
-          team_id: teamId,
-        })
-        .eq('id', profile.id);
-
-      if (profileError) throw profileError;
-
-      // Create team (now get_user_organization returns the org id)
+      // Create team next (uses permissive INSERT policy for managers)
       const { error: teamError } = await supabase
         .from('teams')
         .insert({
@@ -151,6 +140,17 @@ export const ManagerSettings = () => {
         });
 
       if (teamError) throw teamError;
+
+      // Now update profile with both org and team
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          organization_id: orgId,
+          team_id: teamId,
+        })
+        .eq('id', profile.id);
+
+      if (profileError) throw profileError;
 
       // Refresh profile
       await refreshProfile();
