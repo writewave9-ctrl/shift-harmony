@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { 
@@ -53,6 +54,30 @@ const benefits = [
   'Real-time visibility into staffing levels',
 ];
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] },
+  }),
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+
+const cardVariant = {
+  hidden: { opacity: 0, y: 20, scale: 0.97 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.4, ease: 'easeOut' as const },
+  },
+};
+
 export const Landing = () => {
   const navigate = useNavigate();
 
@@ -92,20 +117,43 @@ export const Landing = () => {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
         <div className="max-w-4xl mx-auto px-5 pt-20 pb-16 text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-8"
+          >
             <Shield className="w-3.5 h-3.5" />
             Built for reliability
-          </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6"
+          >
             Workforce scheduling
             <br />
             <span className="text-primary">made simple</span>
-          </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed"
+          >
             Align helps teams coordinate shifts, track attendance, and stay connected — 
             all from a single, beautiful interface.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.45 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3"
+          >
             <Button 
               size="lg" 
               onClick={() => navigate('/auth')}
@@ -122,56 +170,89 @@ export const Landing = () => {
             >
               View demo
             </Button>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Benefits strip */}
-      <section className="border-y border-border/40 bg-card/50">
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, margin: '-50px' }}
+        transition={{ duration: 0.5 }}
+        className="border-y border-border/40 bg-card/50"
+      >
         <div className="max-w-5xl mx-auto px-5 py-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {benefits.map((benefit) => (
-              <div key={benefit} className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            {benefits.map((benefit, i) => (
+              <motion.div key={benefit} variants={fadeUp} custom={i} className="flex items-start gap-2.5">
+                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                 <span className="text-sm text-foreground font-medium">{benefit}</span>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Features */}
       <section className="py-20">
         <div className="max-w-6xl mx-auto px-5">
-          <div className="text-center mb-14">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-14"
+          >
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
               Everything your team needs
             </h2>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto">
               From scheduling to analytics, Align covers the full workforce management lifecycle.
             </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          </motion.div>
+
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
             {features.map((feature) => (
-              <div 
+              <motion.div 
                 key={feature.title}
-                className="group p-6 rounded-2xl border border-border/50 bg-card hover:shadow-lg hover:border-primary/20 transition-all duration-300"
+                variants={cardVariant}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="group p-6 rounded-2xl border border-border/50 bg-card hover:shadow-lg hover:border-primary/20 transition-shadow duration-300"
               >
                 <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors">
                   <feature.icon className="w-5 h-5 text-primary" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA */}
       <section className="py-20">
         <div className="max-w-3xl mx-auto px-5">
-          <div className="rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/50 border border-primary/10 p-10 sm:p-14 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.5 }}
+            className="rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-accent/50 border border-primary/10 p-10 sm:p-14 text-center"
+          >
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
               Ready to align your team?
             </h2>
@@ -186,7 +267,7 @@ export const Landing = () => {
               Get started now
               <ArrowRight className="w-4 h-4" />
             </Button>
-          </div>
+          </motion.div>
         </div>
       </section>
 

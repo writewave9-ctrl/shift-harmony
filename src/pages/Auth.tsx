@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users, UserCog, Loader2, Mail, Lock, User, Clock, Shield, Zap } from 'lucide-react';
+import { Users, UserCog, Loader2, Mail, Lock, User, Clock, Shield, Zap, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-type AuthMode = 'login' | 'signup';
+type AuthMode = 'login' | 'signup' | 'forgot';
 type Role = 'worker' | 'manager';
 
 export const Auth = () => {
@@ -28,7 +29,20 @@ export const Auth = () => {
     setLoading(true);
 
     try {
-      if (mode === 'login') {
+      if (mode === 'forgot') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) {
+          toast({ title: 'Reset failed', description: error.message, variant: 'destructive' });
+        } else {
+          toast({
+            title: 'Check your email',
+            description: 'We sent you a password reset link.',
+          });
+          setMode('login');
+        }
+      } else if (mode === 'login') {
         const { error } = await signIn(email, password);
         if (error) {
           toast({
@@ -153,12 +167,14 @@ export const Auth = () => {
             {/* Form Header */}
             <div className="text-center lg:text-left">
               <h2 className="text-2xl font-bold text-foreground">
-                {mode === 'login' ? 'Welcome back' : 'Create your account'}
+                {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create your account' : 'Reset your password'}
               </h2>
               <p className="text-muted-foreground mt-1">
                 {mode === 'login' 
                   ? 'Sign in to continue to your dashboard' 
-                  : 'Get started with Align in seconds'
+                  : mode === 'signup'
+                  ? 'Get started with Align in seconds'
+                  : 'Enter your email and we\'ll send a reset link'
                 }
               </p>
             </div>
@@ -247,23 +263,38 @@ export const Auth = () => {
                 </div>
               </div>
 
-              {/* Password */}
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 h-12"
-                    minLength={6}
-                    required
-                  />
+              {/* Password (hidden in forgot mode) */}
+              {mode !== 'forgot' && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 h-12"
+                      minLength={6}
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Forgot password link */}
+              {mode === 'login' && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setMode('forgot')}
+                    className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
 
               {/* Submit Button */}
               <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={loading}>
@@ -271,25 +302,38 @@ export const Auth = () => {
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : mode === 'login' ? (
                   'Sign In'
+                ) : mode === 'forgot' ? (
+                  'Send Reset Link'
                 ) : (
                   'Create Account'
                 )}
               </Button>
 
               {/* Toggle Mode */}
-              <div className="text-center pt-2">
-                <button
-                  type="button"
-                  onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {mode === 'login'
-                    ? "Don't have an account? "
-                    : 'Already have an account? '}
-                  <span className="text-primary font-medium">
-                    {mode === 'login' ? 'Sign up' : 'Sign in'}
-                  </span>
-                </button>
+              <div className="text-center pt-2 space-y-2">
+                {mode === 'forgot' ? (
+                  <button
+                    type="button"
+                    onClick={() => setMode('login')}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
+                  >
+                    <ArrowLeft className="w-3 h-3" />
+                    Back to sign in
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {mode === 'login'
+                      ? "Don't have an account? "
+                      : 'Already have an account? '}
+                    <span className="text-primary font-medium">
+                      {mode === 'login' ? 'Sign up' : 'Sign in'}
+                    </span>
+                  </button>
+                )}
               </div>
             </form>
           </div>

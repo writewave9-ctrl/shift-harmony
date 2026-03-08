@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Pages
 import Auth from "./pages/Auth";
+import { ResetPassword } from "./pages/ResetPassword";
 import RoleSelect from "./pages/RoleSelect";
 import NotFound from "./pages/NotFound";
 import { Landing } from "./pages/Landing";
@@ -65,9 +66,12 @@ const RoleGate = ({
   allowed: Array<'admin' | 'manager' | 'worker'>; 
   fallback: string;
 }) => {
-  const { userRole, loading } = useAuth();
+  const { userRole, loading, user } = useAuth();
 
   if (loading) return <LoadingScreen />;
+
+  // While role is still loading after auth, show loading
+  if (user && !userRole) return <LoadingScreen />;
 
   if (!userRole || !allowed.includes(userRole.role)) {
     return <Navigate to={fallback} replace />;
@@ -94,9 +98,10 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, userRole } = useAuth();
 
   if (loading) return <LoadingScreen />;
+  if (user && !userRole) return <LoadingScreen />;
 
-  if (user) {
-    if (userRole?.role === 'manager' || userRole?.role === 'admin') {
+  if (user && userRole) {
+    if (userRole.role === 'manager' || userRole.role === 'admin') {
       return <Navigate to="/manager" replace />;
     }
     return <Navigate to="/worker" replace />;
@@ -110,9 +115,10 @@ const LandingRoute = () => {
   const { user, loading, userRole } = useAuth();
 
   if (loading) return <LoadingScreen />;
+  if (user && !userRole) return <LoadingScreen />;
 
-  if (user) {
-    if (userRole?.role === 'manager' || userRole?.role === 'admin') {
+  if (user && userRole) {
+    if (userRole.role === 'manager' || userRole.role === 'admin') {
       return <Navigate to="/manager" replace />;
     }
     return <Navigate to="/worker" replace />;
@@ -130,8 +136,8 @@ const AppRoutes = () => (
     <Route path="/auth" element={
       <PublicRoute><Auth /></PublicRoute>
     } />
+    <Route path="/reset-password" element={<ResetPassword />} />
 
-    {/* Demo Mode - Role Selection */}
     <Route path="/demo" element={<RoleSelect />} />
 
     {/* Worker Routes - only workers can access */}
