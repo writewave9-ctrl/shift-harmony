@@ -14,6 +14,9 @@ import {
   BarChart3,
   Bell,
   Check,
+  CalendarPlus,
+  BellRing,
+  Activity,
 } from 'lucide-react';
 
 const features = [
@@ -56,6 +59,27 @@ const benefits = [
   'Real-time visibility into staffing levels',
 ];
 
+const howItWorks = [
+  {
+    icon: CalendarPlus,
+    step: '01',
+    title: 'Create shifts',
+    description: 'Build your schedule in minutes using templates or from scratch.',
+  },
+  {
+    icon: BellRing,
+    step: '02',
+    title: 'Workers get notified',
+    description: 'Your team receives instant push notifications with shift details.',
+  },
+  {
+    icon: Activity,
+    step: '03',
+    title: 'Track in real-time',
+    description: 'Monitor check-ins, swaps, and attendance as it happens.',
+  },
+];
+
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
@@ -80,6 +104,10 @@ const cardVariant = {
   },
 };
 
+const scrollTo = (id: string) => {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+};
+
 export const Landing = () => {
   const navigate = useNavigate();
 
@@ -94,7 +122,10 @@ export const Landing = () => {
             </div>
             <span className="text-lg font-semibold tracking-tight">Align</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3">
+            <button onClick={() => scrollTo('features')} className="hidden sm:inline-flex px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">Features</button>
+            <button onClick={() => scrollTo('pricing')} className="hidden sm:inline-flex px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</button>
+            <button onClick={() => scrollTo('faq')} className="hidden sm:inline-flex px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</button>
             <ThemeToggle />
             <Button 
               variant="ghost" 
@@ -167,10 +198,10 @@ export const Landing = () => {
             <Button 
               variant="outline" 
               size="lg"
-              onClick={() => navigate('/demo')}
+              onClick={() => scrollTo('features')}
               className="rounded-xl px-8 h-12 text-base"
             >
-              View demo
+              See how it works
             </Button>
           </motion.div>
         </div>
@@ -202,8 +233,28 @@ export const Landing = () => {
         </div>
       </motion.section>
 
+      {/* Social proof */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, margin: '-50px' }}
+        transition={{ duration: 0.6 }}
+        className="py-12"
+      >
+        <div className="max-w-4xl mx-auto px-5 text-center">
+          <p className="text-sm text-muted-foreground mb-6">Trusted by <span className="font-semibold text-foreground">500+</span> teams worldwide</p>
+          <div className="flex items-center justify-center gap-8 sm:gap-12 flex-wrap opacity-40">
+            {['Acme Co', 'Globex', 'Initech', 'Hooli', 'Piedmont'].map((name) => (
+              <div key={name} className="text-base sm:text-lg font-bold tracking-tight text-foreground select-none">
+                {name}
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
+
       {/* Features */}
-      <section className="py-20">
+      <section id="features" className="py-20">
         <div className="max-w-6xl mx-auto px-5">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -245,8 +296,58 @@ export const Landing = () => {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* How it works */}
       <section className="py-20 bg-card/30">
+        <div className="max-w-5xl mx-auto px-5">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-14"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
+              How it works
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+              Get your team aligned in three simple steps.
+            </p>
+          </motion.div>
+
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-60px' }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 relative"
+          >
+            {/* Connector lines (desktop only) */}
+            <div className="hidden md:block absolute top-16 left-[calc(33.33%+12px)] right-[calc(33.33%+12px)] h-px bg-border" />
+
+            {howItWorks.map((step) => (
+              <motion.div
+                key={step.step}
+                variants={cardVariant}
+                className="flex flex-col items-center text-center"
+              >
+                <div className="relative mb-5">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <step.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shadow-sm">
+                    {step.step}
+                  </span>
+                </div>
+                <h3 className="font-semibold text-foreground mb-2 text-lg">{step.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">{step.description}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="py-20">
         <div className="max-w-6xl mx-auto px-5">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -360,7 +461,7 @@ export const Landing = () => {
       </section>
 
       {/* FAQ */}
-      <section className="py-20">
+      <section id="faq" className="py-20 bg-card/30">
         <div className="max-w-3xl mx-auto px-5">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -395,11 +496,11 @@ export const Landing = () => {
                 },
                 {
                   q: 'Is Align available as a mobile app?',
-                  a: 'Align is a Progressive Web App (PWA), which means it works in any browser and can be installed on any device — no app store download required. It even works offline.',
+                  a: 'Align is a Progressive Web App (PWA), which means it works in any browser and can be installed on any device \u2014 no app store download required. It even works offline.',
                 },
                 {
                   q: 'How do shift templates work?',
-                  a: 'Managers can create reusable shift templates with pre-set times, locations, and positions. Apply a template to quickly generate shifts for the week — cutting scheduling time by up to 80%.',
+                  a: 'Managers can create reusable shift templates with pre-set times, locations, and positions. Apply a template to quickly generate shifts for the week \u2014 cutting scheduling time by up to 80%.',
                 },
                 {
                   q: 'What happens if a worker calls off?',
@@ -407,7 +508,7 @@ export const Landing = () => {
                 },
                 {
                   q: 'Can I try Align before committing?',
-                  a: 'Absolutely. The Starter plan is free forever for teams of up to 5 workers. No credit card required — just sign up and start scheduling.',
+                  a: 'Absolutely. The Starter plan is free forever for teams of up to 5 workers. No credit card required \u2014 just sign up and start scheduling.',
                 },
               ].map((faq, i) => (
                 <AccordionItem
@@ -429,7 +530,7 @@ export const Landing = () => {
       </section>
 
       {/* CTA */}
-      <section className="py-20">
+      <section className="py-12">
         <div className="max-w-3xl mx-auto px-5">
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
@@ -463,7 +564,7 @@ export const Landing = () => {
             <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
               <span className="text-xs font-bold text-primary">A</span>
             </div>
-            <span className="text-sm text-muted-foreground">© 2026 Align. All rights reserved.</span>
+            <span className="text-sm text-muted-foreground">&copy; 2026 Align. All rights reserved.</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <button className="hover:text-foreground transition-colors">Privacy</button>
