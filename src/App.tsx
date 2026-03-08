@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Auth from "./pages/Auth";
 import RoleSelect from "./pages/RoleSelect";
 import NotFound from "./pages/NotFound";
+import { Landing } from "./pages/Landing";
 
 // Worker Pages
 import { WorkerLayout } from "./layouts/WorkerLayout";
