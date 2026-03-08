@@ -98,9 +98,10 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, userRole } = useAuth();
 
   if (loading) return <LoadingScreen />;
+  if (user && !userRole) return <LoadingScreen />;
 
-  if (user) {
-    if (userRole?.role === 'manager' || userRole?.role === 'admin') {
+  if (user && userRole) {
+    if (userRole.role === 'manager' || userRole.role === 'admin') {
       return <Navigate to="/manager" replace />;
     }
     return <Navigate to="/worker" replace />;
@@ -114,9 +115,10 @@ const LandingRoute = () => {
   const { user, loading, userRole } = useAuth();
 
   if (loading) return <LoadingScreen />;
+  if (user && !userRole) return <LoadingScreen />;
 
-  if (user) {
-    if (userRole?.role === 'manager' || userRole?.role === 'admin') {
+  if (user && userRole) {
+    if (userRole.role === 'manager' || userRole.role === 'admin') {
       return <Navigate to="/manager" replace />;
     }
     return <Navigate to="/worker" replace />;
