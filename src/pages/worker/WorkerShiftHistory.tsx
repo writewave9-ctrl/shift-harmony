@@ -99,14 +99,7 @@ export const WorkerShiftHistory = () => {
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
   };
 
-  const calculateHours = (start: string, end: string) => {
-    const [startH, startM] = start.split(':').map(Number);
-    const [endH, endM] = end.split(':').map(Number);
-    let hours = endH - startH, minutes = endM - startM;
-    if (minutes < 0) { hours -= 1; minutes += 60; }
-    if (hours < 0) hours += 24;
-    return `${hours}h ${minutes > 0 ? `${minutes}m` : ''}`;
-  };
+  const calculateHours = (start: string, end: string) => fmtHours(calcMinutes(start, end));
 
   const getAttendanceIcon = (status: string) => {
     switch (status) {
