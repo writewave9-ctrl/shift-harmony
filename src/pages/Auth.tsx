@@ -29,7 +29,20 @@ export const Auth = () => {
     setLoading(true);
 
     try {
-      if (mode === 'login') {
+      if (mode === 'forgot') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) {
+          toast({ title: 'Reset failed', description: error.message, variant: 'destructive' });
+        } else {
+          toast({
+            title: 'Check your email',
+            description: 'We sent you a password reset link.',
+          });
+          setMode('login');
+        }
+      } else if (mode === 'login') {
         const { error } = await signIn(email, password);
         if (error) {
           toast({
