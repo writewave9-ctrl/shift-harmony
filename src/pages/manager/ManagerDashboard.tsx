@@ -467,7 +467,7 @@ export const ManagerDashboard = () => {
                     <div>
                       <p className="font-medium">{selectedSwap.requester?.full_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {selectedSwap.shift?.position} • {selectedSwap.shift?.start_time} - {selectedSwap.shift?.end_time}
+                        {selectedSwap.shift?.position} • {selectedSwap.shift ? formatTimeRange(selectedSwap.shift.start_time, selectedSwap.shift.end_time) : ''}
                       </p>
                     </div>
                   </div>
