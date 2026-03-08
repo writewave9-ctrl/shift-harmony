@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { WorkerHistorySkeleton } from '@/components/PageSkeletons';
 import { MotionItem } from '@/components/MotionWrapper';
@@ -9,6 +9,8 @@ import { Calendar, Clock, ChevronDown, History, CheckCircle, XCircle, AlertCircl
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface ShiftHistoryItem {
   id: string;
@@ -47,11 +49,11 @@ export const WorkerShiftHistory = () => {
         .eq('assigned_worker_id', profile.id)
         .eq('status', 'completed')
         .order('date', { ascending: false })
-        .limit(20);
+        .limit(50);
 
       if (error) {
         const { data: shiftsOnly } = await supabase
-          .from('shifts').select('*').eq('assigned_worker_id', profile.id).eq('status', 'completed').order('date', { ascending: false }).limit(20);
+          .from('shifts').select('*').eq('assigned_worker_id', profile.id).eq('status', 'completed').order('date', { ascending: false }).limit(50);
         setShifts((shiftsOnly || []).map(s => ({ ...s, attendance: null })));
       } else {
         setShifts((data || []).map((s: any) => ({
@@ -101,6 +103,36 @@ export const WorkerShiftHistory = () => {
 
   const calculateHours = (start: string, end: string) => fmtHours(calcMinutes(start, end));
 
+  // Weekly chart data - last 8 weeks
+  const weeklyChartData = useMemo(() => {
+    const weeks: { label: string; hours: number; start: Date }[] = [];
+    for (let i = 7; i >= 0; i--) {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - now.getDay() - i * 7);
+      weekStart.setHours(0, 0, 0, 0);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 7);
+
+      const weekMinutes = shifts
+        .filter(s => {
+          const d = new Date(s.date);
+          return d >= weekStart && d < weekEnd;
+        })
+        .reduce((sum, s) => sum + calcMinutes(s.start_time, s.end_time), 0);
+
+      const monthDay = `${weekStart.getMonth() + 1}/${weekStart.getDate()}`;
+      weeks.push({ label: monthDay, hours: Math.round((weekMinutes / 60) * 10) / 10, start: weekStart });
+    }
+    return weeks;
+  }, [shifts]);
+
+  const chartConfig = {
+    hours: {
+      label: "Hours",
+      color: "hsl(var(--primary))",
+    },
+  };
+
   const getAttendanceIcon = (status: string) => {
     switch (status) {
       case 'present': return <CheckCircle className="w-4 h-4 text-success" />;
@@ -129,20 +161,38 @@ export const WorkerShiftHistory = () => {
       </header>
 
       {shifts.length > 0 && (
-        <div className="px-4 mb-4 grid grid-cols-3 gap-3">
-          <div className="card-elevated rounded-xl p-3 text-center">
-            <p className="text-xs text-muted-foreground mb-1">This Week</p>
-            <p className="text-lg font-bold text-foreground">{fmtHours(weeklyMinutes)}</p>
+        <>
+          <div className="px-4 mb-4 grid grid-cols-3 gap-3">
+            <div className="card-elevated rounded-xl p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">This Week</p>
+              <p className="text-lg font-bold text-foreground">{fmtHours(weeklyMinutes)}</p>
+            </div>
+            <div className="card-elevated rounded-xl p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">This Month</p>
+              <p className="text-lg font-bold text-foreground">{fmtHours(monthlyMinutes)}</p>
+            </div>
+            <div className="card-elevated rounded-xl p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">All Time</p>
+              <p className="text-lg font-bold text-primary">{fmtHours(totalMinutes)}</p>
+            </div>
           </div>
-          <div className="card-elevated rounded-xl p-3 text-center">
-            <p className="text-xs text-muted-foreground mb-1">This Month</p>
-            <p className="text-lg font-bold text-foreground">{fmtHours(monthlyMinutes)}</p>
+
+          {/* Weekly Hours Chart */}
+          <div className="px-4 mb-6">
+            <div className="card-elevated rounded-xl p-4">
+              <h3 className="text-sm font-medium text-foreground mb-3">Hours Per Week</h3>
+              <ChartContainer config={chartConfig} className="h-[180px] w-full">
+                <BarChart data={weeklyChartData} margin={{ top: 5, right: 5, bottom: 5, left: -20 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
+                  <XAxis dataKey="label" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                  <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="hours" fill="var(--color-hours)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ChartContainer>
+            </div>
           </div>
-          <div className="card-elevated rounded-xl p-3 text-center">
-            <p className="text-xs text-muted-foreground mb-1">All Time</p>
-            <p className="text-lg font-bold text-primary">{fmtHours(totalMinutes)}</p>
-          </div>
-        </div>
+        </>
       )}
 
       <div className="px-4 space-y-3">

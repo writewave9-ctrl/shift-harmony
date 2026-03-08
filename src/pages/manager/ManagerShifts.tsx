@@ -406,6 +406,19 @@ export const ManagerShifts = () => {
                           </Button>
                         ) : (
                           <>
+                            {shift.status !== 'completed' && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-1.5 text-success border-success/30 hover:bg-success/10"
+                                onClick={async () => {
+                                  await updateShift(shift.id, { status: 'completed' });
+                                }}
+                              >
+                                <Check className="w-4 h-4" />
+                                Complete
+                              </Button>
+                            )}
                             <Button 
                               variant="outline" 
                               size="sm" 
