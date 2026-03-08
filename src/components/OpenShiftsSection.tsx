@@ -114,7 +114,7 @@ export const OpenShiftsSection = () => {
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {shift.start_time} - {shift.end_time}
+                      {formatTimeRange(shift.start_time, shift.end_time)}
                     </span>
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
