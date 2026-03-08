@@ -12,6 +12,7 @@ import {
   Smartphone,
   BarChart3,
   Bell,
+  Check,
 } from 'lucide-react';
 
 const features = [
