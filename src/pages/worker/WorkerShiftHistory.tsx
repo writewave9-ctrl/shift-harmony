@@ -135,6 +135,23 @@ export const WorkerShiftHistory = () => {
         <h1 className="text-2xl font-bold text-foreground">Completed Shifts</h1>
       </header>
 
+      {shifts.length > 0 && (
+        <div className="px-4 mb-4 grid grid-cols-3 gap-3">
+          <div className="card-elevated rounded-xl p-3 text-center">
+            <p className="text-xs text-muted-foreground mb-1">This Week</p>
+            <p className="text-lg font-bold text-foreground">{fmtHours(weeklyMinutes)}</p>
+          </div>
+          <div className="card-elevated rounded-xl p-3 text-center">
+            <p className="text-xs text-muted-foreground mb-1">This Month</p>
+            <p className="text-lg font-bold text-foreground">{fmtHours(monthlyMinutes)}</p>
+          </div>
+          <div className="card-elevated rounded-xl p-3 text-center">
+            <p className="text-xs text-muted-foreground mb-1">All Time</p>
+            <p className="text-lg font-bold text-primary">{fmtHours(totalMinutes)}</p>
+          </div>
+        </div>
+      )}
+
       <div className="px-4 space-y-3">
         {shifts.map((shift, index) => (
           <MotionItem key={shift.id} index={index}>
