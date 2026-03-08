@@ -9,7 +9,6 @@ import {
   BarChart3,
   HandHelping,
 } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
