@@ -118,38 +118,39 @@ export const ManagerSettings = () => {
     
     setSaving(true);
     try {
+      // Generate IDs client-side so we don't need SELECT permission on newly created rows
+      const orgId = crypto.randomUUID();
+      const teamId = crypto.randomUUID();
+
       // Create organization
-      const { data: org, error: orgError } = await supabase
+      const { error: orgError } = await supabase
         .from('organizations')
-        .insert({ name: orgName })
-        .select()
-        .single();
+        .insert({ id: orgId, name: orgName });
 
       if (orgError) throw orgError;
 
-      // Create team
-      const { data: team, error: teamError } = await supabase
-        .from('teams')
-        .insert({
-          organization_id: org.id,
-          name: teamName,
-          location: teamLocation || null,
-        })
-        .select()
-        .single();
-
-      if (teamError) throw teamError;
-
-      // Update profile with organization and team
+      // Update profile first so RLS policies for teams work
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ 
-          organization_id: org.id,
-          team_id: team.id,
+          organization_id: orgId,
+          team_id: teamId,
         })
         .eq('id', profile.id);
 
       if (profileError) throw profileError;
+
+      // Create team (now get_user_organization returns the org id)
+      const { error: teamError } = await supabase
+        .from('teams')
+        .insert({
+          id: teamId,
+          organization_id: orgId,
+          name: teamName,
+          location: teamLocation || null,
+        });
+
+      if (teamError) throw teamError;
 
       // Refresh profile
       await refreshProfile();
