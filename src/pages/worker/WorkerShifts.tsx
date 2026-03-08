@@ -4,6 +4,7 @@ import { WorkerShiftsSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection } from '@/components/MotionWrapper';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 import { 
   Calendar, 
   ChevronLeft, 
