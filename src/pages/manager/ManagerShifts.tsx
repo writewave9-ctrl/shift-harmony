@@ -132,18 +132,64 @@ export const ManagerShifts = () => {
     }
   };
 
-  const handleSendMessage = (message: string) => {
+  const handleSendMessage = async (message: string) => {
     if (!selectedShift || !profile?.id) return;
-    const newMessage: ShiftMessage = {
-      id: `msg_${Date.now()}`,
-      shiftId: selectedShift.id,
-      senderId: profile.id,
-      senderName: profile.full_name,
-      message,
-      createdAt: new Date().toISOString(),
-    };
-    setMessages(prev => [...prev, newMessage]);
+    try {
+      const { error } = await supabase
+        .from('shift_messages')
+        .insert({
+          shift_id: selectedShift.id,
+          sender_id: profile.id,
+          message,
+        });
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error sending message:', err);
+      toast.error('Failed to send message');
+    }
   };
+
+  // Fetch messages for selected shift
+  const [shiftMessages, setShiftMessages] = useState<ShiftMessage[]>([]);
+  
+  useEffect(() => {
+    if (!selectedShift?.id || !showMessaging) {
+      setShiftMessages([]);
+      return;
+    }
+
+    const fetchMessages = async () => {
+      const { data } = await supabase
+        .from('shift_messages')
+        .select('*, sender:profiles!shift_messages_sender_id_fkey(full_name)')
+        .eq('shift_id', selectedShift.id)
+        .order('created_at', { ascending: true });
+
+      setShiftMessages((data || []).map((m: any) => ({
+        id: m.id,
+        shiftId: m.shift_id,
+        senderId: m.sender_id,
+        senderName: m.sender?.full_name || 'Unknown',
+        message: m.message,
+        createdAt: m.created_at,
+      })));
+    };
+
+    fetchMessages();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel(`shift-messages-${selectedShift.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'shift_messages',
+        filter: `shift_id=eq.${selectedShift.id}`,
+      }, () => { fetchMessages(); })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedShift?.id, showMessaging]);
 
   const handleShiftClick = (shift: DatabaseShift) => {
     setSelectedShift(shift);
