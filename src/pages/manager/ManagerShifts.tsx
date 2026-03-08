@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ManagerShiftsSkeleton } from '@/components/PageSkeletons';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 import { StatusBadge } from '@/components/StatusBadge';
 import { WorkerCard } from '@/components/WorkerCard';
 import { WeeklyCalendar } from '@/components/WeeklyCalendar';
