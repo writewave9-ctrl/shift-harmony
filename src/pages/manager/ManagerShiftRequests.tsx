@@ -225,7 +225,7 @@ export const ManagerShiftRequests = () => {
                   <p className="font-medium">{selectedRequest.shift?.position}</p>
                   <div className="mt-2 space-y-1 text-sm text-muted-foreground">
                     <p className="flex items-center gap-2"><Calendar className="w-4 h-4" />{selectedRequest.shift && formatDate(selectedRequest.shift.date)}</p>
-                    <p className="flex items-center gap-2"><Clock className="w-4 h-4" />{selectedRequest.shift?.start_time} - {selectedRequest.shift?.end_time}</p>
+                    <p className="flex items-center gap-2"><Clock className="w-4 h-4" />{selectedRequest.shift ? formatTimeRange(selectedRequest.shift.start_time, selectedRequest.shift.end_time) : ''}</p>
                     <p className="flex items-center gap-2"><MapPin className="w-4 h-4" />{selectedRequest.shift?.location}</p>
                   </div>
                 </div>
