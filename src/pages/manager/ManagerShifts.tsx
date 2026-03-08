@@ -72,7 +72,6 @@ export const ManagerShifts = () => {
   const [assignmentDone, setAssignmentDone] = useState(false);
   const [filter, setFilter] = useState<'all' | 'vacant'>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [messages, setMessages] = useState<ShiftMessage[]>([]);
   const [prefillData, setPrefillData] = useState<Partial<CreateShiftData> | null>(null);
 
   const filteredShifts = filter === 'vacant' 
