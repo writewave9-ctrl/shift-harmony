@@ -133,7 +133,7 @@ export const ManagerShiftRequests = () => {
                           </span>
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <Clock className="w-3 h-3" />
-                            {request.shift?.start_time} - {request.shift?.end_time}
+                            {request.shift ? formatTimeRange(request.shift.start_time, request.shift.end_time) : ''}
                           </span>
                         </div>
                         {request.notes && (
