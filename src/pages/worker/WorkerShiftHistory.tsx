@@ -71,14 +71,35 @@ export const WorkerShiftHistory = () => {
 
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-  const calculateHours = (start: string, end: string) => {
-    const [startH, startM] = start.split(':').map(Number);
-    const [endH, endM] = end.split(':').map(Number);
-    let hours = endH - startH, minutes = endM - startM;
-    if (minutes < 0) { hours -= 1; minutes += 60; }
-    if (hours < 0) hours += 24;
-    return `${hours}h ${minutes > 0 ? `${minutes}m` : ''}`;
+  const calcMinutes = (start: string, end: string) => {
+    const [sH, sM] = start.split(':').map(Number);
+    const [eH, eM] = end.split(':').map(Number);
+    let mins = (eH * 60 + eM) - (sH * 60 + sM);
+    if (mins < 0) mins += 24 * 60;
+    return mins;
   };
+
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const weeklyMinutes = shifts
+    .filter(s => new Date(s.date) >= startOfWeek)
+    .reduce((sum, s) => sum + calcMinutes(s.start_time, s.end_time), 0);
+  const monthlyMinutes = shifts
+    .filter(s => new Date(s.date) >= startOfMonth)
+    .reduce((sum, s) => sum + calcMinutes(s.start_time, s.end_time), 0);
+  const totalMinutes = shifts.reduce((sum, s) => sum + calcMinutes(s.start_time, s.end_time), 0);
+
+  const fmtHours = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  };
+
+  const calculateHours = (start: string, end: string) => fmtHours(calcMinutes(start, end));
 
   const getAttendanceIcon = (status: string) => {
     switch (status) {
@@ -106,6 +127,23 @@ export const WorkerShiftHistory = () => {
         </div>
         <h1 className="text-2xl font-bold text-foreground">Completed Shifts</h1>
       </header>
+
+      {shifts.length > 0 && (
+        <div className="px-4 mb-4 grid grid-cols-3 gap-3">
+          <div className="card-elevated rounded-xl p-3 text-center">
+            <p className="text-xs text-muted-foreground mb-1">This Week</p>
+            <p className="text-lg font-bold text-foreground">{fmtHours(weeklyMinutes)}</p>
+          </div>
+          <div className="card-elevated rounded-xl p-3 text-center">
+            <p className="text-xs text-muted-foreground mb-1">This Month</p>
+            <p className="text-lg font-bold text-foreground">{fmtHours(monthlyMinutes)}</p>
+          </div>
+          <div className="card-elevated rounded-xl p-3 text-center">
+            <p className="text-xs text-muted-foreground mb-1">All Time</p>
+            <p className="text-lg font-bold text-primary">{fmtHours(totalMinutes)}</p>
+          </div>
+        </div>
+      )}
 
       <div className="px-4 space-y-3">
         {shifts.map((shift, index) => (
