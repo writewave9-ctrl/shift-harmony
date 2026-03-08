@@ -16,17 +16,44 @@ import { Switch } from '@/components/ui/switch';
 
 export const WorkerProfile = () => {
   const navigate = useNavigate();
-  const { setUserRole } = useApp();
   const { profile, signOut, user, loading } = useAuth();
   const { theme, resolvedTheme } = useTheme();
   const { unreadCount } = useNotifications();
   const { supported: pushSupported, isSubscribed: pushEnabled, subscribe: enablePush, unsubscribe: disablePush, loading: pushLoading } = usePushNotifications();
+  const [hoursWorked, setHoursWorked] = useState(0);
+
+  // Calculate hours worked this week from completed shifts
+  useEffect(() => {
+    const fetchHours = async () => {
+      if (!profile?.id) return;
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const { data } = await supabase
+        .from('shifts')
+        .select('start_time, end_time')
+        .eq('assigned_worker_id', profile.id)
+        .gte('date', startOfWeek.toISOString().split('T')[0])
+        .lte('date', now.toISOString().split('T')[0])
+        .in('status', ['completed', 'in_progress']);
+
+      if (data) {
+        const total = data.reduce((acc, shift) => {
+          const [sH, sM] = shift.start_time.split(':').map(Number);
+          const [eH, eM] = shift.end_time.split(':').map(Number);
+          let hours = (eH + eM / 60) - (sH + sM / 60);
+          if (hours < 0) hours += 24;
+          return acc + hours;
+        }, 0);
+        setHoursWorked(Math.round(total));
+      }
+    };
+    fetchHours();
+  }, [profile?.id]);
 
   if (loading) return <WorkerProfileSkeleton />;
-
-  const weeklyTarget = profile?.weekly_hours_target || 40;
-  const hoursWorked = 0;
-  const hoursRemaining = weeklyTarget - hoursWorked;
   const reliabilityScore = profile?.reliability_score || 80;
   const willingness = profile?.willingness_for_extra || 'medium';
 
