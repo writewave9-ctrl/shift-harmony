@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ManagerShiftsSkeleton } from '@/components/PageSkeletons';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 import { StatusBadge } from '@/components/StatusBadge';
 import { WorkerCard } from '@/components/WorkerCard';
 import { WeeklyCalendar } from '@/components/WeeklyCalendar';
@@ -367,7 +368,7 @@ export const ManagerShifts = () => {
                         <div>
                           <h3 className="font-semibold text-foreground">{shift.position}</h3>
                           <p className="text-sm text-muted-foreground">
-                            {shift.start_time} - {shift.end_time} • {shift.location}
+                            {formatTimeRange(shift.start_time, shift.end_time)} • {shift.location}
                           </p>
                         </div>
                         {shift.is_vacant ? (
@@ -483,7 +484,7 @@ export const ManagerShifts = () => {
           <DrawerHeader>
             <DrawerTitle>Assign Worker</DrawerTitle>
             <DrawerDescription>
-              {selectedShift && `${selectedShift.position} • ${selectedShift.start_time} - ${selectedShift.end_time}`}
+              {selectedShift && `${selectedShift.position} • ${formatTimeRange(selectedShift.start_time, selectedShift.end_time)}`}
             </DrawerDescription>
           </DrawerHeader>
 

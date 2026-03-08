@@ -22,6 +22,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 
 export const OpenShiftsSection = () => {
   const { profile } = useAuth();
@@ -113,7 +114,7 @@ export const OpenShiftsSection = () => {
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {shift.start_time} - {shift.end_time}
+                      {formatTimeRange(shift.start_time, shift.end_time)}
                     </span>
                     <span className="flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
@@ -177,7 +178,7 @@ export const OpenShiftsSection = () => {
                   </p>
                   <p className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    {selectedShift.start_time} - {selectedShift.end_time}
+                    {formatTimeRange(selectedShift.start_time, selectedShift.end_time)}
                   </p>
                   <p className="flex items-center gap-2">
                     <MapPin className="w-4 h-4" />

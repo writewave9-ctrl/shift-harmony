@@ -4,6 +4,7 @@ import { WorkerShiftsSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection } from '@/components/MotionWrapper';
 import { haptics } from '@/lib/haptics';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 import { 
   Calendar, 
   ChevronLeft, 
@@ -176,7 +177,7 @@ export const WorkerShifts = () => {
                     <div>
                       <h3 className="font-semibold text-foreground text-sm">{shift.position}</h3>
                       <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{shift.start_time} – {shift.end_time}</span>
+                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatTimeRange(shift.start_time, shift.end_time)}</span>
                         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{shift.location}</span>
                       </div>
                     </div>
@@ -205,7 +206,7 @@ export const WorkerShifts = () => {
           <DrawerHeader>
             <DrawerTitle>Shift Options</DrawerTitle>
             <DrawerDescription>
-              {selectedShift && `${formatDate(selectedShift.date)} • ${selectedShift.start_time} – ${selectedShift.end_time}`}
+              {selectedShift && `${formatDate(selectedShift.date)} • ${formatTimeRange(selectedShift.start_time, selectedShift.end_time)}`}
             </DrawerDescription>
           </DrawerHeader>
           <div className="px-4 pb-8 space-y-3">

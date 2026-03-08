@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 import type { ShiftRequest } from '@/hooks/useShiftRequests';
 
 export const ManagerShiftRequests = () => {
@@ -132,7 +133,7 @@ export const ManagerShiftRequests = () => {
                           </span>
                           <span className="flex items-center gap-1 text-muted-foreground">
                             <Clock className="w-3 h-3" />
-                            {request.shift?.start_time} - {request.shift?.end_time}
+                            {request.shift ? formatTimeRange(request.shift.start_time, request.shift.end_time) : ''}
                           </span>
                         </div>
                         {request.notes && (
@@ -224,7 +225,7 @@ export const ManagerShiftRequests = () => {
                   <p className="font-medium">{selectedRequest.shift?.position}</p>
                   <div className="mt-2 space-y-1 text-sm text-muted-foreground">
                     <p className="flex items-center gap-2"><Calendar className="w-4 h-4" />{selectedRequest.shift && formatDate(selectedRequest.shift.date)}</p>
-                    <p className="flex items-center gap-2"><Clock className="w-4 h-4" />{selectedRequest.shift?.start_time} - {selectedRequest.shift?.end_time}</p>
+                    <p className="flex items-center gap-2"><Clock className="w-4 h-4" />{selectedRequest.shift ? formatTimeRange(selectedRequest.shift.start_time, selectedRequest.shift.end_time) : ''}</p>
                     <p className="flex items-center gap-2"><MapPin className="w-4 h-4" />{selectedRequest.shift?.location}</p>
                   </div>
                 </div>

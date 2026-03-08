@@ -13,6 +13,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { haptics } from '@/lib/haptics';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 
 interface WorkerShift {
   id: string;
@@ -279,7 +280,7 @@ export const WorkerHome = () => {
                       )}>
                         {formatDate(shift.date)}
                       </span>
-                      <p className="font-semibold text-foreground text-sm">{shift.start_time} – {shift.end_time}</p>
+                      <p className="font-semibold text-foreground text-sm">{formatTimeRange(shift.start_time, shift.end_time)}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{shift.position} • {shift.location}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground/50" />

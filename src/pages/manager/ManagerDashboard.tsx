@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ManagerDashboardSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection, MotionItem } from '@/components/MotionWrapper';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 import { StaffingIndicator } from '@/components/StaffingIndicator';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useShifts, DatabaseShift } from '@/hooks/useShifts';
@@ -355,7 +356,7 @@ export const ManagerDashboard = () => {
                     <div>
                       <h3 className="font-semibold text-foreground">{shift.position}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {shift.start_time} - {shift.end_time} • {shift.location}
+                        {formatTimeRange(shift.start_time, shift.end_time)} • {shift.location}
                       </p>
                     </div>
                     <span className="px-2.5 py-1 text-xs font-medium text-warning bg-warning/10 rounded-full border border-warning/20">
@@ -393,7 +394,7 @@ export const ManagerDashboard = () => {
                     <div>
                       <p className="font-medium text-foreground">{shift.assigned_worker?.full_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {shift.position} • {shift.start_time} - {shift.end_time}
+                        {shift.position} • {formatTimeRange(shift.start_time, shift.end_time)}
                       </p>
                     </div>
                   </div>
@@ -466,7 +467,7 @@ export const ManagerDashboard = () => {
                     <div>
                       <p className="font-medium">{selectedSwap.requester?.full_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {selectedSwap.shift?.position} • {selectedSwap.shift?.start_time} - {selectedSwap.shift?.end_time}
+                        {selectedSwap.shift?.position} • {selectedSwap.shift ? formatTimeRange(selectedSwap.shift.start_time, selectedSwap.shift.end_time) : ''}
                       </p>
                     </div>
                   </div>
