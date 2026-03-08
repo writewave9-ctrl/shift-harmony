@@ -1,0 +1,1 @@
+UPDATE profiles SET team_id = '1ed976c2-bbd6-4f45-8b95-0120649b5f79', organization_id = '45aecc2b-4eae-48c8-8198-72709a644ef0' WHERE email = 'testworker@example.com';
