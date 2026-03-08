@@ -177,7 +177,7 @@ export const WorkerShifts = () => {
                     <div>
                       <h3 className="font-semibold text-foreground text-sm">{shift.position}</h3>
                       <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{shift.start_time} – {shift.end_time}</span>
+                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatTimeRange(shift.start_time, shift.end_time)}</span>
                         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{shift.location}</span>
                       </div>
                     </div>
