@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 import { useShiftRequests } from '@/hooks/useShiftRequests';
 
@@ -46,10 +47,11 @@ export const ManagerNav = () => {
       <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:left-0 bg-sidebar border-r border-sidebar-border">
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
+          <div className="h-16 flex items-center justify-between px-6 border-b border-sidebar-border">
             <h1 className="text-xl font-bold text-sidebar-foreground">
               <span className="text-sidebar-primary">Align</span>
             </h1>
+            <ThemeToggle />
           </div>
 
           {/* Navigation */}
