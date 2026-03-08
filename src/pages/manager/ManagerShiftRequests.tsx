@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 import type { ShiftRequest } from '@/hooks/useShiftRequests';
 
 export const ManagerShiftRequests = () => {
