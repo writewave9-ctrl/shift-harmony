@@ -71,6 +71,34 @@ export const WorkerShiftHistory = () => {
 
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
+  const calcMinutes = (start: string, end: string) => {
+    const [sH, sM] = start.split(':').map(Number);
+    const [eH, eM] = end.split(':').map(Number);
+    let mins = (eH * 60 + eM) - (sH * 60 + sM);
+    if (mins < 0) mins += 24 * 60;
+    return mins;
+  };
+
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const weeklyMinutes = shifts
+    .filter(s => new Date(s.date) >= startOfWeek)
+    .reduce((sum, s) => sum + calcMinutes(s.start_time, s.end_time), 0);
+  const monthlyMinutes = shifts
+    .filter(s => new Date(s.date) >= startOfMonth)
+    .reduce((sum, s) => sum + calcMinutes(s.start_time, s.end_time), 0);
+  const totalMinutes = shifts.reduce((sum, s) => sum + calcMinutes(s.start_time, s.end_time), 0);
+
+  const fmtHours = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  };
+
   const calculateHours = (start: string, end: string) => {
     const [startH, startM] = start.split(':').map(Number);
     const [endH, endM] = end.split(':').map(Number);
