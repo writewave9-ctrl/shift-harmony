@@ -484,7 +484,7 @@ export const ManagerShifts = () => {
           <DrawerHeader>
             <DrawerTitle>Assign Worker</DrawerTitle>
             <DrawerDescription>
-              {selectedShift && `${selectedShift.position} • ${selectedShift.start_time} - ${selectedShift.end_time}`}
+              {selectedShift && `${selectedShift.position} • ${formatTimeRange(selectedShift.start_time, selectedShift.end_time)}`}
             </DrawerDescription>
           </DrawerHeader>
 

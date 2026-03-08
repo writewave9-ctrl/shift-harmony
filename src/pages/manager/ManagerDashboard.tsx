@@ -394,7 +394,7 @@ export const ManagerDashboard = () => {
                     <div>
                       <p className="font-medium text-foreground">{shift.assigned_worker?.full_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {shift.position} • {shift.start_time} - {shift.end_time}
+                        {shift.position} • {formatTimeRange(shift.start_time, shift.end_time)}
                       </p>
                     </div>
                   </div>

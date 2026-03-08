@@ -206,7 +206,7 @@ export const WorkerShifts = () => {
           <DrawerHeader>
             <DrawerTitle>Shift Options</DrawerTitle>
             <DrawerDescription>
-              {selectedShift && `${formatDate(selectedShift.date)} • ${selectedShift.start_time} – ${selectedShift.end_time}`}
+              {selectedShift && `${formatDate(selectedShift.date)} • ${formatTimeRange(selectedShift.start_time, selectedShift.end_time)}`}
             </DrawerDescription>
           </DrawerHeader>
           <div className="px-4 pb-8 space-y-3">
