@@ -22,6 +22,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 
 export const OpenShiftsSection = () => {
   const { profile } = useAuth();
