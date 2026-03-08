@@ -66,9 +66,12 @@ const RoleGate = ({
   allowed: Array<'admin' | 'manager' | 'worker'>; 
   fallback: string;
 }) => {
-  const { userRole, loading } = useAuth();
+  const { userRole, loading, user } = useAuth();
 
   if (loading) return <LoadingScreen />;
+
+  // While role is still loading after auth, show loading
+  if (user && !userRole) return <LoadingScreen />;
 
   if (!userRole || !allowed.includes(userRole.role)) {
     return <Navigate to={fallback} replace />;
