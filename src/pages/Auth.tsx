@@ -167,12 +167,14 @@ export const Auth = () => {
             {/* Form Header */}
             <div className="text-center lg:text-left">
               <h2 className="text-2xl font-bold text-foreground">
-                {mode === 'login' ? 'Welcome back' : 'Create your account'}
+                {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create your account' : 'Reset your password'}
               </h2>
               <p className="text-muted-foreground mt-1">
                 {mode === 'login' 
                   ? 'Sign in to continue to your dashboard' 
-                  : 'Get started with Align in seconds'
+                  : mode === 'signup'
+                  ? 'Get started with Align in seconds'
+                  : 'Enter your email and we\'ll send a reset link'
                 }
               </p>
             </div>
