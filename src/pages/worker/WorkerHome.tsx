@@ -13,6 +13,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { haptics } from '@/lib/haptics';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { formatTimeRange } from '@/lib/formatTime';
 
 interface WorkerShift {
   id: string;
