@@ -8,10 +8,12 @@ import { PricingSection } from '@/components/landing/PricingSection';
 import { FAQSection } from '@/components/landing/FAQSection';
 import { CTASection } from '@/components/landing/CTASection';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+import { ScrollToTop } from '@/components/landing/ScrollToTop';
 
 export const Landing = () => (
   <div className="min-h-screen bg-background text-foreground">
     <LandingNav />
+    <ScrollToTop />
     <HeroSection />
     <BenefitsStrip />
     <SocialProof />
