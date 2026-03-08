@@ -54,6 +54,8 @@ export const WorkerProfile = () => {
   }, [profile?.id]);
 
   if (loading) return <WorkerProfileSkeleton />;
+  const weeklyTarget = profile?.weekly_hours_target || 40;
+  const hoursRemaining = weeklyTarget - hoursWorked;
   const reliabilityScore = profile?.reliability_score || 80;
   const willingness = profile?.willingness_for_extra || 'medium';
 
