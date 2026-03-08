@@ -266,7 +266,7 @@ export const ManagerShifts = () => {
     } : undefined,
   }));
 
-  const shiftMessages_filtered = messages.filter(m => m.shiftId === selectedShift?.id);
+  const shiftMessages_filtered = shiftMessages;
 
   // Reset prefill data when modal closes
   useEffect(() => {
