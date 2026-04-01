@@ -8,18 +8,21 @@ import {
   Settings,
   BarChart3,
   HandHelping,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 import { useShiftRequests } from '@/hooks/useShiftRequests';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const navItems = [
   { path: '/manager', icon: LayoutDashboard, label: 'Dashboard', exact: true },
   { path: '/manager/shifts', icon: Calendar, label: 'Shifts' },
   { path: '/manager/team', icon: Users, label: 'Team' },
   { path: '/manager/analytics', icon: BarChart3, label: 'Analytics' },
-  { path: '/manager/requests', icon: HandHelping, label: 'Requests', badge: true },
+  { path: '/manager/requests', icon: HandHelping, label: 'Requests', badge: 'requests' },
+  { path: '/manager/notifications', icon: Bell, label: 'Alerts', badge: 'notifications' },
   { path: '/manager/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -28,6 +31,13 @@ export const ManagerNav = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { pendingRequests } = useShiftRequests();
+  const { unreadCount } = useNotifications();
+
+  const getBadgeCount = (badge?: string) => {
+    if (badge === 'requests') return pendingRequests.length;
+    if (badge === 'notifications') return unreadCount;
+    return 0;
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -67,9 +77,9 @@ export const ManagerNav = () => {
                 >
                   <item.icon className="w-5 h-5" />
                   <span className="flex-1">{item.label}</span>
-                  {item.badge && pendingRequests.length > 0 && (
+                  {item.badge && getBadgeCount(item.badge) > 0 && (
                     <span className="text-xs font-medium bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                      {pendingRequests.length}
+                      {getBadgeCount(item.badge)}
                     </span>
                   )}
                 </Link>
@@ -93,7 +103,7 @@ export const ManagerNav = () => {
       {/* Mobile Bottom Nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/90 backdrop-blur-xl border-t border-border/40 px-2 pb-safe">
         <div className="flex items-center justify-around h-16 max-w-md mx-auto">
-          {navItems.slice(0, 5).map(item => {
+          {navItems.filter(i => !['settings'].includes(i.label.toLowerCase())).slice(0, 5).map(item => {
             const isActive = item.exact 
               ? location.pathname === item.path
               : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
@@ -114,9 +124,9 @@ export const ManagerNav = () => {
                   isActive && 'bg-primary/10'
                 )}>
                   <item.icon className={cn('w-5 h-5', isActive && 'stroke-[2.5]')} />
-                  {item.badge && pendingRequests.length > 0 && (
+                  {item.badge && getBadgeCount(item.badge) > 0 && (
                     <span className="absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold bg-primary text-primary-foreground rounded-full flex items-center justify-center ring-2 ring-card">
-                      {pendingRequests.length}
+                      {getBadgeCount(item.badge)}
                     </span>
                   )}
                 </div>
