@@ -169,6 +169,7 @@ const AppRoutes = () => (
       <Route path="team" element={<ManagerTeam />} />
       <Route path="analytics" element={<ManagerAnalytics />} />
       <Route path="requests" element={<ManagerShiftRequests />} />
+      <Route path="notifications" element={<ManagerNotifications />} />
       <Route path="settings" element={<ManagerSettings />} />
     </Route>
 
