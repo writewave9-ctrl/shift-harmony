@@ -31,6 +31,13 @@ export const ManagerNav = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const { pendingRequests } = useShiftRequests();
+  const { unreadCount } = useNotifications();
+
+  const getBadgeCount = (badge?: string) => {
+    if (badge === 'requests') return pendingRequests.length;
+    if (badge === 'notifications') return unreadCount;
+    return 0;
+  };
 
   const handleSignOut = async () => {
     await signOut();
