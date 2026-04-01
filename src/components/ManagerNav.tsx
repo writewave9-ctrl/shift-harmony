@@ -8,18 +8,21 @@ import {
   Settings,
   BarChart3,
   HandHelping,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 import { useShiftRequests } from '@/hooks/useShiftRequests';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const navItems = [
   { path: '/manager', icon: LayoutDashboard, label: 'Dashboard', exact: true },
   { path: '/manager/shifts', icon: Calendar, label: 'Shifts' },
   { path: '/manager/team', icon: Users, label: 'Team' },
   { path: '/manager/analytics', icon: BarChart3, label: 'Analytics' },
-  { path: '/manager/requests', icon: HandHelping, label: 'Requests', badge: true },
+  { path: '/manager/requests', icon: HandHelping, label: 'Requests', badge: 'requests' },
+  { path: '/manager/notifications', icon: Bell, label: 'Alerts', badge: 'notifications' },
   { path: '/manager/settings', icon: Settings, label: 'Settings' },
 ];
 
