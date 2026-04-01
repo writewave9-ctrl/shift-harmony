@@ -32,6 +32,7 @@ import { ManagerTeam } from "./pages/manager/ManagerTeam";
 import { ManagerSettings } from "./pages/manager/ManagerSettings";
 import { ManagerAnalytics } from "./pages/manager/ManagerAnalytics";
 import { ManagerShiftRequests } from "./pages/manager/ManagerShiftRequests";
+import { ManagerNotifications } from "./pages/manager/ManagerNotifications";
 
 const queryClient = new QueryClient();
 
