@@ -139,7 +139,7 @@ const AppRoutes = () => (
     } />
     <Route path="/reset-password" element={<ResetPassword />} />
 
-    <Route path="/demo" element={<RoleSelect />} />
+    
 
     {/* Worker Routes - only workers can access */}
     <Route path="/worker" element={
