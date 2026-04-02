@@ -29,7 +29,7 @@ export const ManagerTeam = () => {
   const [searchQuery, setSearchQuery] = useState('');
    const [selectedWorker, setSelectedWorker] = useState<TeamMember | null>(null);
    const [showInviteModal, setShowInviteModal] = useState(false);
-   const { workers, loading } = useTeamMembers();
+   const { workers, loading, fetchMembers } = useTeamMembers();
 
   const filteredWorkers = workers.filter(w => 
      w.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
