@@ -85,7 +85,7 @@ export const ManagerTeam = () => {
              onClick={() => setShowInviteModal(true)}
            >
              <UserPlus className="w-4 h-4" />
-             <span className="hidden sm:inline">Invite</span>
+             <span className="hidden sm:inline">Add Worker</span>
            </Button>
         </div>
         <div className="relative">
