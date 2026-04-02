@@ -224,6 +224,7 @@ export const ManagerTeam = () => {
        <InviteWorkerModal
          open={showInviteModal}
          onOpenChange={setShowInviteModal}
+         onWorkerCreated={() => fetchMembers()}
        />
     </div>
   );
