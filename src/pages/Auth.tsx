@@ -5,13 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Users, UserCog, Loader2, Mail, Lock, User, Clock, Shield, Zap, ArrowLeft } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Loader2, Mail, Lock, User, Clock, Shield, Users, Zap, ArrowLeft } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 type AuthMode = 'login' | 'signup' | 'forgot';
-type Role = 'worker' | 'manager';
 
 export const Auth = () => {
   const navigate = useNavigate();
@@ -21,7 +19,6 @@ export const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [selectedRole, setSelectedRole] = useState<Role>('worker');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,7 +55,8 @@ export const Auth = () => {
           navigate('/');
         }
       } else {
-        const { error } = await signUp(email, password, fullName, selectedRole);
+        // Signup is manager-only
+        const { error } = await signUp(email, password, fullName, 'manager');
         if (error) {
           toast({
             title: 'Sign up failed',
@@ -68,7 +66,7 @@ export const Auth = () => {
         } else {
           toast({
             title: 'Account created!',
-            description: 'Welcome to Align! Let\'s get started.',
+            description: 'Welcome to Align! Set up your workspace to get started.',
           });
           navigate('/');
         }
@@ -111,8 +109,8 @@ export const Auth = () => {
               </div>
             </div>
             <div className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border/50">
-              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-5 h-5 text-success" />
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="font-medium text-foreground">GPS Check-in</p>
@@ -120,8 +118,8 @@ export const Auth = () => {
               </div>
             </div>
             <div className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border/50">
-              <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 text-info" />
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="font-medium text-foreground">Team Sync</p>
@@ -129,8 +127,8 @@ export const Auth = () => {
               </div>
             </div>
             <div className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border/50">
-              <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0">
-                <Zap className="w-5 h-5 text-warning" />
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Zap className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="font-medium text-foreground">Instant Swaps</p>
@@ -167,13 +165,13 @@ export const Auth = () => {
             {/* Form Header */}
             <div className="text-center lg:text-left">
               <h2 className="text-2xl font-bold text-foreground">
-                {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create your account' : 'Reset your password'}
+                {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create a manager account' : 'Reset your password'}
               </h2>
               <p className="text-muted-foreground mt-1">
                 {mode === 'login' 
                   ? 'Sign in to continue to your dashboard' 
                   : mode === 'signup'
-                  ? 'Get started with Align in seconds'
+                  ? 'Set up your workspace and add your team'
                   : 'Enter your email and we\'ll send a reset link'
                 }
               </p>
@@ -181,69 +179,21 @@ export const Auth = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {mode === 'signup' && (
-                <>
-                  {/* Role Selection */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">I am a...</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedRole('worker')}
-                        className={cn(
-                          'p-4 rounded-xl border-2 transition-all duration-200 text-left group',
-                          selectedRole === 'worker'
-                            ? 'border-primary bg-primary/5 shadow-sm'
-                            : 'border-border hover:border-primary/50 hover:bg-accent/50'
-                        )}
-                      >
-                        <div className={cn(
-                          "w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors",
-                          selectedRole === 'worker' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
-                        )}>
-                          <Users className="w-5 h-5" />
-                        </div>
-                        <p className="font-semibold text-foreground">Worker</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">View & manage my shifts</p>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedRole('manager')}
-                        className={cn(
-                          'p-4 rounded-xl border-2 transition-all duration-200 text-left group',
-                          selectedRole === 'manager'
-                            ? 'border-primary bg-primary/5 shadow-sm'
-                            : 'border-border hover:border-primary/50 hover:bg-accent/50'
-                        )}
-                      >
-                        <div className={cn(
-                          "w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors",
-                          selectedRole === 'manager' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
-                        )}>
-                          <UserCog className="w-5 h-5" />
-                        </div>
-                        <p className="font-semibold text-foreground">Manager</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">Oversee team & scheduling</p>
-                      </button>
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="Your full name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="pl-10 h-12"
+                      required
+                    />
                   </div>
-
-                  {/* Full Name */}
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="fullName"
-                        type="text"
-                        placeholder="Your full name"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        className="pl-10 h-12"
-                        required
-                      />
-                    </div>
-                  </div>
-                </>
+                </div>
               )}
 
               {/* Email */}
@@ -263,7 +213,7 @@ export const Auth = () => {
                 </div>
               </div>
 
-              {/* Password (hidden in forgot mode) */}
+              {/* Password */}
               {mode !== 'forgot' && (
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
@@ -305,7 +255,7 @@ export const Auth = () => {
                 ) : mode === 'forgot' ? (
                   'Send Reset Link'
                 ) : (
-                  'Create Account'
+                  'Create Manager Account'
                 )}
               </Button>
 
@@ -330,11 +280,17 @@ export const Auth = () => {
                       ? "Don't have an account? "
                       : 'Already have an account? '}
                     <span className="text-primary font-medium">
-                      {mode === 'login' ? 'Sign up' : 'Sign in'}
+                      {mode === 'login' ? 'Sign up as Manager' : 'Sign in'}
                     </span>
                   </button>
                 )}
               </div>
+
+              {mode === 'signup' && (
+                <p className="text-xs text-center text-muted-foreground">
+                  Workers are added by managers from the Team page. Only managers can create accounts here.
+                </p>
+              )}
             </form>
           </div>
         </main>
