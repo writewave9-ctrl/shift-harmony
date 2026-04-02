@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Pages
 import Auth from "./pages/Auth";
 import { ResetPassword } from "./pages/ResetPassword";
-import RoleSelect from "./pages/RoleSelect";
+
 import NotFound from "./pages/NotFound";
 import { Landing } from "./pages/Landing";
 
@@ -139,7 +139,7 @@ const AppRoutes = () => (
     } />
     <Route path="/reset-password" element={<ResetPassword />} />
 
-    <Route path="/demo" element={<RoleSelect />} />
+    
 
     {/* Worker Routes - only workers can access */}
     <Route path="/worker" element={

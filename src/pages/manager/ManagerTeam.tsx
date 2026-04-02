@@ -29,7 +29,7 @@ export const ManagerTeam = () => {
   const [searchQuery, setSearchQuery] = useState('');
    const [selectedWorker, setSelectedWorker] = useState<TeamMember | null>(null);
    const [showInviteModal, setShowInviteModal] = useState(false);
-   const { workers, loading } = useTeamMembers();
+   const { workers, loading, fetchMembers } = useTeamMembers();
 
   const filteredWorkers = workers.filter(w => 
      w.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -85,7 +85,7 @@ export const ManagerTeam = () => {
              onClick={() => setShowInviteModal(true)}
            >
              <UserPlus className="w-4 h-4" />
-             <span className="hidden sm:inline">Invite</span>
+             <span className="hidden sm:inline">Add Worker</span>
            </Button>
         </div>
         <div className="relative">
@@ -224,6 +224,7 @@ export const ManagerTeam = () => {
        <InviteWorkerModal
          open={showInviteModal}
          onOpenChange={setShowInviteModal}
+         onWorkerCreated={() => fetchMembers()}
        />
     </div>
   );
