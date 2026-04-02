@@ -22,6 +22,25 @@ export const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast({ title: 'Google sign in failed', description: String(result.error), variant: 'destructive' });
+      }
+      if (result.redirected) return;
+      navigate('/');
+    } catch (err: any) {
+      toast({ title: 'Google sign in failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
