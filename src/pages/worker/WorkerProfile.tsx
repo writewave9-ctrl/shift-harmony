@@ -13,6 +13,8 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from '@/hooks/use-toast';
 import { haptics } from '@/lib/haptics';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export const WorkerProfile = () => {
   const navigate = useNavigate();
