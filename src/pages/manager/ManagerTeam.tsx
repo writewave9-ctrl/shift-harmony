@@ -12,7 +12,9 @@ import {
   TrendingDown,
    Minus,
    UserPlus,
-   Loader2
+   Loader2,
+   UserMinus,
+   Ban
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
