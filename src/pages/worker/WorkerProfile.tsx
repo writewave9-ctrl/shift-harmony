@@ -181,6 +181,49 @@ export const WorkerProfile = () => {
           </div>
         </MotionSection>
 
+        <MotionSection delay={0.27}>
+          <div className="card-elevated rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-foreground">Security</h3>
+            </div>
+            {!showPasswordChange ? (
+              <button
+                onClick={() => { haptics.light(); setShowPasswordChange(true); }}
+                className="w-full flex items-center justify-between py-2"
+              >
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <KeyRound className="w-4 h-4" />Change Password
+                </span>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+            ) : (
+              <div className="space-y-3 pt-2">
+                <Input
+                  type="password"
+                  placeholder="New password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <Input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => { setShowPasswordChange(false); setNewPassword(''); setConfirmPassword(''); }}>
+                    Cancel
+                  </Button>
+                  <Button size="sm" className="flex-1" disabled={changingPassword || !newPassword} onClick={handleChangePassword}>
+                    {changingPassword && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+                    Update
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </MotionSection>
+
         {pushSupported && (
           <MotionSection delay={0.27}>
             <div className="card-elevated rounded-2xl p-5">
