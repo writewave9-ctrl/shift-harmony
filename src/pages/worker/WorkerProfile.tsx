@@ -23,6 +23,10 @@ export const WorkerProfile = () => {
   const { unreadCount } = useNotifications();
   const { supported: pushSupported, isSubscribed: pushEnabled, subscribe: enablePush, unsubscribe: disablePush, loading: pushLoading } = usePushNotifications();
   const [hoursWorked, setHoursWorked] = useState(0);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // Calculate hours worked this week from completed shifts
   useEffect(() => {
