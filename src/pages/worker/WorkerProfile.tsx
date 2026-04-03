@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Clock, TrendingUp, Star, LogOut, Moon, Sun, Calendar, History, Bell, ChevronRight, BellRing } from 'lucide-react';
+import { User, Clock, TrendingUp, Star, LogOut, Moon, Sun, Calendar, History, Bell, ChevronRight, BellRing, KeyRound, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WorkerProfileSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection } from '@/components/MotionWrapper';
