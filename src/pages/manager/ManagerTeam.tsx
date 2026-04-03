@@ -43,7 +43,32 @@ export const ManagerTeam = () => {
   const [searchQuery, setSearchQuery] = useState('');
    const [selectedWorker, setSelectedWorker] = useState<TeamMember | null>(null);
    const [showInviteModal, setShowInviteModal] = useState(false);
+   const [deactivateAction, setDeactivateAction] = useState<'deactivate' | 'remove' | null>(null);
+   const [deactivating, setDeactivating] = useState(false);
    const { workers, loading, fetchMembers } = useTeamMembers();
+
+  const handleDeactivateWorker = async (action: 'deactivate' | 'remove') => {
+    if (!selectedWorker) return;
+    setDeactivating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('deactivate-worker', {
+        body: {
+          worker_profile_id: selectedWorker.id,
+          action,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(data.message || `Worker ${action === 'remove' ? 'removed' : 'deactivated'}`);
+      setSelectedWorker(null);
+      setDeactivateAction(null);
+      fetchMembers();
+    } catch (err: any) {
+      toast.error(err.message || `Failed to ${action} worker`);
+    } finally {
+      setDeactivating(false);
+    }
+  };
 
   const filteredWorkers = workers.filter(w => 
      w.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
