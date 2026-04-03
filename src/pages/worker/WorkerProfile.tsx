@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Clock, TrendingUp, Star, LogOut, Moon, Sun, Calendar, History, Bell, ChevronRight, BellRing } from 'lucide-react';
+import { User, Clock, TrendingUp, Star, LogOut, Moon, Sun, Calendar, History, Bell, ChevronRight, BellRing, KeyRound, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { WorkerProfileSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection } from '@/components/MotionWrapper';
@@ -13,6 +13,8 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from '@/hooks/use-toast';
 import { haptics } from '@/lib/haptics';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export const WorkerProfile = () => {
   const navigate = useNavigate();
@@ -21,6 +23,10 @@ export const WorkerProfile = () => {
   const { unreadCount } = useNotifications();
   const { supported: pushSupported, isSubscribed: pushEnabled, subscribe: enablePush, unsubscribe: disablePush, loading: pushLoading } = usePushNotifications();
   const [hoursWorked, setHoursWorked] = useState(0);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // Calculate hours worked this week from completed shifts
   useEffect(() => {
@@ -66,6 +72,30 @@ export const WorkerProfile = () => {
     await signOut();
     toast({ title: 'Signed out', description: 'You have been signed out successfully.' });
     navigate('/auth');
+  };
+
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast({ title: 'Password too short', description: 'Password must be at least 6 characters.', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Passwords don\'t match', description: 'Please make sure both passwords match.', variant: 'destructive' });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: 'Password updated', description: 'Your password has been changed successfully.' });
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordChange(false);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to update password.', variant: 'destructive' });
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   return (
@@ -148,6 +178,49 @@ export const WorkerProfile = () => {
                 <ThemeToggle />
               </div>
             </div>
+          </div>
+        </MotionSection>
+
+        <MotionSection delay={0.27}>
+          <div className="card-elevated rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-foreground">Security</h3>
+            </div>
+            {!showPasswordChange ? (
+              <button
+                onClick={() => { haptics.light(); setShowPasswordChange(true); }}
+                className="w-full flex items-center justify-between py-2"
+              >
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <KeyRound className="w-4 h-4" />Change Password
+                </span>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+            ) : (
+              <div className="space-y-3 pt-2">
+                <Input
+                  type="password"
+                  placeholder="New password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <Input
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => { setShowPasswordChange(false); setNewPassword(''); setConfirmPassword(''); }}>
+                    Cancel
+                  </Button>
+                  <Button size="sm" className="flex-1" disabled={changingPassword || !newPassword} onClick={handleChangePassword}>
+                    {changingPassword && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+                    Update
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </MotionSection>
 
