@@ -74,6 +74,30 @@ export const WorkerProfile = () => {
     navigate('/auth');
   };
 
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast({ title: 'Password too short', description: 'Password must be at least 6 characters.', variant: 'destructive' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Passwords don\'t match', description: 'Please make sure both passwords match.', variant: 'destructive' });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: 'Password updated', description: 'Your password has been changed successfully.' });
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowPasswordChange(false);
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to update password.', variant: 'destructive' });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="px-4 pt-6 pb-4">
