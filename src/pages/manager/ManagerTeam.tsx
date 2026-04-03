@@ -12,7 +12,9 @@ import {
   TrendingDown,
    Minus,
    UserPlus,
-   Loader2
+   Loader2,
+   UserMinus,
+   Ban
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -23,13 +25,50 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const ManagerTeam = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
    const [selectedWorker, setSelectedWorker] = useState<TeamMember | null>(null);
    const [showInviteModal, setShowInviteModal] = useState(false);
+   const [deactivateAction, setDeactivateAction] = useState<'deactivate' | 'remove' | null>(null);
+   const [deactivating, setDeactivating] = useState(false);
    const { workers, loading, fetchMembers } = useTeamMembers();
+
+  const handleDeactivateWorker = async (action: 'deactivate' | 'remove') => {
+    if (!selectedWorker) return;
+    setDeactivating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('deactivate-worker', {
+        body: {
+          worker_profile_id: selectedWorker.id,
+          action,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(data.message || `Worker ${action === 'remove' ? 'removed' : 'deactivated'}`);
+      setSelectedWorker(null);
+      setDeactivateAction(null);
+      fetchMembers();
+    } catch (err: any) {
+      toast.error(err.message || `Failed to ${action} worker`);
+    } finally {
+      setDeactivating(false);
+    }
+  };
 
   const filteredWorkers = workers.filter(w => 
      w.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -215,10 +254,61 @@ export const ManagerTeam = () => {
                   <p className="text-sm text-muted-foreground">{selectedWorker.phone}</p>
                 )}
               </div>
+
+              {selectedWorker.role === 'worker' && (
+                <div className="pt-2 space-y-2">
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2 text-warning border-warning/30 hover:bg-warning/10"
+                    onClick={() => setDeactivateAction('deactivate')}
+                  >
+                    <UserMinus className="w-4 h-4" />
+                    Remove from Team
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2 text-destructive border-destructive/30 hover:bg-destructive/10"
+                    onClick={() => setDeactivateAction('remove')}
+                  >
+                    <Ban className="w-4 h-4" />
+                    Deactivate Account
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Deactivate Confirmation */}
+      <AlertDialog open={!!deactivateAction} onOpenChange={() => setDeactivateAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deactivateAction === 'remove' ? 'Deactivate Account' : 'Remove from Team'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deactivateAction === 'remove'
+                ? `This will remove ${selectedWorker?.full_name} from the team and disable their account. They will no longer be able to sign in. This action cannot be easily undone.`
+                : `This will remove ${selectedWorker?.full_name} from your team and unassign them from future shifts. Their account will remain active and they can be re-added later.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deactivating}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deactivating}
+              className={deactivateAction === 'remove' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeactivateWorker(deactivateAction!);
+              }}
+            >
+              {deactivating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {deactivateAction === 'remove' ? 'Deactivate' : 'Remove'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
  
        {/* Invite Modal */}
        <InviteWorkerModal
