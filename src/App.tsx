@@ -22,6 +22,7 @@ import { WorkerHome } from "./pages/worker/WorkerHome";
 import { WorkerShifts } from "./pages/worker/WorkerShifts";
 import { WorkerProfile } from "./pages/worker/WorkerProfile";
 import { WorkerNotifications } from "./pages/worker/WorkerNotifications";
+import WorkerTeamDirectory from "./pages/worker/WorkerTeamDirectory";
 import WorkerShiftHistory from "./pages/worker/WorkerShiftHistory";
 
 // Manager Pages
@@ -151,6 +152,7 @@ const AppRoutes = () => (
     }>
       <Route index element={<WorkerHome />} />
       <Route path="shifts" element={<WorkerShifts />} />
+      <Route path="team" element={<WorkerTeamDirectory />} />
       <Route path="history" element={<WorkerShiftHistory />} />
       <Route path="profile" element={<WorkerProfile />} />
       <Route path="notifications" element={<WorkerNotifications />} />
