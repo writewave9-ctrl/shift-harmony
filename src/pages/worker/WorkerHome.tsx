@@ -14,6 +14,7 @@ import { haptics } from '@/lib/haptics';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatTimeRange } from '@/lib/formatTime';
+import { OnboardingChecklist } from '@/components/OnboardingChecklist';
 
 interface WorkerShift {
   id: string;
@@ -170,6 +171,11 @@ export const WorkerHome = () => {
       </header>
 
       <div className="px-5 space-y-5 pb-6">
+        {/* Onboarding Checklist */}
+        <MotionSection>
+          <OnboardingChecklist />
+        </MotionSection>
+
         {/* Today's Shift Card */}
         <MotionSection>
           {todayShift ? (
