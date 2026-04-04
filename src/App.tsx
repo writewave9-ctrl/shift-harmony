@@ -22,6 +22,7 @@ import { WorkerHome } from "./pages/worker/WorkerHome";
 import { WorkerShifts } from "./pages/worker/WorkerShifts";
 import { WorkerProfile } from "./pages/worker/WorkerProfile";
 import { WorkerNotifications } from "./pages/worker/WorkerNotifications";
+import WorkerTeamDirectory from "./pages/worker/WorkerTeamDirectory";
 import WorkerShiftHistory from "./pages/worker/WorkerShiftHistory";
 
 // Manager Pages
