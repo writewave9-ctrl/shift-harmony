@@ -171,6 +171,11 @@ export const WorkerHome = () => {
       </header>
 
       <div className="px-5 space-y-5 pb-6">
+        {/* Onboarding Checklist */}
+        <MotionSection>
+          <OnboardingChecklist />
+        </MotionSection>
+
         {/* Today's Shift Card */}
         <MotionSection>
           {todayShift ? (
