@@ -152,6 +152,7 @@ const AppRoutes = () => (
     }>
       <Route index element={<WorkerHome />} />
       <Route path="shifts" element={<WorkerShifts />} />
+      <Route path="team" element={<WorkerTeamDirectory />} />
       <Route path="history" element={<WorkerShiftHistory />} />
       <Route path="profile" element={<WorkerProfile />} />
       <Route path="notifications" element={<WorkerNotifications />} />

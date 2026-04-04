@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Home, Calendar, User, History } from 'lucide-react';
+import { Home, Calendar, Users, History, User } from 'lucide-react';
 
 const navItems = [
   { path: '/worker', icon: Home, label: 'Home' },
   { path: '/worker/shifts', icon: Calendar, label: 'Shifts' },
+  { path: '/worker/team', icon: Users, label: 'Team' },
   { path: '/worker/history', icon: History, label: 'History' },
   { path: '/worker/profile', icon: User, label: 'Profile' },
 ];
