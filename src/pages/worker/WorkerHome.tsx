@@ -14,6 +14,7 @@ import { haptics } from '@/lib/haptics';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatTimeRange } from '@/lib/formatTime';
+import { OnboardingChecklist } from '@/components/OnboardingChecklist';
 
 interface WorkerShift {
   id: string;
