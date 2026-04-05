@@ -13,6 +13,7 @@ const navItems = [
 
 export const WorkerNav = () => {
   const location = useLocation();
+  const { unreadCount } = useNotifications();
 
   return (
     <nav className="sticky bottom-0 z-50 bg-card/90 backdrop-blur-xl border-t border-border/40 px-4 pb-safe">
