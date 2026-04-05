@@ -23,12 +23,16 @@ import {
   Trash2, 
   Ban,
   Check,
-  Loader2
+  Loader2,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { AvailabilityCalendar } from '@/components/AvailabilityCalendar';
+import { formatTime } from '@/lib/formatTime';
 
 interface AvailabilityBlock {
   id: string;
@@ -54,6 +58,7 @@ export const AvailabilitySettings = ({ trigger }: AvailabilitySettingsProps) => 
   const [blocks, setBlocks] = useState<AvailabilityBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [newBlockType, setNewBlockType] = useState<'recurring' | 'specific'>('recurring');
@@ -176,15 +181,37 @@ export const AvailabilitySettings = ({ trigger }: AvailabilitySettingsProps) => 
       </SheetTrigger>
       <SheetContent className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <Ban className="w-5 h-5 text-primary" />
-            Blocked Times
-          </SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle className="flex items-center gap-2">
+              <Ban className="w-5 h-5 text-primary" />
+              Availability
+            </SheetTitle>
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode('calendar')}
+                className={cn(
+                  'p-1.5 rounded-md transition-colors',
+                  viewMode === 'calendar' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  'p-1.5 rounded-md transition-colors',
+                  viewMode === 'list' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </SheetHeader>
 
         <div className="mt-6 space-y-4">
           <p className="text-sm text-muted-foreground">
-            Set times when you're not available to work. Managers will see these when assigning shifts.
+            Set times when you're not available. Managers will see these when assigning shifts.
           </p>
 
           {loading ? (
@@ -193,90 +220,108 @@ export const AvailabilitySettings = ({ trigger }: AvailabilitySettingsProps) => 
             </div>
           ) : (
             <>
-              {/* Existing Blocks */}
-              <div className="space-y-3">
-                {blocks.map(block => (
-                  <div key={block.id} className="p-4 rounded-xl border border-border bg-card">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-foreground">{formatBlockTitle(block)}</p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{block.startTime} - {block.endTime}</span>
-                        </div>
-                        {block.notes && <p className="text-xs text-muted-foreground mt-2">{block.notes}</p>}
-                      </div>
-                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleRemoveBlock(block.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+              {/* Calendar View */}
+              {viewMode === 'calendar' && (
+                <AvailabilityCalendar blocks={blocks} />
+              )}
+
+              {/* List View */}
+              {viewMode === 'list' && (
+                <div className="space-y-2">
+                  {blocks.length === 0 ? (
+                    <div className="text-center py-6 text-sm text-muted-foreground">
+                      No blocked times set. You're fully available!
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ) : (
+                    blocks.map(block => (
+                      <div key={block.id} className="p-3.5 rounded-xl border border-border bg-card group">
+                        <div className="flex items-start justify-between">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-foreground text-sm">{formatBlockTitle(block)}</p>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                              <Clock className="w-3 h-3 shrink-0" />
+                              <span>{formatTime(block.startTime)} – {formatTime(block.endTime)}</span>
+                            </div>
+                            {block.notes && <p className="text-xs text-muted-foreground mt-1.5 truncate">{block.notes}</p>}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                            onClick={() => handleRemoveBlock(block.id)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
 
               {/* Add New Block Form */}
               {showAddForm ? (
-                <div className="p-4 rounded-xl border-2 border-dashed border-primary/50 space-y-4">
+                <div className="p-4 rounded-xl border-2 border-dashed border-primary/40 bg-primary/[0.02] space-y-4">
                   <div className="space-y-3">
-                    <Label>Block Type</Label>
+                    <Label className="text-xs font-medium">Block Type</Label>
                     <div className="flex gap-2">
-                      <Button type="button" variant={newBlockType === 'recurring' ? 'default' : 'outline'} size="sm" onClick={() => setNewBlockType('recurring')}>Weekly</Button>
-                      <Button type="button" variant={newBlockType === 'specific' ? 'default' : 'outline'} size="sm" onClick={() => setNewBlockType('specific')}>Specific Date</Button>
+                      <Button type="button" variant={newBlockType === 'recurring' ? 'default' : 'outline'} size="sm" className="text-xs" onClick={() => setNewBlockType('recurring')}>Weekly</Button>
+                      <Button type="button" variant={newBlockType === 'specific' ? 'default' : 'outline'} size="sm" className="text-xs" onClick={() => setNewBlockType('specific')}>Specific Date</Button>
                     </div>
                   </div>
 
                   {newBlockType === 'recurring' ? (
                     <div className="space-y-3">
-                      <Label>Day of Week</Label>
-                      <div className="flex flex-wrap gap-2">
+                      <Label className="text-xs font-medium">Day of Week</Label>
+                      <div className="flex flex-wrap gap-1.5">
                         {DAYS_OF_WEEK.map((day, index) => (
-                          <Button key={day} type="button" variant={newBlockDay === index ? 'default' : 'outline'} size="sm" onClick={() => setNewBlockDay(index)}>{day.slice(0, 3)}</Button>
+                          <Button key={day} type="button" variant={newBlockDay === index ? 'default' : 'outline'} size="sm" className="h-8 px-2.5 text-xs" onClick={() => setNewBlockDay(index)}>{day.slice(0, 3)}</Button>
                         ))}
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <Label>Date</Label>
+                      <Label className="text-xs font-medium">Date</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-left">
+                          <Button variant="outline" className="w-full justify-start text-left text-sm">
                             <CalendarIcon className="w-4 h-4 mr-2" />
                             {newBlockDate ? format(newBlockDate, 'PPP') : 'Pick a date'}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={newBlockDate} onSelect={setNewBlockDate} initialFocus />
+                          <Calendar mode="single" selected={newBlockDate} onSelect={setNewBlockDate} initialFocus className="p-3 pointer-events-auto" />
                         </PopoverContent>
                       </Popover>
                     </div>
                   )}
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label>Start Time</Label>
-                      <Input type="time" value={newBlockStart} onChange={(e) => setNewBlockStart(e.target.value)} />
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Start</Label>
+                      <Input type="time" value={newBlockStart} onChange={(e) => setNewBlockStart(e.target.value)} className="text-sm" />
                     </div>
-                    <div className="space-y-2">
-                      <Label>End Time</Label>
-                      <Input type="time" value={newBlockEnd} onChange={(e) => setNewBlockEnd(e.target.value)} />
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">End</Label>
+                      <Input type="time" value={newBlockEnd} onChange={(e) => setNewBlockEnd(e.target.value)} className="text-sm" />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Notes (Optional)</Label>
-                    <Input placeholder="e.g., Personal commitment" value={newBlockNotes} onChange={(e) => setNewBlockNotes(e.target.value)} />
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Notes (Optional)</Label>
+                    <Input placeholder="e.g., Personal commitment" value={newBlockNotes} onChange={(e) => setNewBlockNotes(e.target.value)} className="text-sm" />
                   </div>
 
                   <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1" onClick={() => setShowAddForm(false)}>Cancel</Button>
-                    <Button className="flex-1" onClick={handleAddBlock} disabled={saving}>
-                      {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
+                    <Button variant="outline" className="flex-1" size="sm" onClick={() => setShowAddForm(false)}>Cancel</Button>
+                    <Button className="flex-1" size="sm" onClick={handleAddBlock} disabled={saving}>
+                      {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Check className="w-4 h-4 mr-1" />}
                       Save
                     </Button>
                   </div>
                 </div>
               ) : (
-                <Button variant="outline" className="w-full h-12 border-dashed" onClick={() => setShowAddForm(true)}>
+                <Button variant="outline" className="w-full h-11 border-dashed text-sm" onClick={() => setShowAddForm(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Blocked Time
                 </Button>
@@ -284,10 +329,10 @@ export const AvailabilitySettings = ({ trigger }: AvailabilitySettingsProps) => 
             </>
           )}
 
-          <div className="p-4 rounded-xl bg-info-muted">
-            <p className="text-sm text-info">
-              <strong>Tip:</strong> You can add multiple blocks for the same day if needed. 
-              Managers will be notified if they try to assign you during blocked times.
+          <div className="p-3.5 rounded-xl bg-info-muted">
+            <p className="text-xs text-info leading-relaxed">
+              <strong>Tip:</strong> Add multiple blocks per day if needed. 
+              Managers will see these when scheduling shifts.
             </p>
           </div>
         </div>
