@@ -188,10 +188,8 @@ export const WorkerHome = () => {
               </div>
               <div className="p-5">
                 <div className="text-center mb-5">
-                  <p className="text-3xl font-bold text-foreground tracking-tight font-mono">
-                    {todayShift.start_time}
-                    <span className="text-muted-foreground/50 mx-2 text-lg">→</span>
-                    {todayShift.end_time}
+                  <p className="text-2xl font-bold text-foreground tracking-tight">
+                    {formatTimeRange(todayShift.start_time, todayShift.end_time)}
                   </p>
                   <div className="flex items-center justify-center gap-4 mt-3">
                     <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
