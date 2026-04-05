@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Home, Calendar, Users, History, User } from 'lucide-react';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const navItems = [
   { path: '/worker', icon: Home, label: 'Home' },
@@ -12,6 +13,7 @@ const navItems = [
 
 export const WorkerNav = () => {
   const location = useLocation();
+  const { unreadCount } = useNotifications();
 
   return (
     <nav className="sticky bottom-0 z-50 bg-card/90 backdrop-blur-xl border-t border-border/40 px-4 pb-safe">
