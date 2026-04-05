@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Home, Calendar, Users, History, User } from 'lucide-react';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const navItems = [
   { path: '/worker', icon: Home, label: 'Home' },
