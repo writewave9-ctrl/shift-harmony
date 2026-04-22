@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ManagerRequestsSkeleton } from '@/components/PageSkeletons';
 import { useShiftRequests } from '@/hooks/useShiftRequests';
 import { useSwapRequests, type SwapRequest } from '@/hooks/useSwapRequests';
@@ -18,6 +18,8 @@ import { formatTimeRange } from '@/lib/formatTime';
 import { toast } from 'sonner';
 import type { ShiftRequest } from '@/hooks/useShiftRequests';
 import { SwapStatusPill } from '@/components/SwapStatusPill';
+import { SwapCountdownBadge } from '@/components/SwapCountdownBadge';
+import { SwapTimeline } from '@/components/SwapTimeline';
 import { supabase } from '@/integrations/supabase/client';
 
 const formatDate = (dateStr: string) => {
@@ -30,6 +32,10 @@ const formatDate = (dateStr: string) => {
   return format(date, 'EEE, MMM d');
 };
 
+type SwapFilter = 'pending' | 'history';
+type ShiftFilter = 'pending' | 'history';
+type Confirm = null | 'approve' | 'decline';
+
 export const ManagerShiftRequests = () => {
   const navigate = useNavigate();
   const { requests, loading, approveRequest, declineRequest } = useShiftRequests();
@@ -40,6 +46,9 @@ export const ManagerShiftRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState<ShiftRequest | null>(null);
   const [selectedSwap, setSelectedSwap] = useState<SwapRequest | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [shiftFilter, setShiftFilter] = useState<ShiftFilter>('pending');
+  const [swapFilter, setSwapFilter] = useState<SwapFilter>('pending');
+  const [confirm, setConfirm] = useState<Confirm>(null);
 
   const handleApprove = async () => {
     if (!selectedRequest) return;
@@ -75,11 +84,9 @@ export const ManagerShiftRequests = () => {
     }
     if (fresh.status !== 'pending') {
       toast.error(
-        fresh.status === 'approved'
-          ? 'Already approved by another manager'
-          : fresh.status === 'declined'
-          ? 'Already declined'
-          : 'This request is no longer available',
+        fresh.status === 'approved' ? 'Already approved by another manager' :
+        fresh.status === 'declined' ? 'Already declined' :
+        'This request is no longer available',
       );
       refetchSwaps();
       return false;
@@ -92,28 +99,58 @@ export const ManagerShiftRequests = () => {
     return await managerDeclineSwap(swap.id);
   };
 
-  const handleSwapApprove = async () => {
-    if (!selectedSwap) return;
+  const handleSwapConfirm = async () => {
+    if (!selectedSwap || !confirm) return;
     setProcessing(true);
-    const ok = await runSwapAction(selectedSwap, 'approve');
+    const ok = await runSwapAction(selectedSwap, confirm);
     setProcessing(false);
-    if (ok) setSelectedSwap(null);
+    if (ok) {
+      setConfirm(null);
+      setSelectedSwap(null);
+    } else {
+      setConfirm(null);
+    }
   };
 
-  const handleSwapDecline = async () => {
-    if (!selectedSwap) return;
-    setProcessing(true);
-    const ok = await runSwapAction(selectedSwap, 'decline');
-    setProcessing(false);
-    if (ok) setSelectedSwap(null);
+  const closeSwapDrawer = () => {
+    setSelectedSwap(null);
+    setConfirm(null);
   };
 
   if (loading || loadingSwaps) return <ManagerRequestsSkeleton />;
 
   const pendingList = requests.filter(r => r.status === 'pending');
   const reviewedList = requests.filter(r => r.status !== 'pending');
-  const reviewedSwaps = allSwaps.filter(s => s.status !== 'pending');
+  const reviewedSwaps = useMemo(() => allSwaps.filter(s => s.status !== 'pending'), [allSwaps]);
   const totalPending = pendingList.length + pendingForManager.length;
+
+  const visibleShifts = shiftFilter === 'pending' ? pendingList : reviewedList;
+  const visibleSwaps = swapFilter === 'pending' ? pendingForManager : reviewedSwaps;
+
+  const FilterPills = <T extends string>({
+    value, onChange, options,
+  }: {
+    value: T;
+    onChange: (v: T) => void;
+    options: { value: T; label: string }[];
+  }) => (
+    <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted/60 border border-border/40">
+      {options.map(o => (
+        <button
+          key={o.value}
+          onClick={() => onChange(o.value)}
+          className={cn(
+            'px-3 py-1 rounded-full text-[11px] font-semibold transition-all',
+            value === o.value
+              ? 'bg-background text-foreground shadow-elevated'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -154,19 +191,38 @@ export const ManagerShiftRequests = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Shift Pickups */}
+          {/* ============ Shift Pickups ============ */}
           <TabsContent value="shifts" className="space-y-4">
-            {pendingList.length > 0 ? (
-              pendingList.map(request => (
+            <div className="flex justify-end">
+              <FilterPills
+                value={shiftFilter}
+                onChange={setShiftFilter}
+                options={[
+                  { value: 'pending', label: `Pending${pendingList.length ? ` · ${pendingList.length}` : ''}` },
+                  { value: 'history', label: 'History' },
+                ]}
+              />
+            </div>
+
+            {visibleShifts.length > 0 ? (
+              visibleShifts.map(request => (
                 <Card
                   key={request.id}
-                  className="cursor-pointer hover:bg-accent/30 transition-colors shadow-elevated border-border/50 rounded-2xl"
+                  className={cn(
+                    'cursor-pointer hover:bg-accent/30 transition-colors rounded-2xl',
+                    request.status === 'pending'
+                      ? 'shadow-floating border-primary/20 bg-gradient-surface'
+                      : 'shadow-elevated border-border/50',
+                  )}
                   onClick={() => setSelectedRequest(request)}
                 >
                   <CardContent className="pt-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-accent flex items-center justify-center shrink-0">
-                        <User className="w-5 h-5 text-primary" />
+                      <div className={cn(
+                        'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
+                        request.status === 'pending' ? 'bg-gradient-accent' : 'bg-accent',
+                      )}>
+                        <User className={cn('w-5 h-5', request.status === 'pending' ? 'text-primary' : 'text-muted-foreground')} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground">{request.worker?.full_name}</p>
@@ -177,7 +233,7 @@ export const ManagerShiftRequests = () => {
                         </div>
                         {request.notes && <p className="mt-2 text-xs text-muted-foreground italic">"{request.notes}"</p>}
                       </div>
-                      <SwapStatusPill status="pending" />
+                      <SwapStatusPill status={(request.status === 'approved' ? 'approved' : request.status === 'declined' ? 'declined' : 'pending') as any} />
                     </div>
                   </CardContent>
                 </Card>
@@ -188,9 +244,13 @@ export const ManagerShiftRequests = () => {
                   <div className="w-14 h-14 mx-auto rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
                     <Inbox className="w-6 h-6 text-muted-foreground/60" />
                   </div>
-                  <p className="text-sm font-medium text-foreground">No pending pickups</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {shiftFilter === 'pending' ? 'No pending pickups' : 'No reviewed pickups yet'}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1 mb-4">
-                    When workers request open shifts, they'll appear here for review.
+                    {shiftFilter === 'pending'
+                      ? "When workers request open shifts, they'll appear here for review."
+                      : 'Approved and declined pickups will be listed here for reference.'}
                   </p>
                   <button
                     onClick={() => navigate('/manager/shifts')}
@@ -201,48 +261,40 @@ export const ManagerShiftRequests = () => {
                 </CardContent>
               </Card>
             )}
-
-            {reviewedList.length > 0 && (
-              <div className="pt-4">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Recently Reviewed</h3>
-                <div className="space-y-2">
-                  {reviewedList.slice(0, 5).map(request => (
-                    <Card key={request.id} className="rounded-xl border-border/40">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center shrink-0">
-                            <User className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-foreground">{request.worker?.full_name}</p>
-                            <div className="mt-1 flex flex-wrap gap-2 text-xs">
-                              <span className="flex items-center gap-1 text-muted-foreground"><Calendar className="w-3 h-3" />{request.shift && formatDate(request.shift.date)}</span>
-                              <span className="flex items-center gap-1 text-muted-foreground">{request.shift?.position}</span>
-                            </div>
-                          </div>
-                          <SwapStatusPill status={request.status === 'approved' ? 'approved' : 'declined'} />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
           </TabsContent>
 
-          {/* Swaps */}
+          {/* ============ Swaps ============ */}
           <TabsContent value="swaps" className="space-y-4">
-            {pendingForManager.length > 0 ? (
-              pendingForManager.map(swap => (
+            <div className="flex justify-end">
+              <FilterPills
+                value={swapFilter}
+                onChange={setSwapFilter}
+                options={[
+                  { value: 'pending', label: `Pending${pendingForManager.length ? ` · ${pendingForManager.length}` : ''}` },
+                  { value: 'history', label: 'History' },
+                ]}
+              />
+            </div>
+
+            {visibleSwaps.length > 0 ? (
+              visibleSwaps.map(swap => (
                 <Card
                   key={swap.id}
-                  className="cursor-pointer hover:bg-accent/30 transition-colors shadow-floating border-primary/20 rounded-2xl bg-gradient-surface"
+                  className={cn(
+                    'cursor-pointer hover:bg-accent/30 transition-colors rounded-2xl',
+                    swap.status === 'pending'
+                      ? 'shadow-floating border-primary/20 bg-gradient-surface'
+                      : 'shadow-elevated border-border/40',
+                  )}
                   onClick={() => setSelectedSwap(swap)}
                 >
                   <CardContent className="pt-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center shrink-0 shadow-glow">
-                        <ArrowLeftRight className="w-5 h-5 text-primary-foreground" />
+                      <div className={cn(
+                        'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
+                        swap.status === 'pending' ? 'bg-gradient-primary shadow-glow' : 'bg-accent',
+                      )}>
+                        <ArrowLeftRight className={cn('w-5 h-5', swap.status === 'pending' ? 'text-primary-foreground' : 'text-muted-foreground')} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground text-sm">
@@ -259,7 +311,10 @@ export const ManagerShiftRequests = () => {
                           <p className="mt-2 text-xs text-muted-foreground italic">"{swap.reason}"</p>
                         )}
                       </div>
-                      <SwapStatusPill status={swap.status} />
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <SwapStatusPill status={swap.status} />
+                        {swap.status === 'pending' && <SwapCountdownBadge shift={swap.shift} />}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -270,9 +325,13 @@ export const ManagerShiftRequests = () => {
                   <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-accent flex items-center justify-center mb-3">
                     <ArrowLeftRight className="w-6 h-6 text-primary/70" />
                   </div>
-                  <p className="text-sm font-medium text-foreground">All caught up — no pending swaps</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {swapFilter === 'pending' ? 'All caught up — no pending swaps' : 'No past swap activity'}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1 mb-4">
-                    Worker-to-worker swaps awaiting your approval will show up here.
+                    {swapFilter === 'pending'
+                      ? 'Worker-to-worker swaps awaiting your approval will show up here.'
+                      : 'Approved, declined, and expired swaps will be archived here.'}
                   </p>
                   <button
                     onClick={() => navigate('/manager/team')}
@@ -283,35 +342,11 @@ export const ManagerShiftRequests = () => {
                 </CardContent>
               </Card>
             )}
-
-            {reviewedSwaps.length > 0 && (
-              <div className="pt-4">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Recently Reviewed</h3>
-                <div className="space-y-2">
-                  {reviewedSwaps.slice(0, 5).map(s => (
-                    <Card key={s.id} className="rounded-xl border-border/40">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center shrink-0">
-                            <ArrowLeftRight className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-foreground text-sm">{s.requester?.full_name} → {s.requested_worker?.full_name || 'Open'}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{s.shift && formatDate(s.shift.date)} • {s.shift?.position}</p>
-                          </div>
-                          <SwapStatusPill status={s.status} />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* Shift Pickup Drawer */}
+      {/* ============ Shift Pickup Drawer ============ */}
       <Drawer open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
         <DrawerContent className="bg-gradient-surface">
           <DrawerHeader>
@@ -328,7 +363,7 @@ export const ManagerShiftRequests = () => {
                   <p className="font-semibold">{selectedRequest.worker?.full_name}</p>
                   <p className="text-sm text-muted-foreground">{selectedRequest.worker?.position || 'Team Member'}</p>
                 </div>
-                <SwapStatusPill status="pending" />
+                <SwapStatusPill status={(selectedRequest.status === 'approved' ? 'approved' : selectedRequest.status === 'declined' ? 'declined' : 'pending') as any} />
               </div>
               <div className="space-y-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Requested Shift</p>
@@ -347,21 +382,23 @@ export const ManagerShiftRequests = () => {
                   <p className="text-sm">"{selectedRequest.notes}"</p>
                 </div>
               )}
-              <div className="flex gap-3 pt-2">
-                <Button variant="outline" className="flex-1 h-11 rounded-xl shadow-elevated" onClick={handleDecline} disabled={processing}>
-                  {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><X className="w-4 h-4 mr-2" />Decline</>}
-                </Button>
-                <Button className="flex-1 h-11 rounded-xl bg-gradient-primary shadow-floating hover:opacity-95" onClick={handleApprove} disabled={processing}>
-                  {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4 mr-2" />Approve</>}
-                </Button>
-              </div>
+              {selectedRequest.status === 'pending' && (
+                <div className="flex gap-3 pt-2">
+                  <Button variant="outline" className="flex-1 h-11 rounded-xl shadow-elevated" onClick={handleDecline} disabled={processing}>
+                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><X className="w-4 h-4 mr-2" />Decline</>}
+                  </Button>
+                  <Button className="flex-1 h-11 rounded-xl bg-gradient-primary shadow-floating hover:opacity-95" onClick={handleApprove} disabled={processing}>
+                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4 mr-2" />Approve</>}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DrawerContent>
       </Drawer>
 
-      {/* Swap Drawer */}
-      <Drawer open={!!selectedSwap} onOpenChange={() => setSelectedSwap(null)}>
+      {/* ============ Swap Drawer (with timeline + confirm step) ============ */}
+      <Drawer open={!!selectedSwap} onOpenChange={(o) => !o && closeSwapDrawer()}>
         <DrawerContent className="bg-gradient-surface">
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-2">
@@ -401,7 +438,10 @@ export const ManagerShiftRequests = () => {
                 <div className="p-4 rounded-2xl border border-border/50 bg-card shadow-elevated">
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <p className="font-semibold">{selectedSwap.shift?.position}</p>
-                    <SwapStatusPill status={selectedSwap.status} />
+                    <div className="flex flex-col items-end gap-1">
+                      <SwapStatusPill status={selectedSwap.status} />
+                      {selectedSwap.status === 'pending' && <SwapCountdownBadge shift={selectedSwap.shift} />}
+                    </div>
                   </div>
                   <div className="space-y-1.5 text-sm text-muted-foreground">
                     <p className="flex items-center gap-2"><Calendar className="w-4 h-4 text-primary/70" />{selectedSwap.shift && formatDate(selectedSwap.shift.date)}</p>
@@ -426,19 +466,72 @@ export const ManagerShiftRequests = () => {
                 </div>
               )}
 
+              {/* Activity timeline */}
+              <SwapTimeline
+                createdAt={selectedSwap.created_at}
+                updatedAt={(selectedSwap as any).updated_at}
+                status={selectedSwap.status}
+              />
+
               {selectedSwap.status === 'pending' ? (
-                <div className="flex gap-3 pt-2">
-                  <Button variant="outline" className="flex-1 h-11 rounded-xl shadow-elevated" onClick={handleSwapDecline} disabled={processing}>
-                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><X className="w-4 h-4 mr-2" />Decline</>}
-                  </Button>
-                  <Button
-                    className="flex-1 h-11 rounded-xl bg-gradient-primary shadow-floating hover:opacity-95"
-                    onClick={handleSwapApprove}
-                    disabled={processing || !selectedSwap.requested_worker_id}
-                  >
-                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4 mr-2" />Approve</>}
-                  </Button>
-                </div>
+                confirm ? (
+                  <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 space-y-3 shadow-elevated">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {confirm === 'approve' ? 'Approve this swap?' : 'Decline this swap?'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {confirm === 'approve'
+                          ? `${selectedSwap.requested_worker?.full_name || 'The new worker'} will be assigned to this shift, replacing ${selectedSwap.requester?.full_name || 'the requester'}.`
+                          : 'Both workers will be notified that the swap was declined.'}
+                      </p>
+                    </div>
+                    <div className="flex gap-3">
+                      <Button
+                        variant="outline"
+                        className="flex-1 h-11 rounded-xl shadow-elevated"
+                        onClick={() => setConfirm(null)}
+                        disabled={processing}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        className={cn(
+                          'flex-1 h-11 rounded-xl shadow-floating hover:opacity-95',
+                          confirm === 'approve'
+                            ? 'bg-gradient-primary text-primary-foreground'
+                            : 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+                        )}
+                        onClick={handleSwapConfirm}
+                        disabled={processing}
+                      >
+                        {processing
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : confirm === 'approve'
+                            ? <><Check className="w-4 h-4 mr-2" />Yes, approve</>
+                            : <><X className="w-4 h-4 mr-2" />Yes, decline</>}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-11 rounded-xl shadow-elevated"
+                      onClick={() => setConfirm('decline')}
+                      disabled={processing}
+                    >
+                      <X className="w-4 h-4 mr-2" />Decline
+                    </Button>
+                    <Button
+                      className="flex-1 h-11 rounded-xl bg-gradient-primary shadow-floating hover:opacity-95"
+                      onClick={() => setConfirm('approve')}
+                      disabled={processing || !selectedSwap.requested_worker_id}
+                    >
+                      <Check className="w-4 h-4 mr-2" />Approve
+                    </Button>
+                  </div>
+                )
               ) : (
                 <div className="text-center text-xs text-muted-foreground py-2">
                   This swap is no longer pending.

@@ -33,26 +33,22 @@ type Confirm = null | 'accept' | 'decline';
 
 export const IncomingSwapsCard = () => {
   const navigate = useNavigate();
-  const { requests, acceptSwap, declineSwap, refetch } = useSwapRequests();
-  const { profile } = { profile: undefined } as any; // not needed; filter uses hook output below
+  const { requests, incomingForMe, acceptSwap, declineSwap, refetch } = useSwapRequests();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [selected, setSelected] = useState<SwapRequest | null>(null);
   const [drawerBusy, setDrawerBusy] = useState(false);
   const [filter, setFilter] = useState<Filter>('pending');
   const [confirm, setConfirm] = useState<Confirm>(null);
 
-  // All swaps targeted at me (including history)
-  const myIncoming = useMemo(
-    () => requests.filter(r => !!r.requested_worker_id && r.requested_worker_id === r.requested_worker?.id),
-    [requests],
-  );
-
-  // Use hook-provided pending list for accuracy; build history from full list
-  const { incomingForMe } = useSwapRequests();
+  // History: any non-pending swap that was targeted at me (need profile id; derive from incoming list)
+  const myProfileId = incomingForMe[0]?.requested_worker_id ?? null;
   const myIncomingHistory = useMemo(() => {
-    const pendingIds = new Set(incomingForMe.map(r => r.id));
-    return myIncoming.filter(r => !pendingIds.has(r.id) && r.status !== 'pending');
-  }, [myIncoming, incomingForMe]);
+    if (!myProfileId) {
+      // Fallback: show non-pending where I'm the requested worker, regardless of profile id source
+      return requests.filter(r => r.status !== 'pending' && r.requested_worker_id && r.requested_worker_id === r.requested_worker?.id);
+    }
+    return requests.filter(r => r.status !== 'pending' && r.requested_worker_id === myProfileId);
+  }, [requests, myProfileId]);
 
   const visible = filter === 'pending' ? incomingForMe : myIncomingHistory;
 
