@@ -246,6 +246,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_team_id: string | null
           avatar_url: string | null
           created_at: string
           email: string
@@ -264,6 +265,7 @@ export type Database = {
             | null
         }
         Insert: {
+          active_team_id?: string | null
           avatar_url?: string | null
           created_at?: string
           email: string
@@ -282,6 +284,7 @@ export type Database = {
             | null
         }
         Update: {
+          active_team_id?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string
@@ -300,6 +303,13 @@ export type Database = {
             | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_active_team_id_fkey"
+            columns: ["active_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_organization_id_fkey"
             columns: ["organization_id"]
@@ -744,6 +754,44 @@ export type Database = {
           },
         ]
       }
+      team_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          joined_at: string
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          joined_at?: string
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_memberships_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_settings: {
         Row: {
           allow_worker_shift_requests: boolean | null
@@ -869,13 +917,31 @@ export type Database = {
           role_position: string
         }[]
       }
+      get_user_active_team: { Args: { _user_id: string }; Returns: string }
       get_user_organization: { Args: { _user_id: string }; Returns: string }
       get_user_team: { Args: { _user_id: string }; Returns: string }
+      get_user_teams: {
+        Args: { _user_id: string }
+        Returns: {
+          is_active_team: boolean
+          joined_at: string
+          team_id: string
+          team_name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_active_team: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_member_of_team: {
+        Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
     }
