@@ -9,7 +9,7 @@ interface AppHeaderProps {
 
 export const AppHeader = ({ title = 'Align', showWorkspaceSwitcher = true }: AppHeaderProps) => {
   return (
-    <header className="sticky top-0 z-50 bg-card/85 backdrop-blur-xl border-b border-border/40 px-4 h-14 flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border/40 shadow-elevated px-4 h-14 flex items-center justify-between">
       <div className="flex items-center gap-2.5 min-w-0">
         <AlignLogo size={28} />
         <span className="text-sm font-semibold text-foreground tracking-tight truncate">{title}</span>
