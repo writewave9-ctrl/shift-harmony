@@ -261,14 +261,10 @@ export const ManagerShiftRequests = () => {
           {/* ============ Swaps ============ */}
           <TabsContent value="swaps" className="space-y-4">
             <div className="flex justify-end">
-              <FilterPills
-                value={swapFilter}
-                onChange={setSwapFilter}
-                options={[
-                  { value: 'pending', label: `Pending${pendingForManager.length ? ` · ${pendingForManager.length}` : ''}` },
-                  { value: 'history', label: 'History' },
-                ]}
-              />
+              {renderFilterPills(swapFilter, (v) => setSwapFilter(v as SwapFilter), [
+                { value: 'pending', label: `Pending${pendingForManager.length ? ` · ${pendingForManager.length}` : ''}` },
+                { value: 'history', label: 'History' },
+              ])}
             </div>
 
             {visibleSwaps.length > 0 ? (
