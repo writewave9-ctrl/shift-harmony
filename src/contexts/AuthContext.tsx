@@ -7,6 +7,7 @@ interface Profile {
   user_id: string;
   organization_id: string | null;
   team_id: string | null;
+  active_team_id: string | null;
   full_name: string;
   email: string;
   phone: string | null;
@@ -27,7 +28,7 @@ interface AuthContextType {
   profile: Profile | null;
   userRole: UserRole | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, role: 'manager' | 'worker') => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, role: 'manager' | 'worker', invitationToken?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -112,7 +113,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, role: 'manager' | 'worker') => {
+  const signUp = async (email: string, password: string, fullName: string, role: 'manager' | 'worker', invitationToken?: string) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -121,17 +122,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           emailRedirectTo: window.location.origin,
           data: {
             full_name: fullName,
-            role: role,
+            role: invitationToken ? 'worker' : role,
+            invitation_token: invitationToken || null,
           }
         }
       });
 
       if (error) throw error;
 
-      // Profile and role are created automatically via database trigger
-      // Wait briefly for the trigger to complete, then fetch profile
       if (data.user) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 600));
         await fetchProfile(data.user.id);
       }
 

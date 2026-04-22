@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Pages
 import Auth from "./pages/Auth";
 import { ResetPassword } from "./pages/ResetPassword";
+import AcceptInvite from "./pages/AcceptInvite";
 
 import NotFound from "./pages/NotFound";
 import { Landing } from "./pages/Landing";
@@ -139,6 +140,7 @@ const AppRoutes = () => (
       <PublicRoute><Auth /></PublicRoute>
     } />
     <Route path="/reset-password" element={<ResetPassword />} />
+    <Route path="/accept-invite" element={<AcceptInvite />} />
 
     
 

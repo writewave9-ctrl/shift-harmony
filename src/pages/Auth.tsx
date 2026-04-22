@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { AlignLogo } from '@/components/AlignLogo';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,8 @@ type AuthMode = 'login' | 'signup' | 'forgot';
 
 export const Auth = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const inviteToken = params.get('invite') || undefined;
   const { signIn, signUp } = useAuth();
   
   const [mode, setMode] = useState<AuthMode>('login');
@@ -76,20 +79,19 @@ export const Auth = () => {
           navigate('/');
         }
       } else {
-        // Signup is manager-only
-        const { error } = await signUp(email, password, fullName, 'manager');
+        // First signup → manager. With invite → worker (handled in signUp).
+        const role: 'manager' | 'worker' = inviteToken ? 'worker' : 'manager';
+        const { error } = await signUp(email, password, fullName, role, inviteToken);
         if (error) {
-          toast({
-            title: 'Sign up failed',
-            description: error.message,
-            variant: 'destructive',
-          });
+          toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
         } else {
           toast({
             title: 'Account created!',
-            description: 'Welcome to Align! Set up your workspace to get started.',
+            description: inviteToken
+              ? 'Welcome to Align! Joining your workspace…'
+              : 'Welcome to Align! Set up your workspace to get started.',
           });
-          navigate('/');
+          navigate(inviteToken ? `/accept-invite?token=${inviteToken}` : '/');
         }
       }
     } finally {
@@ -102,12 +104,7 @@ export const Auth = () => {
       {/* Left Panel - Branding (Hidden on mobile) */}
       <div className="hidden lg:flex lg:w-1/2 bg-primary/5 flex-col justify-between p-12">
         <div>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <span className="text-xl font-bold text-primary-foreground">A</span>
-            </div>
-            <span className="text-2xl font-bold text-foreground">Align</span>
-          </div>
+          <AlignLogo size={44} withWordmark wordmarkClassName="text-2xl" />
         </div>
         
         <div className="space-y-8">
@@ -173,11 +170,9 @@ export const Auth = () => {
         <main className="flex-1 flex items-center justify-center px-6 py-8">
           <div className="w-full max-w-md space-y-8">
             {/* Mobile Logo */}
-            <div className="text-center lg:hidden">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-primary flex items-center justify-center mb-4">
-                <span className="text-2xl font-bold text-primary-foreground">A</span>
-              </div>
-              <h1 className="text-2xl font-bold text-foreground mb-1">Align</h1>
+            <div className="text-center lg:hidden flex flex-col items-center">
+              <AlignLogo size={56} />
+              <h1 className="text-2xl font-bold text-foreground mt-3 mb-1 tracking-tight">Align</h1>
               <p className="text-sm text-muted-foreground">
                 Workforce scheduling made simple
               </p>
