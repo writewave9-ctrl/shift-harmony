@@ -117,10 +117,6 @@ export const ManagerShiftRequests = () => {
     setConfirm(null);
   };
 
-  if (loading || loadingSwaps) return <ManagerRequestsSkeleton />;
-
-  const pendingList = requests.filter(r => r.status === 'pending');
-  const reviewedList = requests.filter(r => r.status !== 'pending');
   const reviewedSwaps = useMemo(() => allSwaps.filter(s => s.status !== 'pending'), [allSwaps]);
 
   if (loading || loadingSwaps) return <ManagerRequestsSkeleton />;
