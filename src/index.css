@@ -85,6 +85,15 @@
     --text-primary: 220 20% 14%;
     --text-secondary: 220 10% 45%;
     --text-tertiary: 220 8% 60%;
+
+    /* Premium gradients & shadows */
+    --gradient-primary: linear-gradient(135deg, hsl(168 35% 42%) 0%, hsl(178 40% 48%) 100%);
+    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(40 18% 97%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(168 30% 96%) 0%, hsl(178 35% 94%) 100%);
+
+    --shadow-elevated: 0 1px 2px hsl(220 20% 14% / 0.04), 0 4px 12px hsl(220 20% 14% / 0.05);
+    --shadow-floating: 0 2px 4px hsl(220 20% 14% / 0.04), 0 12px 32px hsl(220 20% 14% / 0.08);
+    --shadow-glow: 0 0 0 4px hsl(168 35% 42% / 0.12);
   }
 
   .dark {
@@ -139,6 +148,14 @@
     --text-primary: 40 15% 95%;
     --text-secondary: 220 10% 65%;
     --text-tertiary: 220 8% 50%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(168 40% 50%) 0%, hsl(178 45% 55%) 100%);
+    --gradient-surface: linear-gradient(180deg, hsl(220 18% 15%) 0%, hsl(220 18% 13%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(168 25% 18%) 0%, hsl(178 30% 20%) 100%);
+
+    --shadow-elevated: 0 1px 2px hsl(0 0% 0% / 0.2), 0 4px 12px hsl(0 0% 0% / 0.25);
+    --shadow-floating: 0 2px 4px hsl(0 0% 0% / 0.2), 0 12px 32px hsl(0 0% 0% / 0.35);
+    --shadow-glow: 0 0 0 4px hsl(168 40% 50% / 0.18);
   }
 }
 
@@ -324,5 +341,30 @@
 
   .text-tertiary-content {
     color: hsl(var(--text-tertiary));
+  }
+
+  /* Premium gradient & shadow utilities */
+  .bg-gradient-primary { background-image: var(--gradient-primary); }
+  .bg-gradient-surface { background-image: var(--gradient-surface); }
+  .bg-gradient-accent { background-image: var(--gradient-accent); }
+  .shadow-elevated { box-shadow: var(--shadow-elevated); }
+  .shadow-floating { box-shadow: var(--shadow-floating); }
+  .shadow-glow { box-shadow: var(--shadow-glow); }
+
+  /* Shimmer for loading skeletons */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, hsl(var(--foreground) / 0.06), transparent);
+    animation: shimmer 1.6s infinite;
+  }
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
   }
 }
