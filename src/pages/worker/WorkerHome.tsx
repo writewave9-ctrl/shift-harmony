@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CheckInButton } from '@/components/CheckInButton';
 import { OpenShiftsSection } from '@/components/OpenShiftsSection';
+import { IncomingSwapsCard } from '@/components/IncomingSwapsCard';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { WorkerHomeSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection } from '@/components/MotionWrapper';
@@ -254,6 +255,11 @@ export const WorkerHome = () => {
             </div>
           </MotionSection>
         )}
+
+        {/* Incoming Swap Requests */}
+        <MotionSection delay={0.18}>
+          <IncomingSwapsCard />
+        </MotionSection>
 
         {/* Open Shifts */}
         <MotionSection delay={0.2}>
