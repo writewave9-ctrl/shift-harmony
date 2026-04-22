@@ -128,32 +128,28 @@ export const ManagerShiftRequests = () => {
   const visibleShifts = shiftFilter === 'pending' ? pendingList : reviewedList;
   const visibleSwaps = swapFilter === 'pending' ? pendingForManager : reviewedSwaps;
 
-  function FilterPills<T extends string>({
-    value, onChange, options,
-  }: {
-    value: T;
-    onChange: (v: T) => void;
-    options: { value: T; label: string }[];
-  }) {
-    return (
-      <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted/60 border border-border/40">
-        {options.map(o => (
-          <button
-            key={o.value}
-            onClick={() => onChange(o.value)}
-            className={cn(
-              'px-3 py-1 rounded-full text-[11px] font-semibold transition-all',
-              value === o.value
-                ? 'bg-background text-foreground shadow-elevated'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
-    );
-  }
+  const renderFilterPills = (
+    value: string,
+    onChange: (v: string) => void,
+    options: { value: string; label: string }[],
+  ) => (
+    <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted/60 border border-border/40">
+      {options.map(o => (
+        <button
+          key={o.value}
+          onClick={() => onChange(o.value)}
+          className={cn(
+            'px-3 py-1 rounded-full text-[11px] font-semibold transition-all',
+            value === o.value
+              ? 'bg-background text-foreground shadow-elevated'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -197,14 +193,10 @@ export const ManagerShiftRequests = () => {
           {/* ============ Shift Pickups ============ */}
           <TabsContent value="shifts" className="space-y-4">
             <div className="flex justify-end">
-              <FilterPills
-                value={shiftFilter}
-                onChange={setShiftFilter}
-                options={[
-                  { value: 'pending', label: `Pending${pendingList.length ? ` · ${pendingList.length}` : ''}` },
-                  { value: 'history', label: 'History' },
-                ]}
-              />
+              {renderFilterPills(shiftFilter, (v) => setShiftFilter(v as ShiftFilter), [
+                { value: 'pending', label: `Pending${pendingList.length ? ` · ${pendingList.length}` : ''}` },
+                { value: 'history', label: 'History' },
+              ])}
             </div>
 
             {visibleShifts.length > 0 ? (
