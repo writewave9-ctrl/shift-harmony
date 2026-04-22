@@ -228,18 +228,24 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          plan: Database["public"]["Enums"]["org_plan"]
+          plan_started_at: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
           name: string
+          plan?: Database["public"]["Enums"]["org_plan"]
+          plan_started_at?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
           name?: string
+          plan?: Database["public"]["Enums"]["org_plan"]
+          plan_started_at?: string
           updated_at?: string
         }
         Relationships: []
@@ -638,6 +644,74 @@ export type Database = {
           },
         ]
       }
+      support_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          sender_id: string
+          ticket_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          ticket_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          opened_by: string
+          organization_id: string
+          priority: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          opened_by: string
+          organization_id: string
+          priority?: string
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          opened_by?: string
+          organization_id?: string
+          priority?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       swap_requests: {
         Row: {
           approved_by: string | null
@@ -907,6 +981,11 @@ export type Database = {
     }
     Functions: {
       enqueue_due_shift_reminders: { Args: never; Returns: number }
+      get_org_plan: {
+        Args: { _org_id: string }
+        Returns: Database["public"]["Enums"]["org_plan"]
+      }
+      get_org_worker_count: { Args: { _org_id: string }; Returns: number }
       get_profile_id: { Args: { _user_id: string }; Returns: string }
       get_team_member_directory: {
         Args: never
@@ -960,6 +1039,7 @@ export type Database = {
         | "transportation"
         | "personal"
         | "other"
+      org_plan: "starter" | "pro" | "enterprise"
       shift_status: "scheduled" | "in_progress" | "completed" | "cancelled"
       swap_request_status: "pending" | "approved" | "declined" | "expired"
       willingness_level: "low" | "medium" | "high"
@@ -1106,6 +1186,7 @@ export const Constants = {
         "personal",
         "other",
       ],
+      org_plan: ["starter", "pro", "enterprise"],
       shift_status: ["scheduled", "in_progress", "completed", "cancelled"],
       swap_request_status: ["pending", "approved", "declined", "expired"],
       willingness_level: ["low", "medium", "high"],
