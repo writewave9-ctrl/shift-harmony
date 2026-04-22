@@ -18,6 +18,7 @@ const plans = [
     cta: 'Get started free',
     variant: 'outline' as const,
     highlight: false,
+    plan: 'starter',
   },
   {
     name: 'Pro',
@@ -27,17 +28,24 @@ const plans = [
     cta: 'Start free trial',
     variant: 'default' as const,
     highlight: true,
+    plan: 'pro',
   },
   {
     name: 'Enterprise',
     desc: 'For large organizations',
     price: '$99',
-    features: ['Unlimited workers', 'Multi-team support', 'Advanced analytics & reports', 'Priority support', 'Custom integrations'],
+    features: ['Unlimited workers', 'Multi-team support', 'Advanced analytics & reports', 'Priority support', 'Dedicated onboarding'],
     cta: 'Contact sales',
     variant: 'outline' as const,
     highlight: false,
+    plan: 'enterprise',
   },
 ];
+
+const ctaHref = (planKey?: string) => {
+  if (planKey === 'enterprise') return 'mailto:hello@align.app?subject=Align%20Enterprise%20inquiry';
+  return planKey ? `/auth?plan=${planKey}` : '/auth';
+};
 
 export const PricingSection = () => {
   const navigate = useNavigate();
@@ -94,7 +102,11 @@ export const PricingSection = () => {
               </ul>
               <Button
                 variant={plan.variant}
-                onClick={() => navigate('/auth')}
+                onClick={() => {
+                  const href = ctaHref(plan.plan);
+                  if (href.startsWith('mailto:')) window.location.href = href;
+                  else navigate(href);
+                }}
                 className={`rounded-xl w-full ${plan.highlight ? 'shadow-lg shadow-primary/20' : ''}`}
               >
                 {plan.cta}

@@ -35,6 +35,8 @@ import { ManagerSettings } from "./pages/manager/ManagerSettings";
 import { ManagerAnalytics } from "./pages/manager/ManagerAnalytics";
 import { ManagerShiftRequests } from "./pages/manager/ManagerShiftRequests";
 import { ManagerNotifications } from "./pages/manager/ManagerNotifications";
+import { ManagerAutoFill } from "./pages/manager/ManagerAutoFill";
+import { ManagerSupport } from "./pages/manager/ManagerSupport";
 
 const queryClient = new QueryClient();
 
@@ -175,6 +177,8 @@ const AppRoutes = () => (
       <Route path="requests" element={<ManagerShiftRequests />} />
       <Route path="notifications" element={<ManagerNotifications />} />
       <Route path="settings" element={<ManagerSettings />} />
+      <Route path="shifts/auto-fill" element={<ManagerAutoFill />} />
+      <Route path="support" element={<ManagerSupport />} />
     </Route>
 
     {/* Catch-all */}

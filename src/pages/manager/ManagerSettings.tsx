@@ -28,8 +28,10 @@ import {
   ChevronLeft,
   Rocket,
   ArrowRight,
+  LifeBuoy,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ManagerPlanSection } from '@/components/ManagerPlanSection';
 
 export const ManagerSettings = () => {
   const navigate = useNavigate();
@@ -318,6 +320,27 @@ export const ManagerSettings = () => {
       </header>
 
       <div className="px-4 lg:px-8 py-6 space-y-6 max-w-2xl">
+        {/* Plan */}
+        <ManagerPlanSection />
+
+        {/* Support shortcut */}
+        <Card className="rounded-2xl shadow-elevated border-border/50">
+          <CardContent className="p-5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-accent flex items-center justify-center">
+                <LifeBuoy className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Support center</p>
+                <p className="text-xs text-muted-foreground">Open a ticket or browse your conversations</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={() => navigate('/manager/support')}>
+              Open
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Organization & Team Info */}
         <Card>
           <CardHeader>
