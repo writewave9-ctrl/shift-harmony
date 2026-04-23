@@ -48,11 +48,18 @@ export const ManagerShiftRequests = () => {
     pendingForManager, loading: loadingSwaps,
     managerApproveSwap, managerDeclineSwap, requests: allSwaps, refetch: refetchSwaps,
   } = useSwapRequests();
+  const { canUseFeature } = usePlan();
+  const callOffsEnabled = canUseFeature('call_offs');
+  const {
+    requests: allCallOffs, pendingForManager: pendingCallOffs,
+    loading: loadingCallOffs, approveCallOff, declineCallOff,
+  } = useCallOffRequests();
   const [selectedRequest, setSelectedRequest] = useState<ShiftRequest | null>(null);
   const [selectedSwap, setSelectedSwap] = useState<SwapRequest | null>(null);
   const [processing, setProcessing] = useState(false);
   const [shiftFilter, setShiftFilter] = useState<ShiftFilter>('pending');
   const [swapFilter, setSwapFilter] = useState<SwapFilter>('pending');
+  const [callOffFilter, setCallOffFilter] = useState<SwapFilter>('pending');
   const [confirm, setConfirm] = useState<Confirm>(null);
 
   const handleApprove = async () => {
