@@ -130,15 +130,17 @@ export const ManagerShiftRequests = () => {
   };
 
   const reviewedSwaps = useMemo(() => allSwaps.filter(s => s.status !== 'pending'), [allSwaps]);
+  const reviewedCallOffs = useMemo(() => allCallOffs.filter(c => c.status !== 'pending'), [allCallOffs]);
 
-  if (loading || loadingSwaps) return <ManagerRequestsSkeleton />;
+  if (loading || loadingSwaps || (callOffsEnabled && loadingCallOffs)) return <ManagerRequestsSkeleton />;
 
   const pendingList = requests.filter(r => r.status === 'pending');
   const reviewedList = requests.filter(r => r.status !== 'pending');
-  const totalPending = pendingList.length + pendingForManager.length;
+  const totalPending = pendingList.length + pendingForManager.length + (callOffsEnabled ? pendingCallOffs.length : 0);
 
   const visibleShifts = shiftFilter === 'pending' ? pendingList : reviewedList;
   const visibleSwaps = swapFilter === 'pending' ? pendingForManager : reviewedSwaps;
+  const visibleCallOffs = callOffFilter === 'pending' ? pendingCallOffs : reviewedCallOffs;
 
   const renderFilterPills = (
     value: string,
@@ -189,16 +191,23 @@ export const ManagerShiftRequests = () => {
 
       <div className="px-4 lg:px-8 py-6">
         <Tabs defaultValue="shifts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="shifts" className="gap-1.5">
               <HandHelping className="w-3.5 h-3.5" />
-              Shift Pickups
+              <span className="hidden sm:inline">Pickups</span>
               {pendingList.length > 0 && <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">{pendingList.length}</span>}
             </TabsTrigger>
             <TabsTrigger value="swaps" className="gap-1.5">
               <ArrowLeftRight className="w-3.5 h-3.5" />
-              Swaps
+              <span className="hidden sm:inline">Swaps</span>
               {pendingForManager.length > 0 && <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">{pendingForManager.length}</span>}
+            </TabsTrigger>
+            <TabsTrigger value="call-offs" className="gap-1.5">
+              <AlertOctagon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Call-offs</span>
+              {callOffsEnabled && pendingCallOffs.length > 0 && (
+                <span className="text-[10px] bg-warning/20 text-warning px-1.5 py-0.5 rounded-full">{pendingCallOffs.length}</span>
+              )}
             </TabsTrigger>
           </TabsList>
 
