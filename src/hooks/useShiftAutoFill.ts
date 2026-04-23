@@ -68,6 +68,93 @@ export function useShiftAutoFill() {
     [templates],
   );
 
+  const scoreAssignments = useCallback(
+    async (items: PreviewShift[]): Promise<void> => {
+      if (!profile?.team_id || !workers.length) {
+        items.forEach(i => { i.suggestedWorker = null; i.factors = undefined; });
+        return;
+      }
+      const hours: Record<string, number> = {};
+      const allDates = Array.from(new Set(items.map(e => e.date)));
+      if (allDates.length) {
+        const { data: existing } = await supabase
+          .from('shifts')
+          .select('assigned_worker_id, start_time, end_time, date')
+          .eq('team_id', profile.team_id)
+          .in('date', allDates);
+        (existing || []).forEach(s => {
+          if (!s.assigned_worker_id) return;
+          const [sh, sm] = s.start_time.split(':').map(Number);
+          const [eh, em] = s.end_time.split(':').map(Number);
+          let h = (eh + em / 60) - (sh + sm / 60); if (h < 0) h += 24;
+          hours[s.assigned_worker_id] = (hours[s.assigned_worker_id] || 0) + h;
+        });
+      }
+
+      const workerIds = workers.map(w => w.id);
+      const { data: avail } = await supabase
+        .from('availability_settings')
+        .select('worker_id, day_of_week, specific_date, availability_type')
+        .in('worker_id', workerIds);
+      const blocked = new Set<string>();
+      (avail || []).forEach(a => {
+        if (a.availability_type !== 'blocked') return;
+        if (a.specific_date) blocked.add(`${a.worker_id}|${a.specific_date}`);
+        if (a.day_of_week !== null && a.day_of_week !== undefined) {
+          allDates.forEach(d => {
+            if (new Date(d + 'T00:00:00').getDay() === a.day_of_week) {
+              blocked.add(`${a.worker_id}|${d}`);
+            }
+          });
+        }
+      });
+
+      for (const item of items) {
+        const [sh, sm] = item.template.start_time.split(':').map(Number);
+        const [eh, em] = item.template.end_time.split(':').map(Number);
+        let dur = (eh + em / 60) - (sh + sm / 60); if (dur < 0) dur += 24;
+
+        const candidates = workers
+          .filter(w => !blocked.has(`${w.id}|${item.date}`))
+          .map(w => {
+            const target = w.weekly_hours_target || 40;
+            const current = hours[w.id] || 0;
+            const wouldOver = current + dur > target;
+            return {
+              w, wouldOver, current,
+              score: (w.reliability_score || 80) - (wouldOver ? 1000 : 0) - current * 2,
+            };
+          })
+          .sort((a, b) => b.score - a.score);
+
+        const pick = candidates[0];
+        const eligibleCount = candidates.filter(c => !c.wouldOver).length;
+        if (pick && !pick.wouldOver) {
+          hours[pick.w.id] = pick.current + dur;
+          item.suggestedWorker = pick.w;
+          const target = pick.w.weekly_hours_target || 40;
+          const remaining = target - pick.current - dur;
+          const reliability = pick.w.reliability_score || 80;
+          item.factors = {
+            availability: 'free',
+            reliabilityBand: reliability >= 90 ? 'excellent' : reliability >= 75 ? 'strong' : 'building',
+            hoursHeadroom: remaining >= 8 ? 'plenty' : remaining > 0 ? 'some' : 'none',
+            candidatePoolSize: eligibleCount,
+          };
+        } else {
+          item.suggestedWorker = null;
+          item.factors = {
+            availability: candidates.length === 0 ? 'blocked' : 'unknown',
+            reliabilityBand: 'building',
+            hoursHeadroom: 'none',
+            candidatePoolSize: eligibleCount,
+          };
+        }
+      }
+    },
+    [profile?.team_id, workers],
+  );
+
   const generate = useCallback(
     async (items: PreviewShift[], opts: GenerateOptions): Promise<GenerateResult> => {
       if (!profile?.team_id) {
@@ -77,101 +164,14 @@ export function useShiftAutoFill() {
       setGenerating(true);
       const enabled = items.filter(i => opts.templateIds.includes(i.template.id));
 
-      // Optional: auto-assign best fit
-      const assignmentMap = new Map<string, string>(); // key=date|start|position -> workerId
-      if (opts.autoAssign && workers.length) {
-        // Track tentative weekly hours per worker
-        const hours: Record<string, number> = {};
-        // Pre-fetch existing scheduled hours this week
-        const allDates = Array.from(new Set(enabled.map(e => e.date)));
-        if (allDates.length) {
-          const { data: existing } = await supabase
-            .from('shifts')
-            .select('assigned_worker_id, start_time, end_time, date')
-            .eq('team_id', profile.team_id)
-            .in('date', allDates);
-          (existing || []).forEach(s => {
-            if (!s.assigned_worker_id) return;
-            const [sh, sm] = s.start_time.split(':').map(Number);
-            const [eh, em] = s.end_time.split(':').map(Number);
-            let h = (eh + em / 60) - (sh + sm / 60); if (h < 0) h += 24;
-            hours[s.assigned_worker_id] = (hours[s.assigned_worker_id] || 0) + h;
-          });
-        }
-
-        // Fetch availability blocks
-        const workerIds = workers.map(w => w.id);
-        const { data: avail } = await supabase
-          .from('availability_settings')
-          .select('worker_id, day_of_week, specific_date, availability_type')
-          .in('worker_id', workerIds);
-        const blocked = new Set<string>(); // `${workerId}|${date}`
-        (avail || []).forEach(a => {
-          if (a.availability_type !== 'blocked') return;
-          if (a.specific_date) blocked.add(`${a.worker_id}|${a.specific_date}`);
-          if (a.day_of_week !== null && a.day_of_week !== undefined) {
-            // Mark every date in this generation matching that day of week
-            allDates.forEach(d => {
-              if (new Date(d + 'T00:00:00').getDay() === a.day_of_week) {
-                blocked.add(`${a.worker_id}|${d}`);
-              }
-            });
-          }
-        });
-
-        for (const item of enabled) {
-          const [sh, sm] = item.template.start_time.split(':').map(Number);
-          const [eh, em] = item.template.end_time.split(':').map(Number);
-          let dur = (eh + em / 60) - (sh + sm / 60); if (dur < 0) dur += 24;
-
-          const candidates = workers
-            .filter(w => !blocked.has(`${w.id}|${item.date}`))
-            .map(w => {
-              const target = w.weekly_hours_target || 40;
-              const current = hours[w.id] || 0;
-              const wouldOver = current + dur > target;
-              return {
-                w,
-                wouldOver,
-                current,
-                score: (w.reliability_score || 80) - (wouldOver ? 1000 : 0) - current * 2,
-              };
-            })
-            .sort((a, b) => b.score - a.score);
-
-          const pick = candidates[0];
-          const eligibleCount = candidates.filter(c => !c.wouldOver).length;
-          if (pick && !pick.wouldOver) {
-            assignmentMap.set(`${item.date}|${item.template.start_time}|${item.template.position}`, pick.w.id);
-            hours[pick.w.id] = pick.current + dur;
-            item.suggestedWorker = pick.w;
-            const target = pick.w.weekly_hours_target || 40;
-            const remaining = target - pick.current - dur;
-            const reliability = pick.w.reliability_score || 80;
-            item.factors = {
-              availability: 'free',
-              reliabilityBand: reliability >= 90 ? 'excellent' : reliability >= 75 ? 'strong' : 'building',
-              hoursHeadroom: remaining >= 8 ? 'plenty' : remaining > 0 ? 'some' : 'none',
-              candidatePoolSize: eligibleCount,
-            };
-          } else {
-            item.suggestedWorker = null;
-            item.factors = {
-              availability: candidates.length === 0 ? 'blocked' : 'unknown',
-              reliabilityBand: 'building',
-              hoursHeadroom: 'none',
-              candidatePoolSize: eligibleCount,
-            };
-          }
-        }
+      // If autoAssign requested but factors not pre-computed, score now.
+      if (opts.autoAssign && enabled.some(i => !i.factors)) {
+        await scoreAssignments(enabled);
       }
 
-      // Insert shifts (idempotent thanks to unique index)
       let created = 0, skipped = 0, assigned = 0;
       for (const item of enabled) {
-        const assignedWorkerId = opts.autoAssign
-          ? assignmentMap.get(`${item.date}|${item.template.start_time}|${item.template.position}`) ?? null
-          : null;
+        const assignedWorkerId = opts.autoAssign ? item.suggestedWorker?.id ?? null : null;
         const { error } = await supabase.from('shifts').insert({
           team_id: profile.team_id,
           date: item.date,
@@ -197,8 +197,8 @@ export function useShiftAutoFill() {
       setGenerating(false);
       return { created, skipped, assigned };
     },
-    [profile?.team_id, workers],
+    [profile?.team_id, scoreAssignments],
   );
 
-  return { templates, workers, generating, previewWeek, generate };
+  return { templates, workers, generating, previewWeek, scoreAssignments, generate };
 }
