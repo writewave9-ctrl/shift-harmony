@@ -21,6 +21,11 @@ import { SwapStatusPill } from '@/components/SwapStatusPill';
 import { SwapCountdownBadge } from '@/components/SwapCountdownBadge';
 import { SwapTimeline } from '@/components/SwapTimeline';
 import { supabase } from '@/integrations/supabase/client';
+import { useCallOffRequests } from '@/hooks/useCallOffRequests';
+import { CallOffRequestCard } from '@/components/CallOffRequestCard';
+import { usePlan } from '@/hooks/usePlan';
+import { UpgradePromptCard } from '@/components/UpgradePromptCard';
+import { AlertOctagon } from 'lucide-react';
 
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
