@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { ShiftActivityTimeline, parseOverrideNotes, type ShiftActivityEvent } from '@/components/ShiftActivityTimeline';
 
 interface ShiftHistoryItem {
   id: string;
@@ -26,6 +27,7 @@ interface ShiftHistoryItem {
     check_out_time: string | null;
     is_proximity_based: boolean;
     override_notes: string | null;
+    override_timestamp: string | null;
   } | null;
 }
 
@@ -45,7 +47,7 @@ export const WorkerShiftHistory = () => {
     try {
       const { data, error } = await supabase
         .from('shifts')
-        .select(`id, date, start_time, end_time, position, location, status, attendance_records!inner(status, check_in_time, check_out_time, is_proximity_based, override_notes)`)
+        .select(`id, date, start_time, end_time, position, location, status, attendance_records!inner(status, check_in_time, check_out_time, is_proximity_based, override_notes, override_timestamp)`)
         .eq('assigned_worker_id', profile.id)
         .eq('status', 'completed')
         .order('date', { ascending: false })
@@ -230,9 +232,41 @@ export const WorkerShiftHistory = () => {
                             {shift.attendance.is_proximity_based ? 'Auto Check-in' : 'Manual Entry'}
                           </span>
                         </div>
-                        {shift.attendance.override_notes && (
-                          <div className="p-3 rounded-lg bg-accent/50"><p className="text-xs text-muted-foreground mb-1">Notes</p><p className="text-sm text-foreground">{shift.attendance.override_notes}</p></div>
-                        )}
+                        {(() => {
+                          if (!shift.attendance) return null;
+                          const events: ShiftActivityEvent[] = [];
+                          if (shift.attendance.check_in_time) {
+                            events.push({
+                              label: 'Checked in',
+                              detail: shift.attendance.is_proximity_based ? 'Auto via location' : 'Manual',
+                              at: shift.attendance.check_in_time,
+                              tone: 'primary',
+                            });
+                          }
+                          if (shift.attendance.override_timestamp) {
+                            const parsed = parseOverrideNotes(shift.attendance.override_notes);
+                            events.push({
+                              label: 'Manager updated attendance',
+                              at: shift.attendance.override_timestamp,
+                              reason: parsed.reason ?? undefined,
+                              notes: parsed.notes ?? undefined,
+                              tone: 'warning',
+                            });
+                          }
+                          if (shift.attendance.check_out_time) {
+                            events.push({
+                              label: 'Checked out',
+                              at: shift.attendance.check_out_time,
+                              tone: 'success',
+                            });
+                          }
+                          if (!events.length) return null;
+                          return (
+                            <div className="mt-2 pt-3 border-t border-border/40">
+                              <ShiftActivityTimeline events={events} />
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>

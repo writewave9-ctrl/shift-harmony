@@ -3,6 +3,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { formatTimeRange } from '@/lib/formatTime';
 import { MapPin, Clock, User, AlertTriangle } from 'lucide-react';
 import type { PreviewShift } from '@/hooks/useShiftAutoFill';
+import { RecommendationTooltip } from '@/components/RecommendationTooltip';
 
 interface Props {
   items: PreviewShift[];
@@ -69,9 +70,15 @@ export const AutoFillPreview = ({ items, selectedTemplateIds, onToggleTemplate, 
                     </span>
                     {showAssignments && (
                       it.suggestedWorker ? (
-                        <span className="flex items-center gap-1 text-foreground">
+                        <span className="flex items-center gap-1.5 text-foreground">
                           <User className="w-3 h-3 text-primary" />
                           {it.suggestedWorker.full_name}
+                          {it.factors && (
+                            <RecommendationTooltip
+                              workerName={it.suggestedWorker.full_name}
+                              factors={it.factors}
+                            />
+                          )}
                         </span>
                       ) : (
                         <span className="flex items-center gap-1 text-warning-foreground">

@@ -7,6 +7,7 @@ import { WorkerHomeSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection } from '@/components/MotionWrapper';
 import { Calendar, Bell, ChevronRight, MapPin, Clock, AlertCircle, AlertOctagon } from 'lucide-react';
 import { CallOffRequestModal } from '@/components/CallOffRequestModal';
+import { CallOffStatusBanner } from '@/components/CallOffStatusBanner';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -242,7 +243,10 @@ export const WorkerHome = () => {
           )}
         </MotionSection>
 
-        {/* Recent Notifications */}
+        {/* Call-off status banners (auto-hide after shift end) */}
+        <MotionSection delay={0.05}>
+          <CallOffStatusBanner />
+        </MotionSection>
         {unreadCount > 0 && notifications.filter(n => !n.read).length > 0 && (
           <MotionSection delay={0.1}>
             <div className="flex items-center justify-between mb-3">
