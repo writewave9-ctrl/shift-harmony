@@ -45,6 +45,9 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { ReportExportPanel } from '@/components/ReportExportPanel';
+import { UpgradePromptCard } from '@/components/UpgradePromptCard';
+import { usePlan } from '@/hooks/usePlan';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--warning))', 'hsl(var(--destructive))'];
 
@@ -52,6 +55,8 @@ export const ManagerAnalytics = () => {
   const navigate = useNavigate();
   const [period, setPeriod] = useState<'week' | 'month'>('week');
   const { shiftCoverage, attendance, teamPerformance, summary, loading } = useAnalytics(period);
+  const { canUseFeature } = usePlan();
+  const exportsEnabled = canUseFeature('report_exports');
 
   if (loading) return <ManagerAnalyticsSkeleton />;
 
