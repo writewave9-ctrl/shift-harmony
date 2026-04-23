@@ -28,7 +28,8 @@ import {
   Loader2,
   Pencil,
   Trash2,
-  FileText
+  FileText,
+  Sparkles
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -328,6 +329,15 @@ export const ManagerShifts = () => {
               onSelect={handleSelectTemplate}
               onCreateNew={() => setShowTemplateModal(true)}
             />
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 h-8 text-xs"
+              onClick={() => navigate('/manager/shifts/auto-fill')}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Auto-fill</span>
+            </Button>
             <Button size="sm" className="gap-1 h-8 text-xs" onClick={() => setShowCreateModal(true)}>
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">New</span>

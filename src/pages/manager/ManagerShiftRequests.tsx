@@ -21,6 +21,11 @@ import { SwapStatusPill } from '@/components/SwapStatusPill';
 import { SwapCountdownBadge } from '@/components/SwapCountdownBadge';
 import { SwapTimeline } from '@/components/SwapTimeline';
 import { supabase } from '@/integrations/supabase/client';
+import { useCallOffRequests } from '@/hooks/useCallOffRequests';
+import { CallOffRequestCard } from '@/components/CallOffRequestCard';
+import { usePlan } from '@/hooks/usePlan';
+import { UpgradePromptCard } from '@/components/UpgradePromptCard';
+import { AlertOctagon } from 'lucide-react';
 
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -43,11 +48,18 @@ export const ManagerShiftRequests = () => {
     pendingForManager, loading: loadingSwaps,
     managerApproveSwap, managerDeclineSwap, requests: allSwaps, refetch: refetchSwaps,
   } = useSwapRequests();
+  const { canUseFeature } = usePlan();
+  const callOffsEnabled = canUseFeature('call_offs');
+  const {
+    requests: allCallOffs, pendingForManager: pendingCallOffs,
+    loading: loadingCallOffs, approveCallOff, declineCallOff,
+  } = useCallOffRequests();
   const [selectedRequest, setSelectedRequest] = useState<ShiftRequest | null>(null);
   const [selectedSwap, setSelectedSwap] = useState<SwapRequest | null>(null);
   const [processing, setProcessing] = useState(false);
   const [shiftFilter, setShiftFilter] = useState<ShiftFilter>('pending');
   const [swapFilter, setSwapFilter] = useState<SwapFilter>('pending');
+  const [callOffFilter, setCallOffFilter] = useState<SwapFilter>('pending');
   const [confirm, setConfirm] = useState<Confirm>(null);
 
   const handleApprove = async () => {
@@ -118,15 +130,17 @@ export const ManagerShiftRequests = () => {
   };
 
   const reviewedSwaps = useMemo(() => allSwaps.filter(s => s.status !== 'pending'), [allSwaps]);
+  const reviewedCallOffs = useMemo(() => allCallOffs.filter(c => c.status !== 'pending'), [allCallOffs]);
 
-  if (loading || loadingSwaps) return <ManagerRequestsSkeleton />;
+  if (loading || loadingSwaps || (callOffsEnabled && loadingCallOffs)) return <ManagerRequestsSkeleton />;
 
   const pendingList = requests.filter(r => r.status === 'pending');
   const reviewedList = requests.filter(r => r.status !== 'pending');
-  const totalPending = pendingList.length + pendingForManager.length;
+  const totalPending = pendingList.length + pendingForManager.length + (callOffsEnabled ? pendingCallOffs.length : 0);
 
   const visibleShifts = shiftFilter === 'pending' ? pendingList : reviewedList;
   const visibleSwaps = swapFilter === 'pending' ? pendingForManager : reviewedSwaps;
+  const visibleCallOffs = callOffFilter === 'pending' ? pendingCallOffs : reviewedCallOffs;
 
   const renderFilterPills = (
     value: string,
@@ -177,16 +191,23 @@ export const ManagerShiftRequests = () => {
 
       <div className="px-4 lg:px-8 py-6">
         <Tabs defaultValue="shifts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="shifts" className="gap-1.5">
               <HandHelping className="w-3.5 h-3.5" />
-              Shift Pickups
+              <span className="hidden sm:inline">Pickups</span>
               {pendingList.length > 0 && <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">{pendingList.length}</span>}
             </TabsTrigger>
             <TabsTrigger value="swaps" className="gap-1.5">
               <ArrowLeftRight className="w-3.5 h-3.5" />
-              Swaps
+              <span className="hidden sm:inline">Swaps</span>
               {pendingForManager.length > 0 && <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">{pendingForManager.length}</span>}
+            </TabsTrigger>
+            <TabsTrigger value="call-offs" className="gap-1.5">
+              <AlertOctagon className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Call-offs</span>
+              {callOffsEnabled && pendingCallOffs.length > 0 && (
+                <span className="text-[10px] bg-warning/20 text-warning px-1.5 py-0.5 rounded-full">{pendingCallOffs.length}</span>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -332,6 +353,52 @@ export const ManagerShiftRequests = () => {
                   </button>
                 </CardContent>
               </Card>
+            )}
+          </TabsContent>
+
+          {/* ============ Call-offs ============ */}
+          <TabsContent value="call-offs" className="space-y-4">
+            {!callOffsEnabled ? (
+              <UpgradePromptCard
+                requiredPlan="pro"
+                title="Call-off management is a Pro feature"
+                description="Let workers report when they can't make a shift. Approve to instantly post the shift as open coverage."
+              />
+            ) : (
+              <>
+                <div className="flex justify-end">
+                  {renderFilterPills(callOffFilter, (v) => setCallOffFilter(v as SwapFilter), [
+                    { value: 'pending', label: `Pending${pendingCallOffs.length ? ` · ${pendingCallOffs.length}` : ''}` },
+                    { value: 'history', label: 'History' },
+                  ])}
+                </div>
+                {visibleCallOffs.length > 0 ? (
+                  visibleCallOffs.map(req => (
+                    <CallOffRequestCard
+                      key={req.id}
+                      request={req}
+                      onApprove={approveCallOff}
+                      onDecline={declineCallOff}
+                    />
+                  ))
+                ) : (
+                  <Card className="rounded-2xl bg-gradient-surface shadow-elevated border-border/40">
+                    <CardContent className="py-10 text-center">
+                      <div className="w-14 h-14 mx-auto rounded-2xl bg-warning/10 flex items-center justify-center mb-3">
+                        <AlertOctagon className="w-6 h-6 text-warning/80" />
+                      </div>
+                      <p className="text-sm font-medium text-foreground">
+                        {callOffFilter === 'pending' ? 'No pending call-offs' : 'No past call-offs'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1 mb-4">
+                        {callOffFilter === 'pending'
+                          ? "When workers report they can't make a shift, requests appear here."
+                          : 'Approved and declined call-offs will be archived here for reference.'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
           </TabsContent>
         </Tabs>

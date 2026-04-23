@@ -49,6 +49,25 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    // ---------- Plan worker-limit enforcement ----------
+    const PLAN_LIMITS: Record<string, number> = { starter: 5, pro: 50, enterprise: Number.POSITIVE_INFINITY };
+    if (managerProfile?.organization_id) {
+      const { data: org } = await adminClient
+        .from("organizations").select("plan").eq("id", managerProfile.organization_id).maybeSingle();
+      const plan = (org?.plan as string) || "starter";
+      const limit = PLAN_LIMITS[plan] ?? 5;
+      const { data: countRaw } = await adminClient.rpc("get_org_worker_count", {
+        _org_id: managerProfile.organization_id,
+      });
+      const currentCount = typeof countRaw === "number" ? countRaw : 0;
+      if (currentCount >= limit) {
+        return jsonError(
+          `You've reached the ${plan} plan worker limit (${limit}). Upgrade to add more workers.`,
+          402,
+        );
+      }
+    }
+
     // Check if user with this email already exists
     const { data: existing } = await adminClient.auth.admin.listUsers();
     const existingUser = existing?.users?.find(

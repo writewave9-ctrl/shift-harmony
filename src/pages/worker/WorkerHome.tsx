@@ -5,7 +5,8 @@ import { IncomingSwapsCard } from '@/components/IncomingSwapsCard';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { WorkerHomeSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection } from '@/components/MotionWrapper';
-import { Calendar, Bell, ChevronRight, MapPin, Clock, AlertCircle } from 'lucide-react';
+import { Calendar, Bell, ChevronRight, MapPin, Clock, AlertCircle, AlertOctagon } from 'lucide-react';
+import { CallOffRequestModal } from '@/components/CallOffRequestModal';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +41,7 @@ export const WorkerHome = () => {
   const [isWithinProximity, setIsWithinProximity] = useState<boolean | null>(null);
   const [distanceMeters, setDistanceMeters] = useState<number | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [callOffShift, setCallOffShift] = useState<WorkerShift | null>(null);
   
   const { isWithinRadius, loading: checkingLocation } = useGeolocation();
   const { notifications, unreadCount } = useNotifications();
@@ -208,12 +210,20 @@ export const WorkerHome = () => {
                   distanceMeters={distanceMeters} checkingLocation={checkingLocation}
                   locationError={locationError} onCheckLocation={handleCheckLocation}
                 />
-                <button 
-                  onClick={() => navigate('/worker/shifts')}
-                  className="w-full mt-4 pt-3 border-t border-border/30 flex items-center justify-center gap-1.5 text-sm text-primary font-medium hover:text-primary/80 transition-colors"
-                >
-                  Request Shift Change<ChevronRight className="w-3.5 h-3.5" />
-                </button>
+                <div className="mt-4 pt-3 border-t border-border/30 flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => navigate('/worker/shifts')}
+                    className="flex items-center gap-1.5 text-sm text-primary font-medium hover:text-primary/80 transition-colors"
+                  >
+                    Request Change<ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setCallOffShift(todayShift)}
+                    className="flex items-center gap-1.5 text-xs text-warning hover:text-warning/80 font-medium transition-colors"
+                  >
+                    <AlertOctagon className="w-3.5 h-3.5" />Can't make it?
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -311,6 +321,12 @@ export const WorkerHome = () => {
         )}
       </div>
     </div>
+    <CallOffRequestModal
+      open={!!callOffShift}
+      onOpenChange={(o) => !o && setCallOffShift(null)}
+      shift={callOffShift}
+      onSubmitted={() => fetchData()}
+    />
     </PullToRefresh>
   );
 };
