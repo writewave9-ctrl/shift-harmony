@@ -321,6 +321,12 @@ export const WorkerHome = () => {
         )}
       </div>
     </div>
+    <CallOffRequestModal
+      open={!!callOffShift}
+      onOpenChange={(o) => !o && setCallOffShift(null)}
+      shift={callOffShift}
+      onSubmitted={() => fetchData()}
+    />
     </PullToRefresh>
   );
 };
