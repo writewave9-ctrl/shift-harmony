@@ -355,6 +355,52 @@ export const ManagerShiftRequests = () => {
               </Card>
             )}
           </TabsContent>
+
+          {/* ============ Call-offs ============ */}
+          <TabsContent value="call-offs" className="space-y-4">
+            {!callOffsEnabled ? (
+              <UpgradePromptCard
+                requiredPlan="pro"
+                title="Call-off management is a Pro feature"
+                description="Let workers report when they can't make a shift. Approve to instantly post the shift as open coverage."
+              />
+            ) : (
+              <>
+                <div className="flex justify-end">
+                  {renderFilterPills(callOffFilter, (v) => setCallOffFilter(v as SwapFilter), [
+                    { value: 'pending', label: `Pending${pendingCallOffs.length ? ` · ${pendingCallOffs.length}` : ''}` },
+                    { value: 'history', label: 'History' },
+                  ])}
+                </div>
+                {visibleCallOffs.length > 0 ? (
+                  visibleCallOffs.map(req => (
+                    <CallOffRequestCard
+                      key={req.id}
+                      request={req}
+                      onApprove={approveCallOff}
+                      onDecline={declineCallOff}
+                    />
+                  ))
+                ) : (
+                  <Card className="rounded-2xl bg-gradient-surface shadow-elevated border-border/40">
+                    <CardContent className="py-10 text-center">
+                      <div className="w-14 h-14 mx-auto rounded-2xl bg-warning/10 flex items-center justify-center mb-3">
+                        <AlertOctagon className="w-6 h-6 text-warning/80" />
+                      </div>
+                      <p className="text-sm font-medium text-foreground">
+                        {callOffFilter === 'pending' ? 'No pending call-offs' : 'No past call-offs'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1 mb-4">
+                        {callOffFilter === 'pending'
+                          ? "When workers report they can't make a shift, requests appear here."
+                          : 'Approved and declined call-offs will be archived here for reference.'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
 
