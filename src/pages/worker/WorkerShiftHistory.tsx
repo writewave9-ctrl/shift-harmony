@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { ShiftActivityTimeline, parseOverrideNotes, type ShiftActivityEvent } from '@/components/ShiftActivityTimeline';
 
 interface ShiftHistoryItem {
   id: string;
