@@ -6,12 +6,20 @@ import { useTeamMembers, type TeamMember } from '@/hooks/useTeamMembers';
 import { addDays, format, startOfWeek } from 'date-fns';
 import { toast } from 'sonner';
 
+export interface RecommendationFactors {
+  availability: 'free' | 'blocked' | 'unknown';
+  reliabilityBand: 'excellent' | 'strong' | 'building'; // anonymized buckets
+  hoursHeadroom: 'plenty' | 'some' | 'none'; // remaining hours vs target this week
+  candidatePoolSize: number; // how many workers were eligible (no names)
+}
+
 export interface PreviewShift {
   template: ShiftTemplate;
   date: string; // yyyy-MM-dd
   dayLabel: string;
   // After auto-assign, may include suggested worker
   suggestedWorker?: TeamMember | null;
+  factors?: RecommendationFactors;
 }
 
 export interface GenerateOptions {
@@ -132,12 +140,28 @@ export function useShiftAutoFill() {
             .sort((a, b) => b.score - a.score);
 
           const pick = candidates[0];
+          const eligibleCount = candidates.filter(c => !c.wouldOver).length;
           if (pick && !pick.wouldOver) {
             assignmentMap.set(`${item.date}|${item.template.start_time}|${item.template.position}`, pick.w.id);
             hours[pick.w.id] = pick.current + dur;
             item.suggestedWorker = pick.w;
+            const target = pick.w.weekly_hours_target || 40;
+            const remaining = target - pick.current - dur;
+            const reliability = pick.w.reliability_score || 80;
+            item.factors = {
+              availability: 'free',
+              reliabilityBand: reliability >= 90 ? 'excellent' : reliability >= 75 ? 'strong' : 'building',
+              hoursHeadroom: remaining >= 8 ? 'plenty' : remaining > 0 ? 'some' : 'none',
+              candidatePoolSize: eligibleCount,
+            };
           } else {
             item.suggestedWorker = null;
+            item.factors = {
+              availability: candidates.length === 0 ? 'blocked' : 'unknown',
+              reliabilityBand: 'building',
+              hoursHeadroom: 'none',
+              candidatePoolSize: eligibleCount,
+            };
           }
         }
       }
