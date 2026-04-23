@@ -26,11 +26,6 @@ export const ManagerAutoFill = () => {
     [weekOffset],
   );
 
-  const buildPreview = () => {
-    const items = previewWeek(weekStart);
-    setPreviewItems(items);
-    setEnabledTemplates(new Set(items.map(i => i.template.id)));
-  };
 
   const runGenerate = async () => {
     if (!previewItems) return;
@@ -149,8 +144,11 @@ export const ManagerAutoFill = () => {
                   return next;
                 });
               }}
-              showAssignments={false}
+              showAssignments={autoAssign}
             />
+            {scoring && (
+              <p className="text-xs text-muted-foreground text-center">Scoring suggestions…</p>
+            )}
             <Button
               onClick={runGenerate}
               className="w-full rounded-xl bg-gradient-primary shadow-floating h-12"
