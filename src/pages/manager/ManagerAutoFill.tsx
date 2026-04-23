@@ -14,18 +14,29 @@ import { toast } from 'sonner';
 export const ManagerAutoFill = () => {
   const navigate = useNavigate();
   const { canUseFeature, loading: planLoading } = usePlan();
-  const { templates, generating, previewWeek, generate } = useShiftAutoFill();
+  const { templates, generating, previewWeek, scoreAssignments, generate } = useShiftAutoFill();
 
   const [weekOffset, setWeekOffset] = useState(1); // 0 this week, 1 next, etc.
   const [autoAssign, setAutoAssign] = useState(true);
   const [previewItems, setPreviewItems] = useState<PreviewShift[] | null>(null);
   const [enabledTemplates, setEnabledTemplates] = useState<Set<string>>(new Set());
+  const [scoring, setScoring] = useState(false);
 
   const weekStart = useMemo(
     () => startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 }),
     [weekOffset],
   );
 
+  const buildPreview = async () => {
+    const items = previewWeek(weekStart);
+    if (autoAssign) {
+      setScoring(true);
+      await scoreAssignments(items);
+      setScoring(false);
+    }
+    setPreviewItems(items);
+    setEnabledTemplates(new Set(items.map(i => i.template.id)));
+  };
 
   const runGenerate = async () => {
     if (!previewItems) return;
