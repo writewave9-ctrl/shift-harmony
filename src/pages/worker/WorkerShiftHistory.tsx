@@ -27,6 +27,7 @@ interface ShiftHistoryItem {
     check_out_time: string | null;
     is_proximity_based: boolean;
     override_notes: string | null;
+    override_timestamp: string | null;
   } | null;
 }
 
@@ -46,7 +47,7 @@ export const WorkerShiftHistory = () => {
     try {
       const { data, error } = await supabase
         .from('shifts')
-        .select(`id, date, start_time, end_time, position, location, status, attendance_records!inner(status, check_in_time, check_out_time, is_proximity_based, override_notes)`)
+        .select(`id, date, start_time, end_time, position, location, status, attendance_records!inner(status, check_in_time, check_out_time, is_proximity_based, override_notes, override_timestamp)`)
         .eq('assigned_worker_id', profile.id)
         .eq('status', 'completed')
         .order('date', { ascending: false })
