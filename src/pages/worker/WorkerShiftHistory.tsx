@@ -232,9 +232,41 @@ export const WorkerShiftHistory = () => {
                             {shift.attendance.is_proximity_based ? 'Auto Check-in' : 'Manual Entry'}
                           </span>
                         </div>
-                        {shift.attendance.override_notes && (
-                          <div className="p-3 rounded-lg bg-accent/50"><p className="text-xs text-muted-foreground mb-1">Notes</p><p className="text-sm text-foreground">{shift.attendance.override_notes}</p></div>
-                        )}
+                        {(() => {
+                          if (!shift.attendance) return null;
+                          const events: ShiftActivityEvent[] = [];
+                          if (shift.attendance.check_in_time) {
+                            events.push({
+                              label: 'Checked in',
+                              detail: shift.attendance.is_proximity_based ? 'Auto via location' : 'Manual',
+                              at: shift.attendance.check_in_time,
+                              tone: 'primary',
+                            });
+                          }
+                          if (shift.attendance.override_timestamp) {
+                            const parsed = parseOverrideNotes(shift.attendance.override_notes);
+                            events.push({
+                              label: 'Manager updated attendance',
+                              at: shift.attendance.override_timestamp,
+                              reason: parsed.reason ?? undefined,
+                              notes: parsed.notes ?? undefined,
+                              tone: 'warning',
+                            });
+                          }
+                          if (shift.attendance.check_out_time) {
+                            events.push({
+                              label: 'Checked out',
+                              at: shift.attendance.check_out_time,
+                              tone: 'success',
+                            });
+                          }
+                          if (!events.length) return null;
+                          return (
+                            <div className="mt-2 pt-3 border-t border-border/40">
+                              <ShiftActivityTimeline events={events} />
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
