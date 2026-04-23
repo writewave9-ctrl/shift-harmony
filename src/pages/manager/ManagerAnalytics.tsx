@@ -96,6 +96,17 @@ export const ManagerAnalytics = () => {
       </header>
 
       <div className="px-4 lg:px-8 py-6 space-y-6">
+        {/* Report Exports — Enterprise */}
+        {exportsEnabled ? (
+          <ReportExportPanel />
+        ) : (
+          <UpgradePromptCard
+            requiredPlan="enterprise"
+            compact
+            title="Export advanced reports (CSV / PDF)"
+          />
+        )}
+
         {/* Summary Cards */}
         {summary && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
