@@ -39,6 +39,9 @@ export const WorkerHome = () => {
   const { user, profile } = useAuth();
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState<string>();
+  const [attendanceStatus, setAttendanceStatus] = useState<'not_checked_in' | 'present' | 'late' | 'manually_approved'>('present');
+  const [isManagerOverride, setIsManagerOverride] = useState(false);
+  const [overrideReason, setOverrideReason] = useState<string | null>(null);
   const [shifts, setShifts] = useState<WorkerShift[]>([]);
   const [loading, setLoading] = useState(true);
   const [isWithinProximity, setIsWithinProximity] = useState<boolean | null>(null);
@@ -79,12 +82,27 @@ export const WorkerHome = () => {
             .eq('worker_id', profile.id)
             .maybeSingle();
 
-          if (attendance?.check_in_time) {
-            setIsCheckedIn(true);
-            setCheckInTime(new Date(attendance.check_in_time).toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            }));
+          if (attendance) {
+            const hasCheckIn = !!attendance.check_in_time;
+            const isOverride = !!attendance.manual_override_by;
+            // Worker is "checked in" if they tapped check-in OR a manager set a positive status
+            const positiveOverride = isOverride && ['present', 'late', 'manually_approved'].includes(attendance.status);
+            if (hasCheckIn || positiveOverride) {
+              setIsCheckedIn(true);
+              const ts = attendance.check_in_time ?? attendance.override_timestamp;
+              if (ts) {
+                setCheckInTime(new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+              }
+            }
+            setAttendanceStatus((attendance.status as any) ?? 'present');
+            setIsManagerOverride(isOverride);
+            // Parse "[Reason] notes" — we only show reason chip text
+            if (isOverride && attendance.override_notes) {
+              const m = attendance.override_notes.match(/^\[([^\]]+)\]\s*(.*)$/);
+              setOverrideReason(m ? (m[2] || m[1]) : attendance.override_notes);
+            } else {
+              setOverrideReason(null);
+            }
           }
         }
       }
