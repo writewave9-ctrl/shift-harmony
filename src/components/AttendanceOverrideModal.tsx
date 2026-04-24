@@ -4,6 +4,8 @@ import { Check, Clock, User, FileText, Tag } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { ShiftActivityTimeline } from '@/components/ShiftActivityTimeline';
+import { useShiftActivity } from '@/hooks/useShiftActivity';
 import {
   Dialog,
   DialogContent,
