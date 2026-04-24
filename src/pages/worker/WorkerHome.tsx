@@ -121,6 +121,20 @@ export const WorkerHome = () => {
   const requiresProximity = !!(todayShift?.latitude && todayShift?.longitude);
   const { events: activityEvents } = useShiftActivity(todayShift?.id ?? null);
 
+  // Realtime: refetch attendance when manager overrides happen on today's shift
+  useEffect(() => {
+    if (!todayShift?.id) return;
+    const channel = supabase
+      .channel(`worker-attendance-${todayShift.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'attendance_records', filter: `shift_id=eq.${todayShift.id}` },
+        () => fetchData(),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [todayShift?.id, fetchData]);
+
   const handleCheckLocation = async () => {
     if (!todayShift?.latitude || !todayShift?.longitude) return;
     setLocationError(null);
