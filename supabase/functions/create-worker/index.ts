@@ -74,7 +74,9 @@ Deno.serve(async (req) => {
       (u) => (u.email || "").toLowerCase() === email.toLowerCase()
     );
 
-    const origin = req.headers.get("origin") || supabaseUrl;
+    // Use a server-controlled APP_URL for outbound email links to prevent
+    // caller-controlled Origin header phishing. Falls back to supabaseUrl.
+    const origin = Deno.env.get("APP_URL") || supabaseUrl;
 
     // ---------- Existing user → invite to additional team ----------
     if (existingUser) {
@@ -180,12 +182,12 @@ Deno.serve(async (req) => {
       sign_in_url: `${origin}/auth`,
     });
 
-    // Manager notification
+    // Manager notification — never persist the temp password in DB rows.
     await adminClient.from("notifications").insert({
       user_id: user.id,
       type: "worker_created",
       title: "Worker account created",
-      message: `${full_name} added. Temp password: ${tempPassword}`,
+      message: `${full_name} was added — credentials sent by email.`,
       priority: "normal",
     });
 
