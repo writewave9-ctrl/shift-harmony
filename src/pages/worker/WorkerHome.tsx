@@ -234,6 +234,9 @@ export const WorkerHome = () => {
                 </div>
                 <CheckInButton
                   isCheckedIn={isCheckedIn} checkInTime={checkInTime} onCheckIn={handleCheckIn}
+                  attendanceStatus={attendanceStatus}
+                  isManagerOverride={isManagerOverride}
+                  overrideReason={overrideReason}
                   requiresProximity={requiresProximity} isWithinProximity={isWithinProximity}
                   distanceMeters={distanceMeters} checkingLocation={checkingLocation}
                   locationError={locationError} onCheckLocation={handleCheckLocation}
