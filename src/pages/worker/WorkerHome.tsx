@@ -228,6 +228,11 @@ export const WorkerHome = () => {
                     <AlertOctagon className="w-3.5 h-3.5" />Can't make it?
                   </button>
                 </div>
+                {activityEvents.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-border/30">
+                    <ShiftActivityTimeline events={activityEvents} />
+                  </div>
+                )}
               </div>
             </div>
           ) : (
