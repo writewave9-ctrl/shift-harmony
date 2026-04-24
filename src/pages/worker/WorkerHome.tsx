@@ -101,6 +101,7 @@ export const WorkerHome = () => {
   const todayShift = shifts.find(s => s.date === todayStr);
   const nextShifts = shifts.filter(s => s.date !== todayStr).slice(0, 3);
   const requiresProximity = !!(todayShift?.latitude && todayShift?.longitude);
+  const { events: activityEvents } = useShiftActivity(todayShift?.id ?? null);
 
   const handleCheckLocation = async () => {
     if (!todayShift?.latitude || !todayShift?.longitude) return;
