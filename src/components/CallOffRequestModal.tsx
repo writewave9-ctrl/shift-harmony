@@ -58,9 +58,14 @@ export const CallOffRequestModal = ({ open, onOpenChange, shift, onSubmitted }: 
       });
       if (error) throw error;
       setConfirmed(true);
+      toast.success('Call-off submitted', {
+        description: 'Your manager has been notified.',
+      });
       onSubmitted?.();
     } catch (err: any) {
-      toast.error(err.message || 'Could not submit call-off');
+      toast.error('Could not submit call-off', {
+        description: err.message || 'Please try again in a moment.',
+      });
     } finally {
       setBusy(false);
     }

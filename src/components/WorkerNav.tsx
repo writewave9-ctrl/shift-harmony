@@ -1,7 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Home, Calendar, Users, History, User } from 'lucide-react';
-import { useNotifications } from '@/hooks/useNotifications';
 
 const navItems = [
   { path: '/worker', icon: Home, label: 'Home' },
@@ -13,33 +12,63 @@ const navItems = [
 
 export const WorkerNav = () => {
   const location = useLocation();
-  const { unreadCount } = useNotifications();
 
   return (
-    <nav className="sticky bottom-0 z-50 bg-card/90 backdrop-blur-xl border-t border-border/40 px-4 pb-safe">
-      <div className="flex items-center justify-around h-16 max-w-md mx-auto">
-        {navItems.map(item => {
-          const isActive = location.pathname === item.path || 
+    <nav
+      aria-label="Primary"
+      className="sticky bottom-0 z-50 border-t border-border/30 bg-card/85 backdrop-blur-2xl supports-[backdrop-filter]:bg-card/70 pb-safe"
+    >
+      {/* Top hairline highlight for premium feel */}
+      <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-border/60 to-transparent pointer-events-none" />
+
+      <div className="flex items-stretch justify-around h-[68px] max-w-md mx-auto px-3">
+        {navItems.map((item) => {
+          const isActive =
+            location.pathname === item.path ||
             (item.path !== '/worker' && location.pathname.startsWith(item.path));
-          
+
           return (
             <Link
               key={item.path}
               to={item.path}
+              aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-200',
-                isActive 
-                  ? 'text-primary' 
-                  : 'text-muted-foreground hover:text-foreground'
+                'group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl transition-colors duration-300',
+                isActive ? 'text-primary' : 'text-muted-foreground/80 hover:text-foreground',
               )}
             >
-              <div className={cn(
-                'relative p-1 rounded-lg transition-colors',
-                isActive && 'bg-primary/10'
-              )}>
-                <item.icon className={cn('w-5 h-5', isActive && 'stroke-[2.5]')} />
-              </div>
-              <span className="text-[10px] font-medium">{item.label}</span>
+              {/* Active indicator pill above icon */}
+              <span
+                className={cn(
+                  'absolute top-1.5 h-[3px] w-7 rounded-full bg-primary transition-all duration-300 ease-out',
+                  isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-50',
+                )}
+                aria-hidden
+              />
+
+              <span
+                className={cn(
+                  'relative flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-300 ease-out',
+                  isActive
+                    ? 'bg-primary/10 scale-100'
+                    : 'bg-transparent scale-95 group-hover:bg-accent/40 group-active:scale-90',
+                )}
+              >
+                <item.icon
+                  className={cn(
+                    'transition-all duration-300 ease-out',
+                    isActive ? 'w-[22px] h-[22px] stroke-[2.25]' : 'w-[20px] h-[20px] stroke-[1.75]',
+                  )}
+                />
+              </span>
+              <span
+                className={cn(
+                  'text-[10.5px] leading-none tracking-wide transition-all duration-300',
+                  isActive ? 'font-semibold' : 'font-medium opacity-80',
+                )}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}

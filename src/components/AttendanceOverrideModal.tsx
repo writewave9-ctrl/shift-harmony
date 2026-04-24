@@ -4,6 +4,8 @@ import { Check, Clock, User, FileText, Tag } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { ShiftActivityTimeline } from '@/components/ShiftActivityTimeline';
+import { useShiftActivity } from '@/hooks/useShiftActivity';
 import {
   Dialog,
   DialogContent,
@@ -60,6 +62,7 @@ export const AttendanceOverrideModal: React.FC<AttendanceOverrideModalProps> = (
   const [reason, setReason] = useState<Reason | ''>('');
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const { events: activityEvents } = useShiftActivity(open ? shift?.id ?? null : null);
 
   const reset = () => {
     setSelectedStatus('');
@@ -202,6 +205,12 @@ export const AttendanceOverrideModal: React.FC<AttendanceOverrideModalProps> = (
               <Clock className="w-3 h-3" />
               Will be logged at: {new Date().toLocaleString()}
             </div>
+
+            {activityEvents.length > 0 && (
+              <div className="rounded-xl border border-border/40 bg-muted/30 p-3">
+                <ShiftActivityTimeline events={activityEvents} />
+              </div>
+            )}
 
             <div className="flex gap-3">
               <Button

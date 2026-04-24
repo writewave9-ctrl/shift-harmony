@@ -8,6 +8,8 @@ import { MotionCard, MotionSection } from '@/components/MotionWrapper';
 import { Calendar, Bell, ChevronRight, MapPin, Clock, AlertCircle, AlertOctagon } from 'lucide-react';
 import { CallOffRequestModal } from '@/components/CallOffRequestModal';
 import { CallOffStatusBanner } from '@/components/CallOffStatusBanner';
+import { ShiftActivityTimeline } from '@/components/ShiftActivityTimeline';
+import { useShiftActivity } from '@/hooks/useShiftActivity';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +39,9 @@ export const WorkerHome = () => {
   const { user, profile } = useAuth();
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState<string>();
+  const [attendanceStatus, setAttendanceStatus] = useState<'not_checked_in' | 'present' | 'late' | 'manually_approved'>('present');
+  const [isManagerOverride, setIsManagerOverride] = useState(false);
+  const [overrideReason, setOverrideReason] = useState<string | null>(null);
   const [shifts, setShifts] = useState<WorkerShift[]>([]);
   const [loading, setLoading] = useState(true);
   const [isWithinProximity, setIsWithinProximity] = useState<boolean | null>(null);
@@ -77,12 +82,27 @@ export const WorkerHome = () => {
             .eq('worker_id', profile.id)
             .maybeSingle();
 
-          if (attendance?.check_in_time) {
-            setIsCheckedIn(true);
-            setCheckInTime(new Date(attendance.check_in_time).toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            }));
+          if (attendance) {
+            const hasCheckIn = !!attendance.check_in_time;
+            const isOverride = !!attendance.manual_override_by;
+            // Worker is "checked in" if they tapped check-in OR a manager set a positive status
+            const positiveOverride = isOverride && ['present', 'late', 'manually_approved'].includes(attendance.status);
+            if (hasCheckIn || positiveOverride) {
+              setIsCheckedIn(true);
+              const ts = attendance.check_in_time ?? attendance.override_timestamp;
+              if (ts) {
+                setCheckInTime(new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+              }
+            }
+            setAttendanceStatus((attendance.status as any) ?? 'present');
+            setIsManagerOverride(isOverride);
+            // Parse "[Reason] notes" — we only show reason chip text
+            if (isOverride && attendance.override_notes) {
+              const m = attendance.override_notes.match(/^\[([^\]]+)\]\s*(.*)$/);
+              setOverrideReason(m ? (m[2] || m[1]) : attendance.override_notes);
+            } else {
+              setOverrideReason(null);
+            }
           }
         }
       }
@@ -99,6 +119,21 @@ export const WorkerHome = () => {
   const todayShift = shifts.find(s => s.date === todayStr);
   const nextShifts = shifts.filter(s => s.date !== todayStr).slice(0, 3);
   const requiresProximity = !!(todayShift?.latitude && todayShift?.longitude);
+  const { events: activityEvents } = useShiftActivity(todayShift?.id ?? null);
+
+  // Realtime: refetch attendance when manager overrides happen on today's shift
+  useEffect(() => {
+    if (!todayShift?.id) return;
+    const channel = supabase
+      .channel(`worker-attendance-${todayShift.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'attendance_records', filter: `shift_id=eq.${todayShift.id}` },
+        () => fetchData(),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [todayShift?.id, fetchData]);
 
   const handleCheckLocation = async () => {
     if (!todayShift?.latitude || !todayShift?.longitude) return;
@@ -118,16 +153,22 @@ export const WorkerHome = () => {
     if (!todayShift || !profile?.id) return;
     const now = new Date();
     const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    // Determine if Late based on shift start time
+    const start = new Date(`${todayShift.date}T${todayShift.start_time}`);
+    const isLate = now.getTime() > start.getTime() + 5 * 60 * 1000; // 5-min grace
+    const newStatus = isLate ? 'late' : 'present';
     try {
       const { error } = await supabase.from('attendance_records').insert({
         shift_id: todayShift.id, worker_id: profile.id,
-        check_in_time: now.toISOString(), status: 'present', is_proximity_based: requiresProximity,
+        check_in_time: now.toISOString(), status: newStatus, is_proximity_based: requiresProximity,
       });
       if (error) throw error;
       setCheckInTime(time);
       setIsCheckedIn(true);
+      setAttendanceStatus(newStatus as any);
+      setIsManagerOverride(false);
       haptics.success();
-      toast.success('Checked in successfully!');
+      toast.success(isLate ? 'Checked in (marked late)' : 'Checked in successfully!');
     } catch (err: any) {
       console.error('Error checking in:', err);
       toast.error('Failed to check in. Please try again.');
@@ -207,6 +248,9 @@ export const WorkerHome = () => {
                 </div>
                 <CheckInButton
                   isCheckedIn={isCheckedIn} checkInTime={checkInTime} onCheckIn={handleCheckIn}
+                  attendanceStatus={attendanceStatus}
+                  isManagerOverride={isManagerOverride}
+                  overrideReason={overrideReason}
                   requiresProximity={requiresProximity} isWithinProximity={isWithinProximity}
                   distanceMeters={distanceMeters} checkingLocation={checkingLocation}
                   locationError={locationError} onCheckLocation={handleCheckLocation}
@@ -225,6 +269,11 @@ export const WorkerHome = () => {
                     <AlertOctagon className="w-3.5 h-3.5" />Can't make it?
                   </button>
                 </div>
+                {activityEvents.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-border/30">
+                    <ShiftActivityTimeline events={activityEvents} />
+                  </div>
+                )}
               </div>
             </div>
           ) : (
