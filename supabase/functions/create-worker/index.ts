@@ -74,7 +74,9 @@ Deno.serve(async (req) => {
       (u) => (u.email || "").toLowerCase() === email.toLowerCase()
     );
 
-    const origin = req.headers.get("origin") || supabaseUrl;
+    // Use a server-controlled APP_URL for outbound email links to prevent
+    // caller-controlled Origin header phishing. Falls back to supabaseUrl.
+    const origin = Deno.env.get("APP_URL") || supabaseUrl;
 
     // ---------- Existing user → invite to additional team ----------
     if (existingUser) {
