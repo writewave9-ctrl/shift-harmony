@@ -182,12 +182,12 @@ Deno.serve(async (req) => {
       sign_in_url: `${origin}/auth`,
     });
 
-    // Manager notification
+    // Manager notification — never persist the temp password in DB rows.
     await adminClient.from("notifications").insert({
       user_id: user.id,
       type: "worker_created",
       title: "Worker account created",
-      message: `${full_name} added. Temp password: ${tempPassword}`,
+      message: `${full_name} was added — credentials sent by email.`,
       priority: "normal",
     });
 
