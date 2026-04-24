@@ -139,16 +139,22 @@ export const WorkerHome = () => {
     if (!todayShift || !profile?.id) return;
     const now = new Date();
     const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    // Determine if Late based on shift start time
+    const start = new Date(`${todayShift.date}T${todayShift.start_time}`);
+    const isLate = now.getTime() > start.getTime() + 5 * 60 * 1000; // 5-min grace
+    const newStatus = isLate ? 'late' : 'present';
     try {
       const { error } = await supabase.from('attendance_records').insert({
         shift_id: todayShift.id, worker_id: profile.id,
-        check_in_time: now.toISOString(), status: 'present', is_proximity_based: requiresProximity,
+        check_in_time: now.toISOString(), status: newStatus, is_proximity_based: requiresProximity,
       });
       if (error) throw error;
       setCheckInTime(time);
       setIsCheckedIn(true);
+      setAttendanceStatus(newStatus as any);
+      setIsManagerOverride(false);
       haptics.success();
-      toast.success('Checked in successfully!');
+      toast.success(isLate ? 'Checked in (marked late)' : 'Checked in successfully!');
     } catch (err: any) {
       console.error('Error checking in:', err);
       toast.error('Failed to check in. Please try again.');
