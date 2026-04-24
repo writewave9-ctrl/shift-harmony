@@ -101,94 +101,94 @@ export const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Left Panel - Branding (Hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary/5 flex-col justify-between p-12">
-        <div>
-          <AlignLogo size={44} withWordmark wordmarkClassName="text-2xl" />
+      {/* Left Panel — editorial brand */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-14 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-mesh" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-accent/40" />
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: 'radial-gradient(hsl(var(--foreground)) 1px, transparent 1px)',
+            backgroundSize: '22px 22px',
+          }}
+        />
+
+        <div className="relative">
+          <AlignLogo size={42} withWordmark wordmarkClassName="text-xl" />
         </div>
-        
-        <div className="space-y-8">
-          <h1 className="text-4xl font-bold text-foreground leading-tight">
-            Workforce scheduling<br />
-            <span className="text-primary">made simple.</span>
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-md">
-            Streamline shift management, reduce no-shows, and keep your team aligned with real-time updates.
-          </p>
-          
-          <div className="grid grid-cols-2 gap-4 max-w-md">
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border/50">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Clock className="w-5 h-5 text-primary" />
+
+        <div className="relative space-y-10">
+          <div>
+            <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] font-semibold text-primary mb-5">
+              <span className="w-5 h-px bg-primary/40" /> Welcome
+            </span>
+            <h1 className="font-display text-5xl font-semibold text-foreground leading-[1.05] tracking-tight">
+              Every shift,
+              <br />
+              <span className="italic text-primary">in alignment.</span>
+            </h1>
+            <p className="text-base text-muted-foreground max-w-md mt-5 leading-relaxed">
+              Streamline scheduling, reduce no-shows, and keep your team coordinated
+              with real-time updates.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 max-w-md">
+            {[
+              { icon: Clock, title: 'Smart scheduling', desc: 'Templates &amp; auto-fill' },
+              { icon: Shield, title: 'GPS check-in', desc: 'Verified attendance' },
+              { icon: Users, title: 'Team sync', desc: 'Live coordination' },
+              { icon: Zap, title: 'Instant swaps', desc: 'One-tap trades' },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div
+                key={title}
+                className="flex items-start gap-3 p-3.5 rounded-xl bg-card/70 backdrop-blur-sm border border-border/50 hover:border-primary/20 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary/15 to-primary/5 ring-1 ring-primary/15 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4 text-primary" strokeWidth={1.75} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-foreground leading-tight">{title}</p>
+                  <p className="text-[11.5px] text-muted-foreground mt-0.5" dangerouslySetInnerHTML={{ __html: desc }} />
+                </div>
               </div>
-              <div>
-                <p className="font-medium text-foreground">Smart Scheduling</p>
-                <p className="text-sm text-muted-foreground">AI-powered shift optimization</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border/50">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">GPS Check-in</p>
-                <p className="text-sm text-muted-foreground">Location-verified attendance</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border/50">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Team Sync</p>
-                <p className="text-sm text-muted-foreground">Real-time collaboration</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border/50">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Zap className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Instant Swaps</p>
-                <p className="text-sm text-muted-foreground">One-tap shift trades</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
-        
-        <p className="text-sm text-muted-foreground">
-          © 2024 Align. All rights reserved.
+
+        <p className="relative text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Align — workforce coordination, calmly.
         </p>
       </div>
-      
+
       {/* Right Panel - Auth Form */}
       <div className="flex-1 flex flex-col">
         <header className="p-4 flex justify-end">
           <ThemeToggle />
         </header>
-        
+
         <main className="flex-1 flex items-center justify-center px-6 py-8">
           <div className="w-full max-w-md space-y-8">
             {/* Mobile Logo */}
             <div className="text-center lg:hidden flex flex-col items-center">
               <AlignLogo size={56} />
-              <h1 className="text-2xl font-bold text-foreground mt-3 mb-1 tracking-tight">Align</h1>
+              <h1 className="font-display text-3xl font-semibold text-foreground mt-3 mb-1 tracking-tight">Align</h1>
               <p className="text-sm text-muted-foreground">
-                Workforce scheduling made simple
+                Workforce coordination, calmly.
               </p>
             </div>
-            
+
             {/* Form Header */}
             <div className="text-center lg:text-left">
-              <h2 className="text-2xl font-bold text-foreground">
-                {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create a manager account' : 'Reset your password'}
+              <h2 className="font-display text-3xl font-semibold text-foreground tracking-tight">
+                {mode === 'login' ? 'Welcome back.' : mode === 'signup' ? 'Create your workspace.' : 'Reset your password.'}
               </h2>
-              <p className="text-muted-foreground mt-1">
-                {mode === 'login' 
-                  ? 'Sign in to continue to your dashboard' 
+              <p className="text-muted-foreground mt-1.5 text-[14px]">
+                {mode === 'login'
+                  ? 'Sign in to continue to your dashboard'
                   : mode === 'signup'
                   ? 'Set up your workspace and add your team'
-                  : 'Enter your email and we\'ll send a reset link'
+                  : "Enter your email and we'll send a reset link"
                 }
               </p>
             </div>

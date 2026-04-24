@@ -8,11 +8,11 @@ interface AlignLogoProps {
 }
 
 /**
- * Align logo — premium abstract mark.
+ * Align logo — premium sculpted mark.
  *
- * Concept: three precision bars of escalating height anchored on a shared baseline,
- * crowned by an aligned orb. Reads as "elements brought into alignment".
- * Uses theme tokens and dual gradients for depth. Adapts to light/dark.
+ * Concept: a precision arc orbiting a focal point, intersected by a single
+ * vertical alignment axis. Reads as orchestration around a shared moment in
+ * time. Built entirely from primitive geometry so it stays crisp at 16px.
  */
 export const AlignLogo = ({ size = 32, className, withWordmark = false, wordmarkClassName }: AlignLogoProps) => (
   <div className={cn('inline-flex items-center gap-2.5', className)}>
@@ -26,37 +26,52 @@ export const AlignLogo = ({ size = 32, className, withWordmark = false, wordmark
       role="img"
     >
       <defs>
-        <linearGradient id="align-bg" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.16" />
-          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.04" />
+        {/* Squircle backdrop — deep forest gradient, app-icon worthy */}
+        <linearGradient id="align-bg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="hsl(168 38% 22%)" />
+          <stop offset="100%" stopColor="hsl(170 45% 12%)" />
         </linearGradient>
-        <linearGradient id="align-bar" x1="20" y1="6" x2="20" y2="34" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="hsl(var(--primary))" />
-          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.65" />
+        {/* Subtle inner sheen */}
+        <radialGradient id="align-sheen" cx="0.3" cy="0.2" r="0.9">
+          <stop offset="0%" stopColor="hsl(168 60% 70% / 0.18)" />
+          <stop offset="60%" stopColor="hsl(168 60% 70% / 0)" />
+        </radialGradient>
+        {/* Arc gradient — bright teal fading to sage */}
+        <linearGradient id="align-arc" x1="8" y1="8" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="hsl(165 70% 75%)" />
+          <stop offset="100%" stopColor="hsl(168 50% 50%)" />
         </linearGradient>
-        <linearGradient id="align-orb" x1="14" y1="6" x2="26" y2="14" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="hsl(var(--primary))" />
-          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.75" />
-        </linearGradient>
+        {/* Focal dot gradient */}
+        <radialGradient id="align-dot" cx="0.35" cy="0.3" r="0.75">
+          <stop offset="0%" stopColor="hsl(160 80% 88%)" />
+          <stop offset="100%" stopColor="hsl(168 55% 58%)" />
+        </radialGradient>
       </defs>
 
-      {/* Soft squircle container */}
+      {/* Squircle backdrop */}
       <rect x="0" y="0" width="40" height="40" rx="11" fill="url(#align-bg)" />
-      <rect x="0.5" y="0.5" width="39" height="39" rx="10.5" fill="none" stroke="hsl(var(--primary) / 0.18)" />
+      <rect x="0" y="0" width="40" height="40" rx="11" fill="url(#align-sheen)" />
+      <rect x="0.5" y="0.5" width="39" height="39" rx="10.5" fill="none" stroke="hsl(168 40% 65% / 0.18)" />
 
-      {/* Three precision bars rising into alignment */}
-      <rect x="9"  y="20" width="3.4" height="11" rx="1.7" fill="url(#align-bar)" opacity="0.75" />
-      <rect x="14.8" y="15" width="3.4" height="16" rx="1.7" fill="url(#align-bar)" opacity="0.9" />
-      <rect x="20.6" y="11" width="3.4" height="20" rx="1.7" fill="url(#align-bar)" />
+      {/* Outer precision arc — three-quarter ring */}
+      <path
+        d="M 30.5 12 A 12 12 0 1 0 30.5 28"
+        stroke="url(#align-arc)"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        fill="none"
+        opacity="0.95"
+      />
 
-      {/* Crown orb — the aligned target */}
-      <circle cx="29" cy="11.5" r="3.4" fill="url(#align-orb)" />
-      <circle cx="29" cy="11.5" r="3.4" fill="none" stroke="hsl(var(--primary))" strokeOpacity="0.35" />
-      {/* Inner highlight on orb */}
-      <circle cx="27.9" cy="10.4" r="0.9" fill="hsl(0 0% 100% / 0.55)" />
+      {/* Inner alignment axis — single vertical bar through center */}
+      <rect x="18.7" y="11" width="2.6" height="18" rx="1.3" fill="hsl(165 70% 75%)" opacity="0.92" />
 
-      {/* Baseline — the alignment reference */}
-      <rect x="7" y="32" width="20" height="1.6" rx="0.8" fill="hsl(var(--primary))" opacity="0.55" />
+      {/* Crown focal dot — the aligned target */}
+      <circle cx="30.5" cy="20" r="3.2" fill="url(#align-dot)" />
+      <circle cx="29.6" cy="19" r="0.85" fill="hsl(0 0% 100% / 0.55)" />
+
+      {/* Baseline indicator */}
+      <rect x="13" y="32" width="14" height="1.4" rx="0.7" fill="hsl(168 50% 60%)" opacity="0.45" />
     </svg>
     {withWordmark && (
       <span className={cn('text-base font-semibold tracking-tight text-foreground', wordmarkClassName)}>
