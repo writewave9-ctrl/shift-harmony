@@ -62,6 +62,7 @@ export const AttendanceOverrideModal: React.FC<AttendanceOverrideModalProps> = (
   const [reason, setReason] = useState<Reason | ''>('');
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const { events: activityEvents } = useShiftActivity(open ? shift?.id ?? null : null);
 
   const reset = () => {
     setSelectedStatus('');
