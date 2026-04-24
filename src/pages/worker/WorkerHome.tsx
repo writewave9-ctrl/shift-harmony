@@ -8,6 +8,8 @@ import { MotionCard, MotionSection } from '@/components/MotionWrapper';
 import { Calendar, Bell, ChevronRight, MapPin, Clock, AlertCircle, AlertOctagon } from 'lucide-react';
 import { CallOffRequestModal } from '@/components/CallOffRequestModal';
 import { CallOffStatusBanner } from '@/components/CallOffStatusBanner';
+import { ShiftActivityTimeline } from '@/components/ShiftActivityTimeline';
+import { useShiftActivity } from '@/hooks/useShiftActivity';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
