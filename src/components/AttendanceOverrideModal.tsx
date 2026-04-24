@@ -206,6 +206,12 @@ export const AttendanceOverrideModal: React.FC<AttendanceOverrideModalProps> = (
               Will be logged at: {new Date().toLocaleString()}
             </div>
 
+            {activityEvents.length > 0 && (
+              <div className="rounded-xl border border-border/40 bg-muted/30 p-3">
+                <ShiftActivityTimeline events={activityEvents} />
+              </div>
+            )}
+
             <div className="flex gap-3">
               <Button
                 variant="outline"
