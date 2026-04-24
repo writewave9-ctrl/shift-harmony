@@ -11,17 +11,19 @@ import { LandingFooter } from '@/components/landing/LandingFooter';
 import { ScrollToTop } from '@/components/landing/ScrollToTop';
 
 export const Landing = () => (
-  <div className="min-h-screen bg-background text-foreground">
+  <div className="min-h-screen bg-background text-foreground antialiased">
     <LandingNav />
     <ScrollToTop />
-    <HeroSection />
-    <BenefitsStrip />
-    <SocialProof />
-    <FeaturesGrid />
-    <HowItWorks />
-    <PricingSection />
-    <FAQSection />
-    <CTASection />
+    <main>
+      <HeroSection />
+      <BenefitsStrip />
+      <SocialProof />
+      <FeaturesGrid />
+      <HowItWorks />
+      <PricingSection />
+      <FAQSection />
+      <CTASection />
+    </main>
     <LandingFooter />
   </div>
 );
