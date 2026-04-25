@@ -16,12 +16,13 @@ export const WorkerNav = () => {
   return (
     <nav
       aria-label="Primary"
-      className="sticky bottom-0 z-50 border-t border-border/30 bg-card/85 backdrop-blur-2xl supports-[backdrop-filter]:bg-card/70 pb-safe"
+      className="sticky bottom-0 z-50 border-t border-border/40 bg-gradient-nav backdrop-blur-2xl supports-[backdrop-filter]:bg-gradient-nav pb-safe shadow-[0_-8px_32px_-12px_hsl(220_25%_10%_/_0.08)]"
     >
       {/* Top hairline highlight for premium feel */}
-      <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-border/60 to-transparent pointer-events-none" />
+      <div aria-hidden className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent pointer-events-none" />
+      <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-card to-transparent pointer-events-none" />
 
-      <div className="flex items-stretch justify-around h-[68px] max-w-md mx-auto px-3">
+      <div className="flex items-stretch justify-around h-[64px] max-w-md mx-auto px-2 sm:px-4">
         {navItems.map((item) => {
           const isActive =
             location.pathname === item.path ||
@@ -33,15 +34,15 @@ export const WorkerNav = () => {
               to={item.path}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl transition-colors duration-300',
-                isActive ? 'text-primary' : 'text-muted-foreground/80 hover:text-foreground',
+                'group relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl transition-colors duration-300 select-none',
+                isActive ? 'text-primary' : 'text-muted-foreground/75 hover:text-foreground',
               )}
             >
               {/* Active indicator pill above icon */}
               <span
                 className={cn(
-                  'absolute top-1.5 h-[3px] w-7 rounded-full bg-primary transition-all duration-300 ease-out',
-                  isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-50',
+                  'absolute top-1 h-[3px] rounded-full bg-primary transition-all duration-300 ease-out',
+                  isActive ? 'opacity-100 w-6 shadow-[0_0_8px_hsl(var(--primary)/0.5)]' : 'opacity-0 w-2',
                 )}
                 aria-hidden
               />
@@ -50,21 +51,21 @@ export const WorkerNav = () => {
                 className={cn(
                   'relative flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-300 ease-out',
                   isActive
-                    ? 'bg-primary/10 scale-100'
-                    : 'bg-transparent scale-95 group-hover:bg-accent/40 group-active:scale-90',
+                    ? 'bg-primary/12 ring-1 ring-primary/15 scale-100'
+                    : 'bg-transparent scale-95 group-hover:bg-accent/60 group-active:scale-90',
                 )}
               >
                 <item.icon
                   className={cn(
                     'transition-all duration-300 ease-out',
-                    isActive ? 'w-[22px] h-[22px] stroke-[2.25]' : 'w-[20px] h-[20px] stroke-[1.75]',
+                    isActive ? 'w-[21px] h-[21px] stroke-[2.25]' : 'w-[20px] h-[20px] stroke-[1.75]',
                   )}
                 />
               </span>
               <span
                 className={cn(
-                  'text-[10.5px] leading-none tracking-wide transition-all duration-300',
-                  isActive ? 'font-semibold' : 'font-medium opacity-80',
+                  'text-[10px] leading-none tracking-[0.02em] transition-all duration-300',
+                  isActive ? 'font-bold' : 'font-medium opacity-75',
                 )}
               >
                 {item.label}
