@@ -98,8 +98,13 @@
     --shadow-soft: 0 1px 2px hsl(220 20% 14% / 0.03);
     --shadow-elevated: 0 1px 2px hsl(220 20% 14% / 0.04), 0 4px 12px hsl(220 20% 14% / 0.05);
     --shadow-floating: 0 2px 4px hsl(220 20% 14% / 0.04), 0 12px 32px hsl(220 20% 14% / 0.08);
-    --shadow-luxe: 0 1px 3px hsl(168 30% 20% / 0.06), 0 12px 40px hsl(168 30% 20% / 0.10), 0 24px 80px hsl(168 30% 20% / 0.06);
+  --shadow-luxe: 0 1px 3px hsl(168 30% 20% / 0.06), 0 12px 40px hsl(168 30% 20% / 0.10), 0 24px 80px hsl(168 30% 20% / 0.06);
     --shadow-glow: 0 0 0 4px hsl(168 35% 42% / 0.12);
+    --shadow-inset-hairline: inset 0 1px 0 hsl(0 0% 100% / 0.6);
+    --shadow-card-premium: 0 1px 0 hsl(0 0% 100% / 0.6) inset, 0 1px 2px hsl(220 25% 10% / 0.04), 0 8px 24px -8px hsl(168 30% 20% / 0.10);
+    --gradient-card-premium: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(40 25% 98.5%) 100%);
+    --gradient-shift-hero: linear-gradient(135deg, hsl(168 45% 96%) 0%, hsl(178 50% 95%) 50%, hsl(40 35% 97%) 100%);
+    --gradient-nav: linear-gradient(180deg, hsl(0 0% 100% / 0.85) 0%, hsl(40 25% 98% / 0.92) 100%);
 
     /* Editorial type */
     --font-display: 'Fraunces', 'Times New Roman', serif;
@@ -172,6 +177,11 @@
     --shadow-floating: 0 2px 4px hsl(0 0% 0% / 0.2), 0 12px 32px hsl(0 0% 0% / 0.35);
     --shadow-luxe: 0 1px 3px hsl(0 0% 0% / 0.3), 0 12px 40px hsl(0 0% 0% / 0.45), 0 24px 80px hsl(0 0% 0% / 0.3);
     --shadow-glow: 0 0 0 4px hsl(168 40% 50% / 0.18);
+    --shadow-inset-hairline: inset 0 1px 0 hsl(0 0% 100% / 0.04);
+    --shadow-card-premium: 0 1px 0 hsl(0 0% 100% / 0.04) inset, 0 1px 2px hsl(0 0% 0% / 0.25), 0 12px 32px -8px hsl(0 0% 0% / 0.4);
+    --gradient-card-premium: linear-gradient(180deg, hsl(220 18% 14%) 0%, hsl(220 20% 11%) 100%);
+    --gradient-shift-hero: linear-gradient(135deg, hsl(168 30% 16%) 0%, hsl(178 28% 15%) 50%, hsl(220 18% 13%) 100%);
+    --gradient-nav: linear-gradient(180deg, hsl(220 18% 13% / 0.85) 0%, hsl(220 20% 10% / 0.92) 100%);
   }
 }
 
@@ -392,9 +402,23 @@
   .bg-gradient-primary { background-image: var(--gradient-primary); }
   .bg-gradient-surface { background-image: var(--gradient-surface); }
   .bg-gradient-accent { background-image: var(--gradient-accent); }
+  .bg-gradient-mesh { background-image: var(--gradient-mesh); }
+  .bg-gradient-hero { background-image: var(--gradient-hero); }
+  .bg-gradient-card-premium { background-image: var(--gradient-card-premium); }
+  .bg-gradient-shift-hero { background-image: var(--gradient-shift-hero); }
+  .bg-gradient-nav { background-image: var(--gradient-nav); }
   .shadow-elevated { box-shadow: var(--shadow-elevated); }
   .shadow-floating { box-shadow: var(--shadow-floating); }
   .shadow-glow { box-shadow: var(--shadow-glow); }
+  .shadow-luxe { box-shadow: var(--shadow-luxe); }
+  .shadow-card-premium { box-shadow: var(--shadow-card-premium); }
+  .shadow-inset-hairline { box-shadow: var(--shadow-inset-hairline); }
+
+  /* Premium dotted/grid texture overlay for hero surfaces */
+  .texture-grain {
+    background-image: radial-gradient(hsl(var(--foreground) / 0.025) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
 
   /* Shimmer for loading skeletons */
   .shimmer {
