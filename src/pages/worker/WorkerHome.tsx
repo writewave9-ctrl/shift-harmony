@@ -321,20 +321,20 @@ export const WorkerHome = () => {
         {unreadCount > 0 && notifications.filter(n => !n.read).length > 0 && (
           <MotionSection delay={0.1}>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-primary" />New Notifications
+              <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground flex items-center gap-2">
+                <AlertCircle className="w-3.5 h-3.5 text-primary" />New for you
               </h2>
-              <button onClick={() => navigate('/worker/notifications')} className="text-xs text-primary font-medium hover:underline">View All</button>
+              <button onClick={() => navigate('/worker/notifications')} className="text-[11px] text-primary font-semibold uppercase tracking-wider hover:underline">View all</button>
             </div>
             <div className="space-y-2">
               {notifications.filter(n => !n.read).slice(0, 2).map((notification) => (
                 <MotionCard
                   key={notification.id}
                   onClick={() => navigate('/worker/notifications')}
-                  className="w-full rounded-xl p-4 text-left cursor-pointer bg-card border border-border/50 shadow-sm hover:shadow-md transition-shadow"
+                  className="w-full rounded-2xl p-4 text-left cursor-pointer bg-card border border-border/50 shadow-soft hover:shadow-elevated hover:border-primary/30 transition-all"
                 >
-                  <p className="font-medium text-foreground text-sm">{notification.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{notification.message}</p>
+                  <p className="font-semibold text-foreground text-[13.5px] leading-tight">{notification.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{notification.message}</p>
                 </MotionCard>
               ))}
             </div>
