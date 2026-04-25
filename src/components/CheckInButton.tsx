@@ -145,7 +145,7 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
           </div>
         </div>
 
-        <p className="text-lg font-semibold text-foreground mt-4 tracking-tight">
+        <p className="font-display text-[19px] font-semibold text-foreground mt-4 tracking-tight">
           {attendanceStatus === 'not_checked_in' ? 'Awaiting check-in' : 'Checked in'}
         </p>
 
@@ -208,7 +208,7 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
         )}
       </button>
 
-      <p className="text-lg font-semibold text-foreground mt-3 tracking-tight">
+      <p className="font-display text-[19px] font-semibold text-foreground mt-3 tracking-tight">
         {checkingLocation ? 'Checking location…' : showProximityWarning ? 'Too far away' : 'Tap to check in'}
       </p>
 
