@@ -71,21 +71,22 @@ export const WorkerNotifications = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="sticky top-0 z-10 bg-background/90 backdrop-blur-xl border-b border-border/40 px-4 py-4">
+      <header className="sticky top-0 z-10 bg-background/85 backdrop-blur-xl border-b border-border/40 px-4 py-4">
+        <div aria-hidden className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-border/60 to-transparent pointer-events-none" />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-lg hover:bg-accent transition-colors" aria-label="Back">
+            <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-xl hover:bg-accent/60 transition-colors" aria-label="Back">
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-lg font-semibold text-foreground tracking-tight">Notifications</h1>
-              <p className="text-xs text-muted-foreground">
+              <h1 className="font-display text-[20px] leading-none font-semibold text-foreground tracking-tight">Notifications</h1>
+              <p className="text-[11px] text-muted-foreground mt-1 font-medium uppercase tracking-wider">
                 {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
               </p>
             </div>
           </div>
           {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" className="gap-1.5 text-primary" onClick={markAllAsRead}>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-primary text-[12px] font-semibold" onClick={markAllAsRead}>
               <CheckCheck className="w-4 h-4" />Mark all read
             </Button>
           )}

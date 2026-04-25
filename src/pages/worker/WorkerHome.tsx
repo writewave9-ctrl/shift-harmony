@@ -197,22 +197,33 @@ export const WorkerHome = () => {
   return (
     <PullToRefresh onRefresh={async () => { haptics.medium(); await fetchData(); }}>
     <div className="min-h-screen bg-background">
-      {/* Hero Header */}
-      <header className="px-5 pt-6 pb-5">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-medium text-muted-foreground">{getGreeting()}</p>
-          <button 
-            onClick={() => navigate('/worker/notifications')}
-            className="relative p-2.5 rounded-xl hover:bg-accent/80 transition-colors"
-          >
-            <Bell className="w-5 h-5 text-muted-foreground" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-primary rounded-full ring-2 ring-background" />
-            )}
-          </button>
+      {/* Hero Header — editorial premium */}
+      <header className="relative px-5 pt-7 pb-6 overflow-hidden">
+        <div aria-hidden className="absolute inset-0 bg-gradient-mesh opacity-90 pointer-events-none" />
+        <div aria-hidden className="absolute inset-x-0 -top-12 h-40 bg-gradient-hero pointer-events-none" />
+        <div className="relative">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">{getGreeting()}</p>
+            <button
+              onClick={() => navigate('/worker/notifications')}
+              aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Notifications'}
+              className="relative p-2.5 rounded-xl bg-card/70 backdrop-blur-md border border-border/40 shadow-soft hover:shadow-elevated hover:border-primary/25 transition-all"
+            >
+              <Bell className="w-[18px] h-[18px] text-foreground/80" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center text-[10px] font-bold text-primary-foreground bg-primary rounded-full ring-2 ring-background">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+          </div>
+          <h1 className="font-display text-[28px] leading-[1.05] font-semibold text-foreground tracking-tight">
+            {profile?.full_name || 'Worker'}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            {profile?.position || 'Team Member'}
+          </p>
         </div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">{profile?.full_name || 'Worker'}</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">{profile?.position || 'Team Member'}</p>
       </header>
 
       <div className="px-5 space-y-5 pb-6">
@@ -221,27 +232,35 @@ export const WorkerHome = () => {
           <OnboardingChecklist />
         </MotionSection>
 
-        {/* Today's Shift Card */}
+        {/* Today's Shift Card — luxe surface */}
         <MotionSection>
           {todayShift ? (
-            <div className="rounded-2xl overflow-hidden bg-card border border-border/50 shadow-sm">
-              <div className="bg-gradient-to-r from-primary/8 via-primary/5 to-transparent px-5 py-3 border-b border-border/30">
+            <div className="relative rounded-3xl overflow-hidden bg-gradient-card-premium border border-border/50 shadow-card-premium">
+              <div aria-hidden className="absolute inset-x-0 top-0 h-32 bg-gradient-shift-hero opacity-80 pointer-events-none" />
+              <div aria-hidden className="absolute inset-0 texture-grain opacity-60 pointer-events-none" />
+              <div className="relative px-5 pt-4 pb-3 border-b border-border/30 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-xs font-semibold text-primary uppercase tracking-wider">Today's Shift</span>
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-primary/60 animate-ping" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                  </span>
+                  <span className="text-[10.5px] font-bold text-primary uppercase tracking-[0.18em]">Today's Shift</span>
                 </div>
+                <span className="text-[10px] font-medium text-muted-foreground/80 uppercase tracking-wider">
+                  {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                </span>
               </div>
-              <div className="p-5">
+              <div className="relative p-5">
                 <div className="text-center mb-5">
-                  <p className="text-2xl font-bold text-foreground tracking-tight">
+                  <p className="font-display text-[26px] leading-tight font-semibold text-foreground tracking-tight">
                     {formatTimeRange(todayShift.start_time, todayShift.end_time)}
                   </p>
-                  <div className="flex items-center justify-center gap-4 mt-3">
-                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-center gap-3 mt-2.5 text-[13px] text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5" />{todayShift.position}
                     </span>
                     <span className="w-1 h-1 rounded-full bg-border" />
-                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5" />{todayShift.location}
                     </span>
                   </div>
@@ -255,39 +274,42 @@ export const WorkerHome = () => {
                   distanceMeters={distanceMeters} checkingLocation={checkingLocation}
                   locationError={locationError} onCheckLocation={handleCheckLocation}
                 />
-                <div className="mt-4 pt-3 border-t border-border/30 flex items-center justify-between gap-2">
+                <div className="mt-5 pt-3.5 border-t border-border/40 flex items-center justify-between gap-2">
                   <button
                     onClick={() => navigate('/worker/shifts')}
-                    className="flex items-center gap-1.5 text-sm text-primary font-medium hover:text-primary/80 transition-colors"
+                    className="group flex items-center gap-1 text-[13px] text-primary font-semibold hover:gap-1.5 transition-all"
                   >
-                    Request Change<ChevronRight className="w-3.5 h-3.5" />
+                    Request change<ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                   </button>
                   <button
                     onClick={() => setCallOffShift(todayShift)}
-                    className="flex items-center gap-1.5 text-xs text-warning hover:text-warning/80 font-medium transition-colors"
+                    className="flex items-center gap-1.5 text-[12px] text-warning hover:text-warning/85 font-semibold transition-colors"
                   >
                     <AlertOctagon className="w-3.5 h-3.5" />Can't make it?
                   </button>
                 </div>
                 {activityEvents.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-border/30">
+                  <div className="mt-4 pt-4 border-t border-border/40">
                     <ShiftActivityTimeline events={activityEvents} />
                   </div>
                 )}
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl p-8 text-center bg-card border border-border/50 shadow-sm">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-muted/80 flex items-center justify-center mb-4">
-                <Calendar className="w-7 h-7 text-muted-foreground/60" />
+            <div className="relative rounded-3xl p-8 text-center bg-gradient-card-premium border border-border/50 shadow-card-premium overflow-hidden">
+              <div aria-hidden className="absolute inset-0 bg-gradient-mesh opacity-60 pointer-events-none" />
+              <div className="relative">
+                <div className="w-16 h-16 mx-auto rounded-2xl bg-card/80 ring-1 ring-border flex items-center justify-center mb-4 shadow-soft">
+                  <Calendar className="w-7 h-7 text-muted-foreground/70" />
+                </div>
+                <p className="font-display text-xl font-semibold text-foreground tracking-tight">No shift today</p>
+                <p className="text-muted-foreground text-sm mt-1">Enjoy your day off.</p>
+                {nextShifts.length > 0 && (
+                  <p className="text-sm text-primary font-semibold mt-4">
+                    Next shift · {formatDate(nextShifts[0].date)}
+                  </p>
+                )}
               </div>
-              <p className="font-semibold text-foreground text-lg">No shift today</p>
-              <p className="text-muted-foreground text-sm mt-1">Enjoy your day off!</p>
-              {nextShifts.length > 0 && (
-                <p className="text-sm text-primary font-medium mt-4">
-                  Next shift: {formatDate(nextShifts[0].date)}
-                </p>
-              )}
             </div>
           )}
         </MotionSection>
@@ -299,20 +321,20 @@ export const WorkerHome = () => {
         {unreadCount > 0 && notifications.filter(n => !n.read).length > 0 && (
           <MotionSection delay={0.1}>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-primary" />New Notifications
+              <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground flex items-center gap-2">
+                <AlertCircle className="w-3.5 h-3.5 text-primary" />New for you
               </h2>
-              <button onClick={() => navigate('/worker/notifications')} className="text-xs text-primary font-medium hover:underline">View All</button>
+              <button onClick={() => navigate('/worker/notifications')} className="text-[11px] text-primary font-semibold uppercase tracking-wider hover:underline">View all</button>
             </div>
             <div className="space-y-2">
               {notifications.filter(n => !n.read).slice(0, 2).map((notification) => (
                 <MotionCard
                   key={notification.id}
                   onClick={() => navigate('/worker/notifications')}
-                  className="w-full rounded-xl p-4 text-left cursor-pointer bg-card border border-border/50 shadow-sm hover:shadow-md transition-shadow"
+                  className="w-full rounded-2xl p-4 text-left cursor-pointer bg-card border border-border/50 shadow-soft hover:shadow-elevated hover:border-primary/30 transition-all"
                 >
-                  <p className="font-medium text-foreground text-sm">{notification.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{notification.message}</p>
+                  <p className="font-semibold text-foreground text-[13.5px] leading-tight">{notification.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{notification.message}</p>
                 </MotionCard>
               ))}
             </div>
@@ -333,30 +355,33 @@ export const WorkerHome = () => {
         {nextShifts.length > 0 && (
           <MotionSection delay={0.3}>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-foreground">Upcoming Shifts</h2>
-              <button onClick={() => navigate('/worker/shifts')} className="text-xs text-primary font-medium hover:underline">View All</button>
+              <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Upcoming</h2>
+              <button onClick={() => navigate('/worker/shifts')} className="text-[11px] text-primary font-semibold uppercase tracking-wider hover:underline">View all</button>
             </div>
             <div className="space-y-2.5">
               {nextShifts.map((shift, index) => (
                 <MotionCard
                   key={shift.id}
                   className={cn(
-                    "rounded-xl p-4 bg-card border border-border/50 shadow-sm",
-                    index === 0 && "border-l-[3px] border-l-primary"
+                    "group relative rounded-2xl p-4 bg-card border border-border/50 shadow-soft hover:shadow-elevated hover:border-primary/25 transition-all overflow-hidden",
+                    index === 0 && "ring-1 ring-primary/20"
                   )}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
+                  {index === 0 && (
+                    <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-primary via-primary/80 to-primary/40" />
+                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
                       <span className={cn(
-                        "inline-block text-xs font-medium px-2 py-0.5 rounded-md mb-1.5",
-                        index === 0 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        "inline-block text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md mb-1.5",
+                        index === 0 ? "bg-primary/10 text-primary ring-1 ring-primary/20" : "bg-muted text-muted-foreground"
                       )}>
                         {formatDate(shift.date)}
                       </span>
-                      <p className="font-semibold text-foreground text-sm">{formatTimeRange(shift.start_time, shift.end_time)}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{shift.position} • {shift.location}</p>
+                      <p className="font-display font-semibold text-foreground text-[15px] tracking-tight">{formatTimeRange(shift.start_time, shift.end_time)}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">{shift.position} · {shift.location}</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </MotionCard>
               ))}
