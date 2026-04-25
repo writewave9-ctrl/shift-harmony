@@ -355,30 +355,33 @@ export const WorkerHome = () => {
         {nextShifts.length > 0 && (
           <MotionSection delay={0.3}>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-foreground">Upcoming Shifts</h2>
-              <button onClick={() => navigate('/worker/shifts')} className="text-xs text-primary font-medium hover:underline">View All</button>
+              <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Upcoming</h2>
+              <button onClick={() => navigate('/worker/shifts')} className="text-[11px] text-primary font-semibold uppercase tracking-wider hover:underline">View all</button>
             </div>
             <div className="space-y-2.5">
               {nextShifts.map((shift, index) => (
                 <MotionCard
                   key={shift.id}
                   className={cn(
-                    "rounded-xl p-4 bg-card border border-border/50 shadow-sm",
-                    index === 0 && "border-l-[3px] border-l-primary"
+                    "group relative rounded-2xl p-4 bg-card border border-border/50 shadow-soft hover:shadow-elevated hover:border-primary/25 transition-all overflow-hidden",
+                    index === 0 && "ring-1 ring-primary/20"
                   )}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
+                  {index === 0 && (
+                    <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-primary via-primary/80 to-primary/40" />
+                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
                       <span className={cn(
-                        "inline-block text-xs font-medium px-2 py-0.5 rounded-md mb-1.5",
-                        index === 0 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                        "inline-block text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md mb-1.5",
+                        index === 0 ? "bg-primary/10 text-primary ring-1 ring-primary/20" : "bg-muted text-muted-foreground"
                       )}>
                         {formatDate(shift.date)}
                       </span>
-                      <p className="font-semibold text-foreground text-sm">{formatTimeRange(shift.start_time, shift.end_time)}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{shift.position} • {shift.location}</p>
+                      <p className="font-display font-semibold text-foreground text-[15px] tracking-tight">{formatTimeRange(shift.start_time, shift.end_time)}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">{shift.position} · {shift.location}</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </MotionCard>
               ))}
