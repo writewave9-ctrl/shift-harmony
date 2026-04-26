@@ -401,6 +401,8 @@
     @apply border-b border-border/60;
   }
 }
+
+@layer utilities {
   /* Status background utilities */
   .bg-success-muted {
     background-color: hsl(var(--success-muted));
