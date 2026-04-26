@@ -22,7 +22,10 @@ Deno.serve(async (req) => {
     if (!user) return err("Unauthorized", 401);
 
     const { token } = await req.json();
-    if (!token) return err("Missing invitation token", 400);
+    if (!token || typeof token !== "string") return err("Missing invitation token", 400);
+
+    // Hash the incoming raw token; the database never stores the raw form.
+    const tokenHash = await sha256Hex(token);
 
     const admin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -31,7 +34,7 @@ Deno.serve(async (req) => {
     const { data: invite, error: inviteErr } = await admin
       .from("team_invitations")
       .select("*")
-      .eq("token", token)
+      .eq("token_hash", tokenHash)
       .maybeSingle();
 
     if (inviteErr || !invite) return err("Invalid or expired invitation", 404);
@@ -41,14 +44,12 @@ Deno.serve(async (req) => {
       return err("This invitation was sent to a different email", 403);
     }
 
-    // Add membership
     await admin.from("team_memberships").upsert({
       user_id: user.id,
       team_id: invite.team_id,
       is_active: true,
     }, { onConflict: "user_id,team_id" });
 
-    // Set as active team
     const { data: team } = await admin
       .from("teams").select("organization_id").eq("id", invite.team_id).single();
 
@@ -57,7 +58,6 @@ Deno.serve(async (req) => {
       organization_id: team?.organization_id,
     }).eq("user_id", user.id);
 
-    // Mark invitation accepted
     await admin.from("team_invitations").update({ status: "accepted" }).eq("id", invite.id);
 
     return ok({ team_id: invite.team_id });
@@ -66,6 +66,11 @@ Deno.serve(async (req) => {
     return err("Internal server error", 500);
   }
 });
+
+async function sha256Hex(input: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 function err(message: string, status: number) {
   return new Response(JSON.stringify({ error: message }), {
