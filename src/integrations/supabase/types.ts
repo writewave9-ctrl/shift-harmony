@@ -789,7 +789,7 @@ export type Database = {
           invited_by: string
           status: string
           team_id: string
-          token: string
+          token_hash: string
         }
         Insert: {
           created_at?: string
@@ -799,7 +799,7 @@ export type Database = {
           invited_by: string
           status?: string
           team_id: string
-          token?: string
+          token_hash: string
         }
         Update: {
           created_at?: string
@@ -809,7 +809,7 @@ export type Database = {
           invited_by?: string
           status?: string
           team_id?: string
-          token?: string
+          token_hash?: string
         }
         Relationships: [
           {
