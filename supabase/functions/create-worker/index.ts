@@ -229,7 +229,7 @@ interface InviteEmailPayload {
   accept_url?: string;
 }
 
-async function sendInviteEmail(adminClient: ReturnType<typeof createClient>, payload: InviteEmailPayload) {
+async function sendInviteEmail(adminClient: any, payload: InviteEmailPayload) {
   // Best effort; log + swallow errors so worker creation always succeeds.
   try {
     const subject = payload.type === "new_user_credentials"
