@@ -123,11 +123,13 @@ export function useSwapRequests() {
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
-  // Realtime
+  // Realtime — team-scoped channel. swap_requests has no team_id column;
+  // RLS on the underlying shift enforces team isolation, and a per-team
+  // channel name avoids cross-team event fan-out across tabs.
   useEffect(() => {
     if (!profile?.team_id) return;
     const channel = supabase
-      .channel('swap-requests-changes')
+      .channel(`swap-requests:${profile.team_id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'swap_requests' }, () => fetchRequests())
       .subscribe();
     return () => { supabase.removeChannel(channel); };

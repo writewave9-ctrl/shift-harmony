@@ -187,12 +187,13 @@
      fetchShifts();
    }, [profile?.team_id]);
  
-   // Set up realtime subscription
+   // Set up realtime subscription — explicit team_id filter at the source
+   // plus a per-team channel name (RLS still enforces server-side).
    useEffect(() => {
      if (!profile?.team_id) return;
- 
+
      const channel = supabase
-       .channel('shifts-changes')
+       .channel(`shifts:${profile.team_id}`)
        .on(
          'postgres_changes',
          {
@@ -206,7 +207,7 @@
          }
        )
        .subscribe();
- 
+
      return () => {
        supabase.removeChannel(channel);
      };
