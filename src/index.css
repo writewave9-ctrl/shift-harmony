@@ -112,42 +112,49 @@
   }
 
   .dark {
-    --background: 220 20% 10%;
-    --foreground: 40 15% 95%;
+    /* Deep forest-ink palette — warm-cool balanced for long sessions */
+    --background: 200 18% 7%;
+    --foreground: 40 18% 96%;
 
-    --card: 220 18% 13%;
-    --card-foreground: 40 15% 95%;
+    --card: 200 16% 11%;
+    --card-foreground: 40 18% 96%;
 
-    --popover: 220 18% 13%;
-    --popover-foreground: 40 15% 95%;
+    --popover: 200 18% 10%;
+    --popover-foreground: 40 18% 96%;
 
-    --primary: 168 40% 50%;
-    --primary-foreground: 220 20% 10%;
+    /* Brighter sage-teal that holds AA contrast on dark surfaces */
+    --primary: 168 55% 62%;
+    --primary-foreground: 200 30% 8%;
 
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 40 12% 85%;
+    --secondary: 200 14% 15%;
+    --secondary-foreground: 40 15% 90%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 200 14% 14%;
+    --muted-foreground: 200 8% 70%;
 
-    --accent: 168 25% 18%;
-    --accent-foreground: 168 40% 70%;
+    --accent: 168 30% 18%;
+    --accent-foreground: 168 60% 78%;
 
-    --success: 152 45% 50%;
-    --success-muted: 152 30% 15%;
-    
-    --warning: 38 75% 50%;
-    --warning-muted: 38 40% 15%;
-    
-    --destructive: 12 55% 50%;
-    --destructive-muted: 12 35% 15%;
+    /* Status colors brightened for AA on dark — ≥4.5:1 against bg */
+    --success: 152 55% 62%;
+    --success-foreground: 152 60% 10%;
+    --success-muted: 152 35% 14%;
 
-    --info: 210 55% 55%;
+    --warning: 38 90% 62%;
+    --warning-foreground: 38 90% 12%;
+    --warning-muted: 38 45% 14%;
+
+    --destructive: 8 75% 62%;
+    --destructive-foreground: 8 60% 10%;
+    --destructive-muted: 8 40% 15%;
+
+    --info: 210 75% 68%;
+    --info-foreground: 210 60% 10%;
     --info-muted: 210 35% 15%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 168 40% 50%;
+    --border: 200 12% 18%;
+    --input: 200 12% 18%;
+    --ring: 168 60% 65%;
 
     --sidebar-background: 220 18% 11%;
     --sidebar-foreground: 40 12% 85%;
