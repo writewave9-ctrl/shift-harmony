@@ -28,8 +28,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 14%;
 
-    /* Primary - Muted Teal/Sage */
-    --primary: 168 35% 42%;
+    /* Primary - Sage/Teal — darkened slightly for AA contrast on muted bg */
+    --primary: 168 42% 34%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary - Soft warm gray */
@@ -42,7 +42,7 @@
 
     /* Accent */
     --accent: 168 30% 94%;
-    --accent-foreground: 168 35% 32%;
+    --accent-foreground: 168 45% 24%;
 
     /* Status Colors - Gentle, non-aggressive */
     --success: 152 45% 45%;
@@ -65,7 +65,7 @@
     /* Borders & Inputs */
     --border: 40 15% 88%;
     --input: 40 15% 88%;
-    --ring: 168 35% 42%;
+    --ring: 168 42% 34%;
 
     --radius: 0.75rem;
 
@@ -112,76 +112,83 @@
   }
 
   .dark {
-    --background: 220 20% 10%;
-    --foreground: 40 15% 95%;
+    /* Deep forest-ink palette — warm-cool balanced for long sessions */
+    --background: 200 18% 7%;
+    --foreground: 40 18% 96%;
 
-    --card: 220 18% 13%;
-    --card-foreground: 40 15% 95%;
+    --card: 200 16% 11%;
+    --card-foreground: 40 18% 96%;
 
-    --popover: 220 18% 13%;
-    --popover-foreground: 40 15% 95%;
+    --popover: 200 18% 10%;
+    --popover-foreground: 40 18% 96%;
 
-    --primary: 168 40% 50%;
-    --primary-foreground: 220 20% 10%;
+    /* Brighter sage-teal that holds AA contrast on dark surfaces */
+    --primary: 168 55% 62%;
+    --primary-foreground: 200 30% 8%;
 
-    --secondary: 220 15% 18%;
-    --secondary-foreground: 40 12% 85%;
+    --secondary: 200 14% 15%;
+    --secondary-foreground: 40 15% 90%;
 
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 10% 60%;
+    --muted: 200 14% 14%;
+    --muted-foreground: 200 8% 70%;
 
-    --accent: 168 25% 18%;
-    --accent-foreground: 168 40% 70%;
+    --accent: 168 30% 18%;
+    --accent-foreground: 168 60% 78%;
 
-    --success: 152 45% 50%;
-    --success-muted: 152 30% 15%;
-    
-    --warning: 38 75% 50%;
-    --warning-muted: 38 40% 15%;
-    
-    --destructive: 12 55% 50%;
-    --destructive-muted: 12 35% 15%;
+    /* Status colors brightened for AA on dark — ≥4.5:1 against bg */
+    --success: 152 55% 62%;
+    --success-foreground: 152 60% 10%;
+    --success-muted: 152 35% 14%;
 
-    --info: 210 55% 55%;
+    --warning: 38 90% 62%;
+    --warning-foreground: 38 90% 12%;
+    --warning-muted: 38 45% 14%;
+
+    --destructive: 8 75% 62%;
+    --destructive-foreground: 8 60% 10%;
+    --destructive-muted: 8 40% 15%;
+
+    --info: 210 75% 68%;
+    --info-foreground: 210 60% 10%;
     --info-muted: 210 35% 15%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 168 40% 50%;
+    --border: 200 12% 18%;
+    --input: 200 12% 18%;
+    --ring: 168 60% 65%;
 
-    --sidebar-background: 220 18% 11%;
-    --sidebar-foreground: 40 12% 85%;
-    --sidebar-primary: 168 40% 50%;
-    --sidebar-primary-foreground: 220 20% 10%;
-    --sidebar-accent: 168 25% 18%;
-    --sidebar-accent-foreground: 168 40% 70%;
-    --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 168 40% 50%;
+    --sidebar-background: 200 18% 8%;
+    --sidebar-foreground: 40 15% 90%;
+    --sidebar-primary: 168 55% 62%;
+    --sidebar-primary-foreground: 200 30% 8%;
+    --sidebar-accent: 168 30% 18%;
+    --sidebar-accent-foreground: 168 60% 78%;
+    --sidebar-border: 200 12% 16%;
+    --sidebar-ring: 168 60% 65%;
 
-    --surface-elevated: 220 18% 15%;
-    --surface-sunken: 220 20% 8%;
-    --text-primary: 40 15% 95%;
-    --text-secondary: 220 10% 65%;
-    --text-tertiary: 220 8% 50%;
+    --surface-elevated: 200 16% 13%;
+    --surface-sunken: 200 20% 5%;
+    --text-primary: 40 18% 96%;
+    --text-secondary: 200 10% 72%;
+    --text-tertiary: 200 8% 55%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(168 40% 50%) 0%, hsl(178 45% 55%) 100%);
-    --gradient-surface: linear-gradient(180deg, hsl(220 18% 15%) 0%, hsl(220 18% 13%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(168 25% 18%) 0%, hsl(178 30% 20%) 100%);
-    --gradient-hero: radial-gradient(ellipse 80% 50% at 50% 0%, hsl(168 40% 25% / 0.6), transparent 70%);
-    --gradient-mesh: radial-gradient(at 20% 10%, hsl(168 50% 30% / 0.25) 0px, transparent 50%),
-                      radial-gradient(at 80% 0%, hsl(178 40% 25% / 0.18) 0px, transparent 50%),
-                      radial-gradient(at 0% 80%, hsl(40 30% 25% / 0.12) 0px, transparent 50%);
+    --gradient-primary: linear-gradient(135deg, hsl(168 55% 55%) 0%, hsl(178 50% 60%) 100%);
+    --gradient-surface: linear-gradient(180deg, hsl(200 16% 13%) 0%, hsl(200 18% 10%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(168 30% 18%) 0%, hsl(178 32% 20%) 100%);
+    --gradient-hero: radial-gradient(ellipse 80% 50% at 50% 0%, hsl(168 50% 28% / 0.7), transparent 70%);
+    --gradient-mesh: radial-gradient(at 20% 10%, hsl(168 55% 32% / 0.32) 0px, transparent 50%),
+                      radial-gradient(at 80% 0%, hsl(178 45% 28% / 0.22) 0px, transparent 50%),
+                      radial-gradient(at 0% 80%, hsl(40 30% 22% / 0.14) 0px, transparent 50%);
 
-    --shadow-soft: 0 1px 2px hsl(0 0% 0% / 0.15);
-    --shadow-elevated: 0 1px 2px hsl(0 0% 0% / 0.2), 0 4px 12px hsl(0 0% 0% / 0.25);
-    --shadow-floating: 0 2px 4px hsl(0 0% 0% / 0.2), 0 12px 32px hsl(0 0% 0% / 0.35);
-    --shadow-luxe: 0 1px 3px hsl(0 0% 0% / 0.3), 0 12px 40px hsl(0 0% 0% / 0.45), 0 24px 80px hsl(0 0% 0% / 0.3);
-    --shadow-glow: 0 0 0 4px hsl(168 40% 50% / 0.18);
-    --shadow-inset-hairline: inset 0 1px 0 hsl(0 0% 100% / 0.04);
-    --shadow-card-premium: 0 1px 0 hsl(0 0% 100% / 0.04) inset, 0 1px 2px hsl(0 0% 0% / 0.25), 0 12px 32px -8px hsl(0 0% 0% / 0.4);
-    --gradient-card-premium: linear-gradient(180deg, hsl(220 18% 14%) 0%, hsl(220 20% 11%) 100%);
-    --gradient-shift-hero: linear-gradient(135deg, hsl(168 30% 16%) 0%, hsl(178 28% 15%) 50%, hsl(220 18% 13%) 100%);
-    --gradient-nav: linear-gradient(180deg, hsl(220 18% 13% / 0.85) 0%, hsl(220 20% 10% / 0.92) 100%);
+    --shadow-soft: 0 1px 2px hsl(0 0% 0% / 0.25);
+    --shadow-elevated: 0 1px 2px hsl(0 0% 0% / 0.3), 0 4px 12px hsl(0 0% 0% / 0.35);
+    --shadow-floating: 0 2px 4px hsl(0 0% 0% / 0.3), 0 12px 32px hsl(0 0% 0% / 0.45);
+    --shadow-luxe: 0 1px 3px hsl(0 0% 0% / 0.4), 0 12px 40px hsl(0 0% 0% / 0.55), 0 24px 80px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 0 4px hsl(168 60% 65% / 0.22);
+    --shadow-inset-hairline: inset 0 1px 0 hsl(0 0% 100% / 0.05);
+    --shadow-card-premium: 0 1px 0 hsl(0 0% 100% / 0.05) inset, 0 1px 2px hsl(0 0% 0% / 0.35), 0 12px 32px -8px hsl(0 0% 0% / 0.5);
+    --gradient-card-premium: linear-gradient(180deg, hsl(200 16% 13%) 0%, hsl(200 20% 9%) 100%);
+    --gradient-shift-hero: linear-gradient(135deg, hsl(168 32% 16%) 0%, hsl(178 30% 14%) 50%, hsl(200 18% 10%) 100%);
+    --gradient-nav: linear-gradient(180deg, hsl(200 16% 11% / 0.88) 0%, hsl(200 18% 7% / 0.94) 100%);
   }
 }
 
@@ -214,6 +221,32 @@
   ::selection {
     background-color: hsl(var(--primary) / 0.18);
     color: hsl(var(--primary));
+  }
+
+  /* Accessible focus — clear, branded, never default browser blue.
+     Suppresses ring on pointer interactions, keeps it for keyboard users. */
+  :focus { outline: none; }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+  /* Buttons / interactive surfaces get a soft halo too */
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    box-shadow: 0 0 0 4px hsl(var(--ring) / 0.18);
+  }
+
+  /* Reduced motion — respect users who opt out */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
@@ -335,6 +368,37 @@
       transform: scale(1.6);
       opacity: 0;
     }
+  }
+
+  /* Empty / error state shells — readable, calm, and consistent */
+  .empty-state {
+    @apply flex flex-col items-center justify-center text-center px-6 py-10 rounded-2xl border border-border/60 bg-card/50;
+  }
+  .empty-state-icon {
+    @apply w-12 h-12 rounded-2xl bg-muted/70 flex items-center justify-center text-muted-foreground mb-3;
+  }
+  .empty-state-title {
+    @apply font-display text-base font-semibold text-foreground tracking-tight;
+  }
+  .empty-state-body {
+    @apply text-sm text-muted-foreground mt-1.5 max-w-[28ch];
+  }
+  .error-state {
+    @apply flex flex-col items-center justify-center text-center px-6 py-8 rounded-2xl border border-destructive/25 bg-destructive-muted;
+  }
+  .error-state-icon {
+    @apply w-11 h-11 rounded-2xl bg-destructive/15 flex items-center justify-center text-destructive mb-3;
+  }
+  .error-state-title {
+    @apply font-display text-base font-semibold text-destructive tracking-tight;
+  }
+  .error-state-body {
+    @apply text-sm text-destructive/80 mt-1.5 max-w-[32ch];
+  }
+
+  /* Hairline divider used in conversation headers, etc. */
+  .hairline {
+    @apply border-b border-border/60;
   }
 }
 
