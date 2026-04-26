@@ -369,9 +369,38 @@
       opacity: 0;
     }
   }
-}
 
-@layer utilities {
+  /* Empty / error state shells — readable, calm, and consistent */
+  .empty-state {
+    @apply flex flex-col items-center justify-center text-center px-6 py-10 rounded-2xl border border-border/60 bg-card/50;
+  }
+  .empty-state-icon {
+    @apply w-12 h-12 rounded-2xl bg-muted/70 flex items-center justify-center text-muted-foreground mb-3;
+  }
+  .empty-state-title {
+    @apply font-display text-base font-semibold text-foreground tracking-tight;
+  }
+  .empty-state-body {
+    @apply text-sm text-muted-foreground mt-1.5 max-w-[28ch];
+  }
+  .error-state {
+    @apply flex flex-col items-center justify-center text-center px-6 py-8 rounded-2xl border border-destructive/25 bg-destructive-muted;
+  }
+  .error-state-icon {
+    @apply w-11 h-11 rounded-2xl bg-destructive/15 flex items-center justify-center text-destructive mb-3;
+  }
+  .error-state-title {
+    @apply font-display text-base font-semibold text-destructive tracking-tight;
+  }
+  .error-state-body {
+    @apply text-sm text-destructive/80 mt-1.5 max-w-[32ch];
+  }
+
+  /* Hairline divider used in conversation headers, etc. */
+  .hairline {
+    @apply border-b border-border/60;
+  }
+}
   /* Status background utilities */
   .bg-success-muted {
     background-color: hsl(var(--success-muted));
