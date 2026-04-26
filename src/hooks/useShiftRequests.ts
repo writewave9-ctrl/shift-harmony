@@ -195,12 +195,13 @@ export function useShiftRequests() {
     fetchRequests();
   }, [profile?.id, userRole?.role]);
 
-  // Realtime subscription
+  // Realtime subscription — team-scoped channel. shift_requests has no
+  // team_id column; RLS on the underlying shift enforces team isolation.
   useEffect(() => {
     if (!profile?.team_id) return;
 
     const channel = supabase
-      .channel('shift-requests-changes')
+      .channel(`shift-requests:${profile.team_id}`)
       .on(
         'postgres_changes',
         {

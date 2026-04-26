@@ -106,21 +106,25 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Create invitation
-      const { data: invite, error: inviteErr } = await adminClient
+      // Create invitation: generate raw token in-memory, persist only its
+      // SHA-256 hash. The raw token is embedded in the accept-invite URL
+      // (delivered via email) and is never written to the database.
+      const rawToken = generateRawToken();
+      const tokenHash = await sha256Hex(rawToken);
+
+      const { error: inviteErr } = await adminClient
         .from("team_invitations")
         .insert({
           team_id: teamId,
           email: email.toLowerCase(),
           invited_by: managerProfile.id,
           status: "pending",
-        })
-        .select("token")
-        .single();
+          token_hash: tokenHash,
+        });
 
       if (inviteErr) return jsonError(inviteErr.message, 400);
 
-      const acceptUrl = `${origin}/accept-invite?token=${invite.token}`;
+      const acceptUrl = `${origin}/accept-invite?token=${rawToken}`;
 
       // Send email via transactional queue (Lovable Email)
       await sendInviteEmail(adminClient, {
@@ -286,3 +290,14 @@ function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }
 function stripHtml(s: string) { return s.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(); }
+
+function generateRawToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
+}

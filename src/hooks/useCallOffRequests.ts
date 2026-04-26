@@ -103,11 +103,14 @@ export function useCallOffRequests() {
 
   useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
-  // Realtime
+  // Realtime — team-scoped channel name. The call_off_requests table has no
+  // team_id column (it joins through shifts), so per-team isolation is
+  // enforced by RLS. The per-team channel name avoids cross-team event
+  // fan-out across tabs/users on the same Realtime connection.
   useEffect(() => {
     if (!profile?.team_id) return;
     const channel = supabase
-      .channel('call-off-requests-changes')
+      .channel(`call-off-requests:${profile.team_id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'call_off_requests' }, () => fetchRequests())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
