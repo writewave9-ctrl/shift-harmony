@@ -28,8 +28,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 14%;
 
-    /* Primary - Muted Teal/Sage */
-    --primary: 168 35% 42%;
+    /* Primary - Sage/Teal — darkened slightly for AA contrast on muted bg */
+    --primary: 168 42% 34%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary - Soft warm gray */
@@ -42,7 +42,7 @@
 
     /* Accent */
     --accent: 168 30% 94%;
-    --accent-foreground: 168 35% 32%;
+    --accent-foreground: 168 45% 24%;
 
     /* Status Colors - Gentle, non-aggressive */
     --success: 152 45% 45%;
@@ -65,7 +65,7 @@
     /* Borders & Inputs */
     --border: 40 15% 88%;
     --input: 40 15% 88%;
-    --ring: 168 35% 42%;
+    --ring: 168 42% 34%;
 
     --radius: 0.75rem;
 
