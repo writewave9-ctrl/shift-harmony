@@ -3,15 +3,28 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
+/**
+ * Subscribes to user-scoped realtime side-channels. All filtering is
+ * primarily enforced by RLS (no row the user cannot SELECT will be
+ * delivered) — we additionally use unique, user-scoped channel names so
+ * Realtime fan-out across tabs/users stays cleanly partitioned, and we
+ * defensively re-check identifiers on the client before showing toasts.
+ */
 export const useRealtimeNotifications = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !profile?.id) return;
 
-    // Subscribe to attendance record changes
+    const profileId = profile.id;
+
+    // Attendance overrides — RLS already restricts SELECT to the worker
+    // (or their managers). We additionally check worker_id matches the
+    // current profile before surfacing the toast, so a manager viewing
+    // their own team's overrides doesn't get spurious "your attendance
+    // was approved" notifications about other workers.
     const attendanceChannel = supabase
-      .channel('attendance_changes')
+      .channel(`attendance:${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -21,8 +34,7 @@ export const useRealtimeNotifications = () => {
         },
         (payload) => {
           const newRecord = payload.new as any;
-          
-          // Check if this was a manual override
+          if (newRecord.worker_id !== profileId) return;
           if (newRecord.manual_override_by && newRecord.status === 'manually_approved') {
             toast({
               title: 'Attendance Override',
@@ -33,9 +45,11 @@ export const useRealtimeNotifications = () => {
       )
       .subscribe();
 
-    // Subscribe to swap request changes
+    // Swap requests — only show the toast if the requester is *me*. RLS
+    // grants visibility to the whole team, so without this check a
+    // manager would also see "your swap request was approved" toasts.
     const swapChannel = supabase
-      .channel('swap_changes')
+      .channel(`swaps:${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -45,7 +59,7 @@ export const useRealtimeNotifications = () => {
         },
         (payload) => {
           const newRequest = payload.new as any;
-          
+          if (newRequest.requester_id !== profileId) return;
           if (newRequest.status === 'approved') {
             toast({
               title: 'Swap Request Approved! ✓',
@@ -62,9 +76,9 @@ export const useRealtimeNotifications = () => {
       )
       .subscribe();
 
-    // Subscribe to notification inserts
+    // Personal notification feed — already filtered server-side by user_id.
     const notificationChannel = supabase
-      .channel('notification_inserts')
+      .channel(`notifications:${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -75,7 +89,6 @@ export const useRealtimeNotifications = () => {
         },
         (payload) => {
           const notification = payload.new as any;
-          
           toast({
             title: notification.title,
             description: notification.message,
@@ -89,5 +102,5 @@ export const useRealtimeNotifications = () => {
       supabase.removeChannel(swapChannel);
       supabase.removeChannel(notificationChannel);
     };
-  }, [user]);
+  }, [user, profile?.id]);
 };
