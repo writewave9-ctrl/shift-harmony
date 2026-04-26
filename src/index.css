@@ -222,6 +222,32 @@
     background-color: hsl(var(--primary) / 0.18);
     color: hsl(var(--primary));
   }
+
+  /* Accessible focus — clear, branded, never default browser blue.
+     Suppresses ring on pointer interactions, keeps it for keyboard users. */
+  :focus { outline: none; }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+  /* Buttons / interactive surfaces get a soft halo too */
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    box-shadow: 0 0 0 4px hsl(var(--ring) / 0.18);
+  }
+
+  /* Reduced motion — respect users who opt out */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
