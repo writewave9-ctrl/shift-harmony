@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { ManagerDashboardSkeleton } from '@/components/PageSkeletons';
-import { MotionCard, MotionSection, MotionItem } from '@/components/MotionWrapper';
 import { cn } from '@/lib/utils';
 import { formatTimeRange } from '@/lib/formatTime';
 import { StaffingIndicator } from '@/components/StaffingIndicator';
@@ -10,10 +9,9 @@ import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { haptics } from '@/lib/haptics';
-import { 
+import {
   Bell, Users, Clock, ChevronRight, AlertCircle, CheckCircle, User,
-  ArrowRightLeft, Check, X, Calendar, Plus, TrendingUp, Rocket, Settings,
+  ArrowRightLeft, Check, X, Calendar, Plus, Rocket, Settings,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
