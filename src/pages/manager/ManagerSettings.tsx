@@ -36,7 +36,7 @@ import { ManagerPlanSection } from '@/components/ManagerPlanSection';
 export const ManagerSettings = () => {
   const navigate = useNavigate();
   const { profile, refreshProfile } = useAuth();
-  const { settings, loading: settingsLoading, updateSettings, createSettings } = useTeamSettings();
+  const { settings, loading: settingsLoading, updateSettings } = useTeamSettings();
   
   const [saving, setSaving] = useState(false);
   const [teamName, setTeamName] = useState('');
@@ -105,12 +105,7 @@ export const ManagerSettings = () => {
     }
   }, [settings]);
 
-  // Create settings if they don't exist
-  useEffect(() => {
-    if (!settingsLoading && !settings && profile?.team_id) {
-      createSettings();
-    }
-  }, [settingsLoading, settings, profile?.team_id]);
+  // Settings are auto-created on first updateSettings call (upsert behavior).
 
   const handleCreateWorkspace = async () => {
     if (!orgName.trim() || !teamName.trim() || !profile?.id) {

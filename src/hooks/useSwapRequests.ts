@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { qk } from '@/lib/queryClient';
 
 export interface SwapRequest {
   id: string;
@@ -18,124 +20,117 @@ export interface SwapRequest {
   shift?: { id: string; date: string; start_time: string; end_time: string; position: string; location: string };
 }
 
+const SELECT = `
+  *,
+  requester:profiles!swap_requests_requester_id_fkey(id, full_name, avatar_url, position),
+  requested_worker:profiles!swap_requests_requested_worker_id_fkey(id, full_name, avatar_url, position),
+  shift:shifts!swap_requests_shift_id_fkey(id, date, start_time, end_time, position, location)
+` as const;
+
+async function fetchSwaps(): Promise<SwapRequest[]> {
+  const { data, error } = await supabase
+    .from('swap_requests')
+    .select(SELECT)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []) as SwapRequest[];
+}
+
 export function useSwapRequests() {
-  const { profile, userRole } = useAuth();
-  const [requests, setRequests] = useState<SwapRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { profile } = useAuth();
+  const teamId = profile?.team_id ?? null;
+  const qc = useQueryClient();
 
-  const fetchRequests = useCallback(async () => {
-    if (!profile?.id) { setRequests([]); setLoading(false); return; }
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('swap_requests')
-        .select(`
-          *,
-          requester:profiles!swap_requests_requester_id_fkey(id, full_name, avatar_url, position),
-          requested_worker:profiles!swap_requests_requested_worker_id_fkey(id, full_name, avatar_url, position),
-          shift:shifts!swap_requests_shift_id_fkey(id, date, start_time, end_time, position, location)
-        `)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      setRequests((data || []) as SwapRequest[]);
-    } catch (err) {
-      console.error('Error fetching swap requests:', err);
-    } finally {
-      setLoading(false);
+  const query = useQuery({
+    queryKey: teamId ? qk.swaps.byTeam(teamId) : ['swaps', 'no-team'],
+    queryFn: fetchSwaps,
+    enabled: !!profile?.id,
+  });
+
+  useEffect(() => {
+    if (!teamId) return;
+    const channel = supabase
+      .channel(`swap-requests:${teamId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'swap_requests' }, () => {
+        qc.invalidateQueries({ queryKey: qk.swaps.byTeam(teamId) });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [teamId, qc]);
+
+  const invalidate = () => {
+    if (teamId) {
+      qc.invalidateQueries({ queryKey: qk.swaps.byTeam(teamId) });
+      qc.invalidateQueries({ queryKey: qk.shifts.byTeam(teamId) });
     }
-  }, [profile?.id]);
+  };
 
-  // Worker accepts a swap targeted at them → swap assigned worker on the shift
-  const acceptSwap = async (request: SwapRequest) => {
-    if (!profile?.id || request.requested_worker_id !== profile.id) return false;
-    try {
-      // Reassign shift to current worker
+  const acceptSwap = useMutation({
+    mutationKey: ['swaps', 'accept'],
+    mutationFn: async (request: SwapRequest) => {
+      if (!profile?.id || request.requested_worker_id !== profile.id) {
+        throw new Error('Not authorized');
+      }
       const { error: shiftError } = await supabase
         .from('shifts')
         .update({ assigned_worker_id: profile.id, is_vacant: false })
         .eq('id', request.shift_id);
       if (shiftError) throw shiftError;
-
       const { error: swapError } = await supabase
         .from('swap_requests')
-        .update({ status: 'approved' })
+        .update({ status: 'approved', approved_by: profile.id })
         .eq('id', request.id);
       if (swapError) throw swapError;
+    },
+    onSuccess: () => { invalidate(); toast.success('Swap accepted — the shift is now yours'); },
+    onError: (e: Error) => toast.error(e.message || 'Failed to accept swap'),
+  });
 
-      toast.success('Swap accepted — the shift is now yours');
-      fetchRequests();
-      return true;
-    } catch (err: any) {
-      console.error('Error accepting swap:', err);
-      toast.error(err.message || 'Failed to accept swap');
-      return false;
-    }
-  };
-
-  const declineSwap = async (requestId: string) => {
-    try {
+  const declineSwap = useMutation({
+    mutationKey: ['swaps', 'decline'],
+    mutationFn: async (requestId: string) => {
+      if (!profile?.id) throw new Error('Not signed in');
       const { error } = await supabase
         .from('swap_requests')
-        .update({ status: 'declined' })
+        .update({ status: 'declined', approved_by: profile.id })
         .eq('id', requestId);
       if (error) throw error;
-      toast.success('Swap declined');
-      fetchRequests();
-      return true;
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to decline');
-      return false;
-    }
-  };
+    },
+    onSuccess: () => { invalidate(); toast.success('Swap declined'); },
+    onError: (e: Error) => toast.error(e.message || 'Failed to decline'),
+  });
 
-  const managerApproveSwap = async (request: SwapRequest, newWorkerId: string) => {
-    if (!profile?.id) return false;
-    try {
-      await supabase.from('shifts').update({
-        assigned_worker_id: newWorkerId, is_vacant: false,
-      }).eq('id', request.shift_id);
-      await supabase.from('swap_requests').update({
-        status: 'approved', approved_by: profile.id,
-      }).eq('id', request.id);
-      toast.success('Swap approved');
-      fetchRequests();
-      return true;
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to approve');
-      return false;
-    }
-  };
+  const managerApproveSwap = useMutation({
+    mutationKey: ['swaps', 'managerApprove'],
+    mutationFn: async ({ request, newWorkerId }: { request: SwapRequest; newWorkerId: string }) => {
+      if (!profile?.id) throw new Error('Not signed in');
+      const { error: sErr } = await supabase.from('shifts')
+        .update({ assigned_worker_id: newWorkerId, is_vacant: false })
+        .eq('id', request.shift_id);
+      if (sErr) throw sErr;
+      const { error } = await supabase.from('swap_requests')
+        .update({ status: 'approved', approved_by: profile.id })
+        .eq('id', request.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidate(); toast.success('Swap approved'); },
+    onError: (e: Error) => toast.error(e.message || 'Failed to approve'),
+  });
 
-  const managerDeclineSwap = async (requestId: string) => {
-    if (!profile?.id) return false;
-    try {
-      await supabase.from('swap_requests').update({
-        status: 'declined', approved_by: profile.id,
-      }).eq('id', requestId);
-      toast.success('Swap declined');
-      fetchRequests();
-      return true;
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to decline');
-      return false;
-    }
-  };
+  const managerDeclineSwap = useMutation({
+    mutationKey: ['swaps', 'managerDecline'],
+    mutationFn: async (requestId: string) => {
+      if (!profile?.id) throw new Error('Not signed in');
+      const { error } = await supabase.from('swap_requests')
+        .update({ status: 'declined', approved_by: profile.id })
+        .eq('id', requestId);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidate(); toast.success('Swap declined'); },
+    onError: (e: Error) => toast.error(e.message || 'Failed to decline'),
+  });
 
-  useEffect(() => { fetchRequests(); }, [fetchRequests]);
-
-  // Realtime — team-scoped channel. swap_requests has no team_id column;
-  // RLS on the underlying shift enforces team isolation, and a per-team
-  // channel name avoids cross-team event fan-out across tabs.
-  useEffect(() => {
-    if (!profile?.team_id) return;
-    const channel = supabase
-      .channel(`swap-requests:${profile.team_id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'swap_requests' }, () => fetchRequests())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [profile?.team_id, fetchRequests]);
-
-  // Filtered views
+  const requests = query.data ?? [];
   const incomingForMe = requests.filter(
     r => r.requested_worker_id === profile?.id && r.status === 'pending'
   );
@@ -143,7 +138,16 @@ export function useSwapRequests() {
   const pendingForManager = requests.filter(r => r.status === 'pending');
 
   return {
-    requests, loading, incomingForMe, myOutgoing, pendingForManager,
-    acceptSwap, declineSwap, managerApproveSwap, managerDeclineSwap, refetch: fetchRequests,
+    requests,
+    loading: query.isLoading,
+    incomingForMe,
+    myOutgoing,
+    pendingForManager,
+    acceptSwap: (r: SwapRequest) => acceptSwap.mutateAsync(r).then(() => true).catch(() => false),
+    declineSwap: (id: string) => declineSwap.mutateAsync(id).then(() => true).catch(() => false),
+    managerApproveSwap: (r: SwapRequest, newWorkerId: string) =>
+      managerApproveSwap.mutateAsync({ request: r, newWorkerId }).then(() => true).catch(() => false),
+    managerDeclineSwap: (id: string) => managerDeclineSwap.mutateAsync(id).then(() => true).catch(() => false),
+    refetch: () => query.refetch(),
   };
 }

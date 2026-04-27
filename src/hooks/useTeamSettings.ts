@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { qk } from '@/lib/queryClient';
 
 export interface TeamSettings {
   id: string;
@@ -14,91 +15,62 @@ export interface TeamSettings {
   auto_approve_swaps: boolean;
 }
 
+async function fetchSettings(teamId: string): Promise<TeamSettings | null> {
+  const { data, error } = await supabase
+    .from('team_settings')
+    .select('*')
+    .eq('team_id', teamId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as TeamSettings) ?? null;
+}
+
 export function useTeamSettings() {
   const { profile } = useAuth();
-  const [settings, setSettings] = useState<TeamSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const teamId = profile?.team_id ?? null;
+  const qc = useQueryClient();
 
-  const fetchSettings = async () => {
-    if (!profile?.team_id) {
-      setSettings(null);
-      setLoading(false);
-      return;
-    }
+  const query = useQuery({
+    queryKey: teamId ? qk.team.settings(teamId) : ['team', 'no-team', 'settings'],
+    queryFn: () => fetchSettings(teamId as string),
+    enabled: !!teamId,
+  });
 
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('team_settings')
-        .select('*')
-        .eq('team_id', profile.team_id)
-        .maybeSingle();
-
-      if (error) throw error;
-      setSettings(data as TeamSettings);
-    } catch (err) {
-      console.error('Error fetching team settings:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createSettings = async () => {
-    if (!profile?.team_id) return null;
-
-    try {
-      const { data, error } = await supabase
-        .from('team_settings')
-        .insert({ team_id: profile.team_id })
-        .select()
-        .single();
-
-      if (error) throw error;
-      setSettings(data as TeamSettings);
-      return data;
-    } catch (err) {
-      console.error('Error creating team settings:', err);
-      return null;
-    }
-  };
-
-  const updateSettings = async (updates: Partial<Omit<TeamSettings, 'id' | 'team_id'>>) => {
-    if (!settings?.id) {
-      // Create settings if they don't exist
-      const created = await createSettings();
-      if (!created) {
-        toast.error('Failed to create settings');
-        return false;
+  const updateSettings = useMutation({
+    mutationKey: ['teamSettings', 'update'],
+    mutationFn: async (updates: Partial<Omit<TeamSettings, 'id' | 'team_id'>>) => {
+      if (!teamId) throw new Error('No team');
+      // Upsert: create if missing
+      if (!query.data?.id) {
+        const { data, error } = await supabase
+          .from('team_settings')
+          .insert({ team_id: teamId, ...updates })
+          .select()
+          .single();
+        if (error) throw error;
+        return data as TeamSettings;
       }
-    }
-
-    try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('team_settings')
         .update(updates)
-        .eq('team_id', profile?.team_id);
-
+        .eq('team_id', teamId)
+        .select()
+        .single();
       if (error) throw error;
-
-      setSettings(prev => prev ? { ...prev, ...updates } : null);
+      return data as TeamSettings;
+    },
+    onSuccess: (data) => {
+      if (teamId) qc.setQueryData(qk.team.settings(teamId), data);
       toast.success('Settings updated');
-      return true;
-    } catch (err) {
-      console.error('Error updating settings:', err);
-      toast.error('Failed to update settings');
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    fetchSettings();
-  }, [profile?.team_id]);
+    },
+    onError: () => toast.error('Failed to update settings'),
+  });
 
   return {
-    settings,
-    loading,
-    updateSettings,
-    createSettings,
-    refetch: fetchSettings,
+    settings: query.data ?? null,
+    loading: query.isLoading,
+    updateSettings: (u: Partial<Omit<TeamSettings, 'id' | 'team_id'>>) =>
+      updateSettings.mutateAsync(u).then(() => true).catch(() => false),
+    refetch: () => query.refetch(),
   };
 }
