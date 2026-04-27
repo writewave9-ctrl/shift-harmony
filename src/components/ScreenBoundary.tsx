@@ -52,9 +52,9 @@ const DefaultErrorFallback: React.FC<FallbackProps & { homeHref?: string }> = ({
           We hit an unexpected hiccup loading this view. Your data is safe — try
           again in a moment, or head back home.
         </p>
-        {import.meta.env.DEV && error?.message && (
+        {import.meta.env.DEV && (error as Error)?.message && (
           <pre className="mt-4 text-[11px] text-left bg-muted/60 rounded-lg p-3 overflow-x-auto text-muted-foreground">
-            {error.message}
+            {(error as Error).message}
           </pre>
         )}
         <div className="flex gap-2 justify-center mt-6">
