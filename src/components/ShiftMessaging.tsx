@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Shift, ShiftMessage } from '@/types/align';
 import {
   Send, MessageCircle, Clock, Archive, User, Reply, Info, ChevronRight, Lock,
+  Check, CheckCheck, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,11 +23,23 @@ interface ShiftMessagingProps {
   messages: ShiftMessage[];
   currentUserId: string;
   currentUserName: string;
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, replyTo?: ShiftMessage | null) => void;
   /** Optional: when defined, surfaces a "View request context" affordance in the header. */
   onViewRequestContext?: () => void;
   /** Optional label for the request context affordance, e.g. "View swap request". */
   requestContextLabel?: string;
+}
+
+// Parse legacy reply prefix "↳ @Name: ..." for backward compatibility.
+const REPLY_PREFIX = /^↳\s+@([^:]+):\s+([\s\S]+)$/;
+
+function extractReply(msg: ShiftMessage): { reply: { sender: string; excerpt: string } | null; body: string } {
+  if (msg.replyToSender && msg.replyToExcerpt) {
+    return { reply: { sender: msg.replyToSender, excerpt: msg.replyToExcerpt }, body: msg.message };
+  }
+  const m = msg.message.match(REPLY_PREFIX);
+  if (m) return { reply: { sender: m[1].trim(), excerpt: '' }, body: m[2] };
+  return { reply: null, body: msg.message };
 }
 
 export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
@@ -44,17 +57,27 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
   const [replyingTo, setReplyingTo] = useState<ShiftMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Track which message ids the current user has seen this session.
+  // Used to render a "New" divider above messages received since open.
+  const lastSeenRef = useRef<string | null>(null);
 
+  // When the sheet first opens, capture the last message id as "already seen"
   useEffect(() => {
     if (open) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      lastSeenRef.current = messages.length > 0 ? messages[messages.length - 1].id : null;
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  useEffect(() => {
+    if (open) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
 
   const handleSend = () => {
-    if (!newMessage.trim()) return;
-    const prefix = replyingTo ? `↳ @${replyingTo.senderName}: ` : '';
-    onSendMessage(prefix + newMessage.trim());
+    const trimmed = newMessage.trim();
+    if (!trimmed) return;
+    onSendMessage(trimmed, replyingTo);
     setNewMessage('');
     setReplyingTo(null);
   };
@@ -86,6 +109,17 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
     setReplyingTo(msg);
     requestAnimationFrame(() => inputRef.current?.focus());
   };
+
+  // Find the index where the "New" divider should appear
+  const newDividerIndex = useMemo(() => {
+    if (!open || !lastSeenRef.current) return -1;
+    const idx = messages.findIndex((m) => m.id === lastSeenRef.current);
+    if (idx < 0 || idx === messages.length - 1) return -1;
+    // First new message is at idx + 1, but only show divider if it's from someone else
+    const firstNew = messages[idx + 1];
+    if (!firstNew || firstNew.senderId === currentUserId) return -1;
+    return idx + 1;
+  }, [messages, open, currentUserId]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -127,11 +161,12 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
             </div>
           )}
 
-          {/* Request context affordance — safe, prominent tap target */}
+          {/* Request context affordance — safe, prominent tap target with focus ring */}
           {onViewRequestContext && (
             <button
+              type="button"
               onClick={onViewRequestContext}
-              className="mt-3 w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-accent/60 hover:bg-accent transition-colors text-left ring-1 ring-border/40"
+              className="mt-3 w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-accent/60 hover:bg-accent transition-colors text-left ring-1 ring-border/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <span className="flex items-center gap-2 min-w-0">
                 <Info className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -159,70 +194,116 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
               </p>
             </div>
           ) : (
-            messages.map((msg) => {
+            messages.map((msg, idx) => {
               const isOwn = msg.senderId === currentUserId;
+              const { reply, body } = extractReply(msg);
+              const showNewDivider = idx === newDividerIndex;
+              const isLastOwn = isOwn && idx === messages.length - 1;
               return (
-                <div
-                  key={msg.id}
-                  className={cn(
-                    'group flex gap-2',
-                    isOwn ? 'flex-row-reverse' : 'flex-row',
+                <div key={msg.id}>
+                  {showNewDivider && (
+                    <div className="flex items-center gap-2 my-3" aria-label="New messages">
+                      <div className="flex-1 h-px bg-primary/30" />
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-primary px-2 py-0.5 rounded-full bg-primary/10 ring-1 ring-primary/20">
+                        New
+                      </span>
+                      <div className="flex-1 h-px bg-primary/30" />
+                    </div>
                   )}
-                >
                   <div
                     className={cn(
-                      'w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-inset-hairline',
-                      isOwn ? 'bg-primary/15' : 'bg-accent',
-                    )}
-                    aria-hidden
-                  >
-                    <User
-                      className={cn(
-                        'w-4 h-4',
-                        isOwn ? 'text-primary' : 'text-accent-foreground',
-                      )}
-                    />
-                  </div>
-                  <div
-                    className={cn(
-                      'max-w-[78%] flex flex-col gap-1',
-                      isOwn ? 'items-end' : 'items-start',
+                      'group flex gap-2',
+                      isOwn ? 'flex-row-reverse' : 'flex-row',
                     )}
                   >
                     <div
                       className={cn(
-                        'px-3.5 py-2.5 rounded-2xl shadow-soft text-[14px] leading-snug',
-                        isOwn
-                          ? 'bg-gradient-primary text-primary-foreground rounded-tr-md'
-                          : 'bg-card text-foreground rounded-tl-md ring-1 ring-border/50',
+                        'w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-inset-hairline',
+                        isOwn ? 'bg-primary/15' : 'bg-accent',
                       )}
+                      aria-hidden
                     >
-                      <p>{msg.message}</p>
+                      <User
+                        className={cn(
+                          'w-4 h-4',
+                          isOwn ? 'text-primary' : 'text-accent-foreground',
+                        )}
+                      />
                     </div>
                     <div
                       className={cn(
-                        'flex items-center gap-2 px-1 text-[10px] text-muted-foreground',
-                        isOwn ? 'flex-row-reverse' : 'flex-row',
+                        'max-w-[78%] flex flex-col gap-1',
+                        isOwn ? 'items-end' : 'items-start',
                       )}
                     >
-                      {!isOwn && (
-                        <span className="font-medium text-foreground/80">
-                          {msg.senderName}
-                        </span>
-                      )}
-                      <span aria-hidden>•</span>
-                      <span>{formatTime(msg.createdAt)}</span>
-                      {!shiftEnded && (
-                        <button
-                          type="button"
-                          onClick={() => handleReply(msg)}
-                          className="inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-                          aria-label={`Reply to ${msg.senderName}`}
+                      {/* Reply context strip */}
+                      {reply && (
+                        <div
+                          className={cn(
+                            'flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg max-w-full',
+                            'bg-muted/60 ring-1 ring-border/50 text-muted-foreground',
+                          )}
                         >
-                          <Reply className="w-3 h-3" />
-                          <span className="text-[10px] font-medium">Reply</span>
-                        </button>
+                          <Reply className="w-3 h-3 shrink-0 text-primary/70" aria-hidden />
+                          <span className="font-medium text-foreground/80 truncate">
+                            {reply.sender}
+                          </span>
+                          {reply.excerpt && (
+                            <span className="truncate italic">"{reply.excerpt}"</span>
+                          )}
+                        </div>
                       )}
+                      <div
+                        className={cn(
+                          'px-3.5 py-2.5 rounded-2xl shadow-soft text-[14px] leading-snug',
+                          isOwn
+                            ? 'bg-gradient-primary text-primary-foreground rounded-tr-md'
+                            : 'bg-card text-foreground rounded-tl-md ring-1 ring-border/50',
+                        )}
+                      >
+                        <p className="whitespace-pre-wrap break-words">{body}</p>
+                      </div>
+                      <div
+                        className={cn(
+                          'flex items-center gap-2 px-1 text-[10px] text-muted-foreground',
+                          isOwn ? 'flex-row-reverse' : 'flex-row',
+                        )}
+                      >
+                        {!isOwn && (
+                          <span className="font-medium text-foreground/80">
+                            {msg.senderName}
+                          </span>
+                        )}
+                        <span aria-hidden>•</span>
+                        <span>{formatTime(msg.createdAt)}</span>
+
+                        {/* Read indicator on own messages: 'Sent' then 'Seen' once a teammate replies after */}
+                        {isOwn && (
+                          <span
+                            className="inline-flex items-center gap-0.5"
+                            aria-label={isLastOwn ? 'Sent' : 'Seen by team'}
+                            title={isLastOwn ? 'Sent' : 'Seen by team'}
+                          >
+                            {isLastOwn ? (
+                              <Check className="w-3 h-3" />
+                            ) : (
+                              <CheckCheck className="w-3 h-3 text-primary" />
+                            )}
+                          </span>
+                        )}
+
+                        {!shiftEnded && !isOwn && (
+                          <button
+                            type="button"
+                            onClick={() => handleReply(msg)}
+                            className="inline-flex items-center gap-0.5 ml-1 px-1.5 py-0.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                            aria-label={`Reply to ${msg.senderName}`}
+                          >
+                            <Reply className="w-3 h-3" />
+                            <span className="text-[10px] font-medium">Reply</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -243,18 +324,23 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
         ) : (
           <div className="px-5 pt-3 pb-4 border-t border-border/60 bg-card/40">
             {replyingTo && (
-              <div className="mb-2 flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg bg-accent/60 ring-1 ring-border/50">
-                <Reply className="w-3 h-3 text-primary shrink-0" />
-                <span className="text-muted-foreground truncate">
-                  Replying to <span className="font-medium text-foreground">{replyingTo.senderName}</span>: "{replyingTo.message}"
-                </span>
+              <div className="mb-2 flex items-start gap-2 text-xs px-2.5 py-2 rounded-xl bg-primary/5 ring-1 ring-primary/20">
+                <Reply className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    Replying to {replyingTo.senderName}
+                  </div>
+                  <div className="text-foreground/80 truncate mt-0.5">
+                    "{extractReply(replyingTo).body}"
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => setReplyingTo(null)}
-                  className="ml-auto text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Cancel reply"
                 >
-                  ✕
+                  <X className="w-3 h-3" />
                 </button>
               </div>
             )}
@@ -267,12 +353,13 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
                 onKeyPress={handleKeyPress}
                 className="flex-1 h-11 rounded-xl bg-background"
                 aria-label="Message text"
+                maxLength={1000}
               />
               <Button
                 size="icon"
                 disabled={!newMessage.trim()}
                 onClick={handleSend}
-                className="h-11 w-11 rounded-xl bg-gradient-primary shadow-floating disabled:shadow-none"
+                className="h-11 w-11 rounded-xl bg-gradient-primary shadow-floating disabled:shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 aria-label="Send message"
               >
                 <Send className="w-4 h-4" />

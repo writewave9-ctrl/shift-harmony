@@ -104,6 +104,12 @@ export interface ShiftMessage {
   senderName: string;
   message: string;
   createdAt: string;
+  /** Replied-to message id (UI-only thread context). */
+  replyToId?: string | null;
+  /** Replied-to message excerpt (UI-only). */
+  replyToExcerpt?: string | null;
+  /** Replied-to sender name (UI-only). */
+  replyToSender?: string | null;
 }
 
 export interface StaffingHealth {
