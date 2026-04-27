@@ -5,18 +5,24 @@ interface AlignLogoProps {
   className?: string;
   withWordmark?: boolean;
   wordmarkClassName?: string;
-  /** Render the mark on a transparent backdrop (e.g. inside an existing colored container). */
+  /** Render only the glyph with no backdrop (for use inside dark headers, etc.). */
   bare?: boolean;
+  /** Force a monochrome rendering (uses currentColor). Great inside colored chips. */
+  mono?: boolean;
 }
 
 /**
- * Align logo — "Convergence" mark.
+ * Align — monogram mark.
  *
- * Concept: three offset arcs orbiting a single luminous focal point.
- * The arcs represent independent schedules (workers, managers, time)
- * aligning to one shared moment. Built from pure geometry so it stays
- * crisp from 14px favicon up to hero sizes, and reads cleanly in both
- * light and dark modes via a self-contained gradient backdrop.
+ * A confident, asymmetric "A" formed by two strokes meeting at a precise
+ * apex with a third horizontal anchor — the visual idea of two schedules
+ * (worker + manager) converging on a shared time. Built from pure geometry
+ * so it stays crisp from a 14px favicon up to hero sizes.
+ *
+ * - Light mode: ink-on-ivory squircle with a subtle warm gradient.
+ * - Dark mode: same glyph reads luminously against a deep-teal squircle.
+ * - `bare` strips the backdrop so the glyph can sit on any surface.
+ * - `mono` uses currentColor — perfect for chips, buttons, and footers.
  */
 export const AlignLogo = ({
   size = 32,
@@ -24,6 +30,7 @@ export const AlignLogo = ({
   withWordmark = false,
   wordmarkClassName,
   bare = false,
+  mono = false,
 }: AlignLogoProps) => (
   <div className={cn('inline-flex items-center gap-2.5', className)}>
     <svg
@@ -36,49 +43,24 @@ export const AlignLogo = ({
       role="img"
     >
       <defs>
-        {/* Squircle backdrop — deep forest gradient */}
-        <linearGradient id="align-bg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#1d4a40" />
-          <stop offset="55%" stopColor="#143832" />
-          <stop offset="100%" stopColor="#0a201d" />
+        <linearGradient id="al-bg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#0f1f1c" />
+          <stop offset="100%" stopColor="#06110f" />
         </linearGradient>
-        {/* Top-light sheen */}
-        <radialGradient id="align-sheen" cx="0.28" cy="0.18" r="0.85">
-          <stop offset="0%" stopColor="#9be0cf" stopOpacity="0.22" />
-          <stop offset="55%" stopColor="#9be0cf" stopOpacity="0" />
-        </radialGradient>
-        {/* Outer arc gradient */}
-        <linearGradient id="align-arc-outer" x1="6" y1="10" x2="42" y2="38" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#bff2e1" />
-          <stop offset="100%" stopColor="#3f9d89" />
+        <linearGradient id="al-stroke" x1="14" y1="38" x2="34" y2="10" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#7fe3c7" />
+          <stop offset="100%" stopColor="#e8fff5" />
         </linearGradient>
-        {/* Mid arc gradient */}
-        <linearGradient id="align-arc-mid" x1="10" y1="14" x2="38" y2="34" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#7fd9c2" />
-          <stop offset="100%" stopColor="#2c8170" />
-        </linearGradient>
-        {/* Inner arc gradient */}
-        <linearGradient id="align-arc-inner" x1="14" y1="18" x2="34" y2="30" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#5cc4ad" />
-          <stop offset="100%" stopColor="#1f6a5c" />
-        </linearGradient>
-        {/* Focal dot — the aligned target */}
-        <radialGradient id="align-focal" cx="0.32" cy="0.28" r="0.8">
-          <stop offset="0%" stopColor="#eafff5" />
-          <stop offset="55%" stopColor="#a8eedc" />
-          <stop offset="100%" stopColor="#3f9d89" />
-        </radialGradient>
-        {/* Soft halo behind focal dot */}
-        <radialGradient id="align-halo" cx="0.5" cy="0.5" r="0.5">
-          <stop offset="0%" stopColor="#a8eedc" stopOpacity="0.45" />
-          <stop offset="100%" stopColor="#a8eedc" stopOpacity="0" />
+        <radialGradient id="al-sheen" cx="0.25" cy="0.18" r="0.85">
+          <stop offset="0%" stopColor="#9be0cf" stopOpacity="0.18" />
+          <stop offset="60%" stopColor="#9be0cf" stopOpacity="0" />
         </radialGradient>
       </defs>
 
-      {!bare && (
+      {!bare && !mono && (
         <>
-          <rect x="0" y="0" width="48" height="48" rx="13" fill="url(#align-bg)" />
-          <rect x="0" y="0" width="48" height="48" rx="13" fill="url(#align-sheen)" />
+          <rect x="0" y="0" width="48" height="48" rx="13" fill="url(#al-bg)" />
+          <rect x="0" y="0" width="48" height="48" rx="13" fill="url(#al-sheen)" />
           <rect
             x="0.5"
             y="0.5"
@@ -87,51 +69,42 @@ export const AlignLogo = ({
             rx="12.5"
             fill="none"
             stroke="#9be0cf"
-            strokeOpacity="0.15"
+            strokeOpacity="0.14"
           />
         </>
       )}
 
-      {/* Halo behind focal point */}
-      <circle cx="34" cy="24" r="9" fill="url(#align-halo)" />
+      {/* The "A" — two converging strokes + a horizontal anchor */}
+      <g
+        stroke={mono ? 'currentColor' : 'url(#al-stroke)'}
+        strokeWidth="3.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      >
+        {/* Left ascending stroke */}
+        <path d="M 13 36 L 24 11" />
+        {/* Right ascending stroke (slightly steeper — the asymmetry is the signature) */}
+        <path d="M 24 11 L 35 36" />
+        {/* Horizontal anchor — the moment of alignment */}
+        <path d="M 17.5 27 L 30.5 27" strokeWidth="2.6" opacity="0.92" />
+      </g>
 
-      {/* Three offset arcs converging on the focal point */}
-      {/* Outer arc — widest sweep */}
-      <path
-        d="M 34 9.5 A 14.5 14.5 0 1 0 34 38.5"
-        stroke="url(#align-arc-outer)"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        fill="none"
-        opacity="0.95"
-      />
-      {/* Middle arc — slightly inset */}
-      <path
-        d="M 34 13.5 A 10.5 10.5 0 1 0 34 34.5"
-        stroke="url(#align-arc-mid)"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        fill="none"
-        opacity="0.9"
-      />
-      {/* Inner arc — closest to center */}
-      <path
-        d="M 34 17.5 A 6.5 6.5 0 1 0 34 30.5"
-        stroke="url(#align-arc-inner)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        fill="none"
-        opacity="0.85"
-      />
-
-      {/* Focal point — the aligned target */}
-      <circle cx="34" cy="24" r="3.4" fill="url(#align-focal)" />
-      <circle cx="33" cy="22.9" r="0.95" fill="#ffffff" fillOpacity="0.7" />
+      {/* Apex highlight — tiny luminous dot at the convergence */}
+      {!mono && (
+        <circle
+          cx="24"
+          cy="11"
+          r="1.6"
+          fill="#eafff5"
+          opacity="0.95"
+        />
+      )}
     </svg>
     {withWordmark && (
       <span
         className={cn(
-          'font-display text-[17px] font-semibold tracking-tight text-foreground',
+          'font-display text-[18px] font-semibold tracking-[-0.02em] text-foreground',
           wordmarkClassName,
         )}
       >
