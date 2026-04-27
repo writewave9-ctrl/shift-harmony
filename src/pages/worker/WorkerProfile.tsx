@@ -100,21 +100,24 @@ export const WorkerProfile = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="px-4 pt-6 pb-4">
-        <h1 className="text-lg font-semibold text-foreground">Profile</h1>
+      <header className="px-4 pt-6 pb-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Account</p>
+        <h1 className="font-display text-2xl font-semibold text-foreground tracking-tight">Profile</h1>
       </header>
 
-      <div className="px-4 space-y-6">
+      <div className="px-4 space-y-5">
         <MotionSection>
-          <div className="card-elevated rounded-2xl p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-2 border-primary/20">
-                <User className="w-10 h-10 text-primary" />
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-card-premium shadow-card-premium border border-border/50 p-6">
+            <div className="absolute inset-0 bg-gradient-mesh opacity-70 pointer-events-none" />
+            <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+            <div className="relative flex items-center gap-4">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-elevated ring-1 ring-white/20">
+                <User className="w-10 h-10 text-primary-foreground" strokeWidth={1.6} />
               </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold text-foreground">{profile?.full_name || 'Worker'}</h2>
-                <p className="text-muted-foreground">{profile?.position || 'Team Member'}</p>
-                <p className="text-sm text-muted-foreground mt-0.5">{profile?.email}</p>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-display text-xl font-semibold text-foreground tracking-tight truncate">{profile?.full_name || 'Worker'}</h2>
+                <p className="text-sm text-muted-foreground truncate">{profile?.position || 'Team Member'}</p>
+                <p className="text-xs text-muted-foreground/80 mt-0.5 truncate">{profile?.email}</p>
               </div>
             </div>
           </div>
@@ -122,34 +125,34 @@ export const WorkerProfile = () => {
 
         <MotionSection delay={0.1}>
           <div className="grid grid-cols-2 gap-3">
-            <MotionCard className="card-elevated rounded-xl p-4 text-center">
-              <div className="w-10 h-10 mx-auto rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+            <MotionCard className="bg-card rounded-2xl p-4 text-center border border-border/50 shadow-card-premium">
+              <div className="w-10 h-10 mx-auto rounded-xl bg-primary/10 flex items-center justify-center mb-2">
                 <Clock className="w-5 h-5 text-primary" />
               </div>
-              <p className="text-2xl font-bold text-foreground">{hoursWorked}h</p>
-              <p className="text-xs text-muted-foreground">Hours this week</p>
+              <p className="font-display text-2xl font-semibold text-foreground tracking-tight">{hoursWorked}h</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Hours this week</p>
             </MotionCard>
-            <MotionCard className="card-elevated rounded-xl p-4 text-center">
-              <div className="w-10 h-10 mx-auto rounded-lg bg-success/10 flex items-center justify-center mb-2">
+            <MotionCard className="bg-card rounded-2xl p-4 text-center border border-border/50 shadow-card-premium">
+              <div className="w-10 h-10 mx-auto rounded-xl bg-success/10 flex items-center justify-center mb-2">
                 <Star className="w-5 h-5 text-success" />
               </div>
-              <p className="text-2xl font-bold text-foreground">{reliabilityScore}%</p>
-              <p className="text-xs text-muted-foreground">Reliability score</p>
+              <p className="font-display text-2xl font-semibold text-foreground tracking-tight">{reliabilityScore}%</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Reliability score</p>
             </MotionCard>
           </div>
         </MotionSection>
 
         <MotionSection delay={0.15}>
-          <div className="card-elevated rounded-2xl p-5">
+          <div className="bg-card rounded-2xl p-5 border border-border/50 shadow-card-premium">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-foreground">Weekly Hours</h3>
-              <span className="text-sm text-muted-foreground">{hoursWorked} / {weeklyTarget}h</span>
+              <h3 className="text-sm font-semibold text-foreground">Weekly hours</h3>
+              <span className="text-sm tabular-nums text-muted-foreground">{hoursWorked} / {weeklyTarget}h</span>
             </div>
-            <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500" style={{ width: `${Math.min((hoursWorked / weeklyTarget) * 100, 100)}%` }} />
+            <div className="w-full h-2.5 bg-muted/70 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-primary rounded-full transition-all duration-700 ease-out" style={{ width: `${Math.min((hoursWorked / weeklyTarget) * 100, 100)}%` }} />
             </div>
             {hoursRemaining > 0 && (
-              <p className="text-sm text-success font-medium mt-3 flex items-center gap-1">
+              <p className="text-sm text-success font-medium mt-3 flex items-center gap-1.5">
                 <TrendingUp className="w-4 h-4" />{hoursRemaining} hours available to pick up
               </p>
             )}
@@ -171,12 +174,10 @@ export const WorkerProfile = () => {
             <h3 className="text-sm font-semibold text-foreground mb-4">Appearance</h3>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-muted-foreground">
-                {resolvedTheme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}Theme
+                {resolvedTheme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                <span>{resolvedTheme === 'dark' ? 'Dark mode' : 'Light mode'}</span>
               </span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm capitalize text-foreground">{theme}</span>
-                <ThemeToggle />
-              </div>
+              <ThemeToggle />
             </div>
           </div>
         </MotionSection>
