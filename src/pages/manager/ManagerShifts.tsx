@@ -207,7 +207,14 @@ export const ManagerShifts = () => {
     } : undefined,
   }));
 
-  const shiftMessages_filtered = shiftMessages;
+  const shiftMessages_filtered: ShiftMessage[] = shiftMessagesRaw.map((m) => ({
+    id: m.id,
+    shiftId: m.shift_id,
+    senderId: m.sender_id,
+    senderName: m.sender_name,
+    message: m.message,
+    createdAt: m.created_at,
+  }));
 
   // Reset prefill data when modal closes
   useEffect(() => {
