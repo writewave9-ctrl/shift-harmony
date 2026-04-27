@@ -171,12 +171,10 @@ export const WorkerProfile = () => {
             <h3 className="text-sm font-semibold text-foreground mb-4">Appearance</h3>
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-muted-foreground">
-                {resolvedTheme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}Theme
+                {resolvedTheme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                <span>{resolvedTheme === 'dark' ? 'Dark mode' : 'Light mode'}</span>
               </span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm capitalize text-foreground">{theme}</span>
-                <ThemeToggle />
-              </div>
+              <ThemeToggle />
             </div>
           </div>
         </MotionSection>
