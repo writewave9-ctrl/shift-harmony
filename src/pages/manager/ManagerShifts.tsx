@@ -13,6 +13,8 @@ import { TemplateSelector } from '@/components/TemplateSelector';
 import { useShifts, DatabaseShift, CreateShiftData } from '@/hooks/useShifts';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
 import { useShiftTemplates, ShiftTemplate } from '@/hooks/useShiftTemplates';
+import { useShiftMessages } from '@/hooks/useShiftMessages';
+import { useAttendanceOverride } from '@/hooks/useAttendance';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   ChevronLeft, 
@@ -109,89 +111,26 @@ export const ManagerShifts = () => {
     }, 1500);
   };
 
-  const handleAttendanceOverride = async (status: AttendanceStatus, notes: string, timestamp: string) => {
-    if (!selectedShift || !profile?.id || !selectedShift.assigned_worker_id) return;
-    
-    try {
-      const { error } = await supabase
-        .from('attendance_records')
-        .upsert({
-          shift_id: selectedShift.id,
-          worker_id: selectedShift.assigned_worker_id,
-          status,
-          override_notes: notes,
-          override_timestamp: timestamp,
-          manual_override_by: profile.id,
-        }, {
-          onConflict: 'shift_id,worker_id',
-        });
+  const overrideAttendance = useAttendanceOverride();
 
-      if (error) throw error;
-      toast.success('Attendance updated');
-    } catch (err) {
-      console.error('Error updating attendance:', err);
-      toast.error('Failed to update attendance');
-    }
+  const handleAttendanceOverride = async (status: AttendanceStatus, notes: string, _timestamp: string) => {
+    if (!selectedShift || !profile?.id || !selectedShift.assigned_worker_id) return;
+    await overrideAttendance.mutateAsync({
+      shiftId: selectedShift.id,
+      workerId: selectedShift.assigned_worker_id,
+      status: status as any,
+      notes,
+    }).catch(() => undefined);
   };
+
+  // Shift-scoped messages via React Query (RLS-enforced team scope, realtime invalidation)
+  const { messages: shiftMessagesRaw, sendMessage: sendShiftMessage } = useShiftMessages(
+    showMessaging ? selectedShift?.id ?? null : null,
+  );
 
   const handleSendMessage = async (message: string) => {
-    if (!selectedShift || !profile?.id) return;
-    try {
-      const { error } = await supabase
-        .from('shift_messages')
-        .insert({
-          shift_id: selectedShift.id,
-          sender_id: profile.id,
-          message,
-        });
-      if (error) throw error;
-    } catch (err) {
-      console.error('Error sending message:', err);
-      toast.error('Failed to send message');
-    }
+    await sendShiftMessage(message);
   };
-
-  // Fetch messages for selected shift
-  const [shiftMessages, setShiftMessages] = useState<ShiftMessage[]>([]);
-  
-  useEffect(() => {
-    if (!selectedShift?.id || !showMessaging) {
-      setShiftMessages([]);
-      return;
-    }
-
-    const fetchMessages = async () => {
-      const { data } = await supabase
-        .from('shift_messages')
-        .select('*, sender:profiles!shift_messages_sender_id_fkey(full_name)')
-        .eq('shift_id', selectedShift.id)
-        .order('created_at', { ascending: true });
-
-      setShiftMessages((data || []).map((m: any) => ({
-        id: m.id,
-        shiftId: m.shift_id,
-        senderId: m.sender_id,
-        senderName: m.sender?.full_name || 'Unknown',
-        message: m.message,
-        createdAt: m.created_at,
-      })));
-    };
-
-    fetchMessages();
-
-    // Subscribe to new messages
-    const channel = supabase
-      .channel(`shift-messages-${selectedShift.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'shift_messages',
-        filter: `shift_id=eq.${selectedShift.id}`,
-      }, () => { fetchMessages(); })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [selectedShift?.id, showMessaging]);
 
   const handleShiftClick = (shift: DatabaseShift) => {
     setSelectedShift(shift);
