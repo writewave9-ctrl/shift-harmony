@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { qk } from '@/lib/queryClient';
 
 export interface ShiftTemplate {
   id: string;
@@ -35,110 +36,78 @@ export interface CreateTemplateData {
   days_of_week?: number[];
 }
 
+async function fetchTemplates(teamId: string): Promise<ShiftTemplate[]> {
+  const { data, error } = await supabase
+    .from('shift_templates')
+    .select('*')
+    .eq('team_id', teamId)
+    .eq('is_active', true)
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return (data || []) as ShiftTemplate[];
+}
+
 export const useShiftTemplates = () => {
   const { profile } = useAuth();
-  const [templates, setTemplates] = useState<ShiftTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
+  const teamId = profile?.team_id ?? null;
+  const qc = useQueryClient();
 
-  const fetchTemplates = async () => {
-    if (!profile?.team_id) return;
+  const query = useQuery({
+    queryKey: teamId ? qk.templates.byTeam(teamId) : ['templates', 'no-team'],
+    queryFn: () => fetchTemplates(teamId as string),
+    enabled: !!teamId,
+  });
 
-    try {
-      const { data, error } = await supabase
-        .from('shift_templates')
-        .select('*')
-        .eq('team_id', profile.team_id)
-        .eq('is_active', true)
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-      setTemplates(data || []);
-    } catch (err) {
-      console.error('Error fetching templates:', err);
-    } finally {
-      setLoading(false);
-    }
+  const invalidate = () => {
+    if (teamId) qc.invalidateQueries({ queryKey: qk.templates.byTeam(teamId) });
   };
 
-  useEffect(() => {
-    fetchTemplates();
-  }, [profile?.team_id]);
-
-  const createTemplate = async (data: CreateTemplateData): Promise<ShiftTemplate | null> => {
-    if (!profile?.team_id || !profile?.id) {
-      toast.error('Team not configured');
-      return null;
-    }
-
-    try {
+  const createTemplate = useMutation({
+    mutationKey: ['templates', 'create'],
+    mutationFn: async (data: CreateTemplateData) => {
+      if (!teamId || !profile?.id) throw new Error('Team not configured');
       const { data: template, error } = await supabase
         .from('shift_templates')
-        .insert({
-          ...data,
-          team_id: profile.team_id,
-          created_by: profile.id,
-        })
+        .insert({ ...data, team_id: teamId, created_by: profile.id })
         .select()
         .single();
-
       if (error) throw error;
+      return template as ShiftTemplate;
+    },
+    onSuccess: () => { invalidate(); toast.success('Template created'); },
+    onError: () => toast.error('Failed to create template'),
+  });
 
-      setTemplates(prev => [...prev, template]);
-      toast.success('Template created');
-      return template;
-    } catch (err: any) {
-      console.error('Error creating template:', err);
-      toast.error('Failed to create template');
-      return null;
-    }
-  };
-
-  const updateTemplate = async (id: string, data: Partial<CreateTemplateData>): Promise<ShiftTemplate | null> => {
-    try {
+  const updateTemplate = useMutation({
+    mutationKey: ['templates', 'update'],
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateTemplateData> }) => {
       const { data: template, error } = await supabase
-        .from('shift_templates')
-        .update(data)
-        .eq('id', id)
-        .select()
-        .single();
-
+        .from('shift_templates').update(data).eq('id', id).select().single();
       if (error) throw error;
+      return template as ShiftTemplate;
+    },
+    onSuccess: () => { invalidate(); toast.success('Template updated'); },
+    onError: () => toast.error('Failed to update template'),
+  });
 
-      setTemplates(prev => prev.map(t => t.id === id ? template : t));
-      toast.success('Template updated');
-      return template;
-    } catch (err: any) {
-      console.error('Error updating template:', err);
-      toast.error('Failed to update template');
-      return null;
-    }
-  };
-
-  const deleteTemplate = async (id: string): Promise<boolean> => {
-    try {
+  const deleteTemplate = useMutation({
+    mutationKey: ['templates', 'delete'],
+    mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('shift_templates')
-        .update({ is_active: false })
-        .eq('id', id);
-
+        .from('shift_templates').update({ is_active: false }).eq('id', id);
       if (error) throw error;
-
-      setTemplates(prev => prev.filter(t => t.id !== id));
-      toast.success('Template deleted');
-      return true;
-    } catch (err: any) {
-      console.error('Error deleting template:', err);
-      toast.error('Failed to delete template');
-      return false;
-    }
-  };
+    },
+    onSuccess: () => { invalidate(); toast.success('Template deleted'); },
+    onError: () => toast.error('Failed to delete template'),
+  });
 
   return {
-    templates,
-    loading,
-    createTemplate,
-    updateTemplate,
-    deleteTemplate,
-    refetch: fetchTemplates,
+    templates: query.data ?? [],
+    loading: query.isLoading,
+    createTemplate: (data: CreateTemplateData) => createTemplate.mutateAsync(data).catch(() => null),
+    updateTemplate: (id: string, data: Partial<CreateTemplateData>) =>
+      updateTemplate.mutateAsync({ id, data }).catch(() => null),
+    deleteTemplate: (id: string) => deleteTemplate.mutateAsync(id).then(() => true).catch(() => false),
+    refetch: () => query.refetch(),
   };
 };
