@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScreenBoundary } from "@/components/ScreenBoundary";
 
 // Pages
 import Auth from "./pages/Auth";
@@ -155,12 +156,12 @@ const AppRoutes = () => (
         </RoleGate>
       </ProtectedRoute>
     }>
-      <Route index element={<WorkerHome />} />
-      <Route path="shifts" element={<WorkerShifts />} />
-      <Route path="team" element={<WorkerTeamDirectory />} />
-      <Route path="history" element={<WorkerShiftHistory />} />
-      <Route path="profile" element={<WorkerProfile />} />
-      <Route path="notifications" element={<WorkerNotifications />} />
+      <Route index element={<ScreenBoundary homeHref="/worker"><WorkerHome /></ScreenBoundary>} />
+      <Route path="shifts" element={<ScreenBoundary homeHref="/worker"><WorkerShifts /></ScreenBoundary>} />
+      <Route path="team" element={<ScreenBoundary homeHref="/worker"><WorkerTeamDirectory /></ScreenBoundary>} />
+      <Route path="history" element={<ScreenBoundary homeHref="/worker"><WorkerShiftHistory /></ScreenBoundary>} />
+      <Route path="profile" element={<ScreenBoundary homeHref="/worker"><WorkerProfile /></ScreenBoundary>} />
+      <Route path="notifications" element={<ScreenBoundary homeHref="/worker"><WorkerNotifications /></ScreenBoundary>} />
     </Route>
 
     {/* Manager Routes - only managers/admins can access */}
@@ -171,15 +172,15 @@ const AppRoutes = () => (
         </RoleGate>
       </ProtectedRoute>
     }>
-      <Route index element={<ManagerDashboard />} />
-      <Route path="shifts" element={<ManagerShifts />} />
-      <Route path="team" element={<ManagerTeam />} />
-      <Route path="analytics" element={<ManagerAnalytics />} />
-      <Route path="requests" element={<ManagerShiftRequests />} />
-      <Route path="notifications" element={<ManagerNotifications />} />
-      <Route path="settings" element={<ManagerSettings />} />
-      <Route path="shifts/auto-fill" element={<ManagerAutoFill />} />
-      <Route path="support" element={<ManagerSupport />} />
+      <Route index element={<ScreenBoundary homeHref="/manager"><ManagerDashboard /></ScreenBoundary>} />
+      <Route path="shifts" element={<ScreenBoundary homeHref="/manager"><ManagerShifts /></ScreenBoundary>} />
+      <Route path="team" element={<ScreenBoundary homeHref="/manager"><ManagerTeam /></ScreenBoundary>} />
+      <Route path="analytics" element={<ScreenBoundary homeHref="/manager"><ManagerAnalytics /></ScreenBoundary>} />
+      <Route path="requests" element={<ScreenBoundary homeHref="/manager"><ManagerShiftRequests /></ScreenBoundary>} />
+      <Route path="notifications" element={<ScreenBoundary homeHref="/manager"><ManagerNotifications /></ScreenBoundary>} />
+      <Route path="settings" element={<ScreenBoundary homeHref="/manager"><ManagerSettings /></ScreenBoundary>} />
+      <Route path="shifts/auto-fill" element={<ScreenBoundary homeHref="/manager"><ManagerAutoFill /></ScreenBoundary>} />
+      <Route path="support" element={<ScreenBoundary homeHref="/manager"><ManagerSupport /></ScreenBoundary>} />
     </Route>
 
     {/* Catch-all */}
