@@ -214,7 +214,6 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
               const isOwn = msg.senderId === currentUserId;
               const { reply, body } = extractReply(msg);
               const showNewDivider = idx === newDividerIndex;
-              const isLastOwn = isOwn && idx === messages.length - 1;
               return (
                 <div key={msg.id}>
                   {showNewDivider && (
