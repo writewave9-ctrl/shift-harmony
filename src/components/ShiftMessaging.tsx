@@ -24,6 +24,8 @@ interface ShiftMessagingProps {
   currentUserId: string;
   currentUserName: string;
   onSendMessage: (message: string, replyTo?: ShiftMessage | null) => void;
+  /** Persists "I read these" for the current viewer. Idempotent. */
+  onMarkRead?: (messageIds: string[]) => Promise<unknown> | void;
   /** Optional: when defined, surfaces a "View request context" affordance in the header. */
   onViewRequestContext?: () => void;
   /** Optional label for the request context affordance, e.g. "View swap request". */
@@ -50,6 +52,7 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
   currentUserId,
   currentUserName,
   onSendMessage,
+  onMarkRead,
   onViewRequestContext,
   requestContextLabel = 'View request context',
 }) => {
