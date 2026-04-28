@@ -124,7 +124,7 @@ export const ManagerShifts = () => {
   };
 
   // Shift-scoped messages via React Query (RLS-enforced team scope, realtime invalidation)
-  const { messages: shiftMessagesRaw, sendMessage: sendShiftMessage } = useShiftMessages(
+  const { messages: shiftMessagesRaw, sendMessage: sendShiftMessage, markRead: markShiftMessagesRead } = useShiftMessages(
     showMessaging ? selectedShift?.id ?? null : null,
   );
 
@@ -214,6 +214,8 @@ export const ManagerShifts = () => {
     senderName: m.sender_name,
     message: m.message,
     createdAt: m.created_at,
+    readBy: m.read_by,
+    readByMe: m.read_by_me,
   }));
 
   // Reset prefill data when modal closes
@@ -546,6 +548,7 @@ export const ManagerShifts = () => {
         currentUserId={profile?.id || ''}
         currentUserName={profile?.full_name || ''}
         onSendMessage={handleSendMessage}
+        onMarkRead={markShiftMessagesRead}
       />
 
       {/* Create/Edit Shift Modal */}
