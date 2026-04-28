@@ -110,6 +110,10 @@ export interface ShiftMessage {
   replyToExcerpt?: string | null;
   /** Replied-to sender name (UI-only). */
   replyToSender?: string | null;
+  /** Persisted reads — populated from `shift_message_reads`. */
+  readBy?: string[];
+  /** Whether the current viewer has marked this message as read. */
+  readByMe?: boolean;
 }
 
 export interface StaffingHealth {
