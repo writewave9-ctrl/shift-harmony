@@ -26,10 +26,17 @@ const DefaultLoader: React.FC<{ label?: string }> = ({ label = 'Loading' }) => (
   </div>
 );
 
-const DefaultErrorFallback: React.FC<FallbackProps & { homeHref?: string }> = ({
+interface ErrorCopy {
+  title?: string;
+  description?: string;
+  retryLabel?: string;
+}
+
+const DefaultErrorFallback: React.FC<FallbackProps & { homeHref?: string; copy?: ErrorCopy }> = ({
   error,
   resetErrorBoundary,
   homeHref = '/',
+  copy,
 }) => {
   const qc = useQueryClient();
   const handleRetry = () => {
@@ -46,11 +53,11 @@ const DefaultErrorFallback: React.FC<FallbackProps & { homeHref?: string }> = ({
           <AlertOctagon className="w-7 h-7" strokeWidth={1.8} />
         </div>
         <h2 className="font-display text-xl font-semibold text-foreground tracking-tight">
-          Something went wrong on this screen
+          {copy?.title ?? 'Something went wrong on this screen'}
         </h2>
         <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-          We hit an unexpected hiccup loading this view. Your data is safe — try
-          again in a moment, or head back home.
+          {copy?.description ??
+            'We hit an unexpected hiccup loading this view. Your data is safe — try again in a moment, or head back home.'}
         </p>
         {import.meta.env.DEV && (error as Error)?.message && (
           <pre className="mt-4 text-[11px] text-left bg-muted/60 rounded-lg p-3 overflow-x-auto text-muted-foreground">
@@ -59,7 +66,7 @@ const DefaultErrorFallback: React.FC<FallbackProps & { homeHref?: string }> = ({
         )}
         <div className="flex gap-2 justify-center mt-6">
           <Button onClick={handleRetry} className="rounded-xl gap-2">
-            <RefreshCw className="w-4 h-4" /> Try again
+            <RefreshCw className="w-4 h-4" /> {copy?.retryLabel ?? 'Try again'}
           </Button>
           <Button asChild variant="outline" className="rounded-xl gap-2">
             <Link to={homeHref}>
@@ -80,6 +87,8 @@ interface ScreenBoundaryProps {
   homeHref?: string;
   /** Label for screen readers while loading */
   loadingLabel?: string;
+  /** Tailored copy for the error fallback */
+  errorCopy?: ErrorCopy;
 }
 
 /**
@@ -95,12 +104,13 @@ export const ScreenBoundary: React.FC<ScreenBoundaryProps> = ({
   fallback,
   homeHref,
   loadingLabel,
+  errorCopy,
 }) => {
   return (
     <ErrorBoundary
       onError={(error, info) => logger.error('[screen]', { error, info })}
       FallbackComponent={(props) => (
-        <DefaultErrorFallback {...props} homeHref={homeHref} />
+        <DefaultErrorFallback {...props} homeHref={homeHref} copy={errorCopy} />
       )}
     >
       <Suspense fallback={fallback ?? <DefaultLoader label={loadingLabel} />}>

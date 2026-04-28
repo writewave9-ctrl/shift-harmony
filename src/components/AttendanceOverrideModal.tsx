@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ShiftActivityTimeline } from '@/components/ShiftActivityTimeline';
 import { useShiftActivity } from '@/hooks/useShiftActivity';
+import { ConfirmDestructiveDialog } from '@/components/ConfirmDestructiveDialog';
 import {
   Dialog,
   DialogContent,
@@ -62,6 +63,7 @@ export const AttendanceOverrideModal: React.FC<AttendanceOverrideModalProps> = (
   const [reason, setReason] = useState<Reason | ''>('');
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const { events: activityEvents } = useShiftActivity(open ? shift?.id ?? null : null);
 
   const reset = () => {
@@ -69,16 +71,17 @@ export const AttendanceOverrideModal: React.FC<AttendanceOverrideModalProps> = (
     setReason('');
     setNotes('');
     setSubmitted(false);
+    setConfirmOpen(false);
   };
 
-  const handleSubmit = () => {
-    if (!selectedStatus || !reason) return;
+  const performOverride = async (extraNotes: string): Promise<boolean> => {
+    if (!selectedStatus || !reason) return false;
 
     const timestamp = new Date().toISOString();
-    // Encode the reason into the override notes so the activity timeline
-    // can surface a structured "reason" alongside the free-text note.
-    const composed = notes.trim()
-      ? `[${reason}] ${notes.trim()}`
+    const trimmedExtra = extraNotes.trim();
+    const composedExtras = [notes.trim(), trimmedExtra].filter(Boolean).join(' — ');
+    const composed = composedExtras
+      ? `[${reason}] ${composedExtras}`
       : `[${reason}]`;
     onOverride(selectedStatus, composed, timestamp);
     setSubmitted(true);
@@ -92,6 +95,7 @@ export const AttendanceOverrideModal: React.FC<AttendanceOverrideModalProps> = (
       onOpenChange(false);
       reset();
     }, 1500);
+    return true;
   };
 
   const handleClose = (value: boolean) => {
@@ -223,7 +227,7 @@ export const AttendanceOverrideModal: React.FC<AttendanceOverrideModalProps> = (
               <Button
                 className="flex-1"
                 disabled={!selectedStatus || !reason}
-                onClick={handleSubmit}
+                onClick={() => setConfirmOpen(true)}
               >
                 Confirm Override
               </Button>
@@ -231,6 +235,24 @@ export const AttendanceOverrideModal: React.FC<AttendanceOverrideModalProps> = (
           </div>
         )}
       </DialogContent>
+
+      <ConfirmDestructiveDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Apply attendance override?"
+        description={
+          worker?.name && selectedStatus
+            ? `${worker.name}'s attendance will be set to "${selectedStatus.replace('_', ' ')}" with reason "${reason}". This is recorded in the shift's activity timeline.`
+            : 'This change is recorded in the shift\'s activity timeline.'
+        }
+        requireReason
+        reasonOptional
+        reasonLabel="Add a confirmation note (optional)"
+        reasonPlaceholder="Anything else managers should know…"
+        confirmLabel="Apply override"
+        tone="primary"
+        onConfirm={performOverride}
+      />
     </Dialog>
   );
 };

@@ -156,12 +156,31 @@ const AppRoutes = () => (
         </RoleGate>
       </ProtectedRoute>
     }>
-      <Route index element={<ScreenBoundary homeHref="/worker"><WorkerHome /></ScreenBoundary>} />
-      <Route path="shifts" element={<ScreenBoundary homeHref="/worker"><WorkerShifts /></ScreenBoundary>} />
+      <Route index element={
+        <ScreenBoundary
+          homeHref="/worker"
+          errorCopy={{
+            title: 'We couldn\'t load your home',
+            description: 'Your shifts and check-in will appear here once we reconnect. Give it another try.',
+            retryLabel: 'Reload home',
+          }}
+        ><WorkerHome /></ScreenBoundary>
+      } />
+      <Route path="shifts" element={
+        <ScreenBoundary
+          homeHref="/worker"
+          errorCopy={{ title: 'Shifts didn\'t load', description: 'Your upcoming shifts will appear here once the connection recovers.' }}
+        ><WorkerShifts /></ScreenBoundary>
+      } />
       <Route path="team" element={<ScreenBoundary homeHref="/worker"><WorkerTeamDirectory /></ScreenBoundary>} />
       <Route path="history" element={<ScreenBoundary homeHref="/worker"><WorkerShiftHistory /></ScreenBoundary>} />
       <Route path="profile" element={<ScreenBoundary homeHref="/worker"><WorkerProfile /></ScreenBoundary>} />
-      <Route path="notifications" element={<ScreenBoundary homeHref="/worker"><WorkerNotifications /></ScreenBoundary>} />
+      <Route path="notifications" element={
+        <ScreenBoundary
+          homeHref="/worker"
+          errorCopy={{ title: 'Notifications didn\'t load', description: 'New updates will appear here once the connection recovers.' }}
+        ><WorkerNotifications /></ScreenBoundary>
+      } />
     </Route>
 
     {/* Manager Routes - only managers/admins can access */}
@@ -172,11 +191,29 @@ const AppRoutes = () => (
         </RoleGate>
       </ProtectedRoute>
     }>
-      <Route index element={<ScreenBoundary homeHref="/manager"><ManagerDashboard /></ScreenBoundary>} />
+      <Route index element={
+        <ScreenBoundary
+          homeHref="/manager"
+          errorCopy={{
+            title: 'Dashboard didn\'t load',
+            description: 'Today\'s coverage, attendance, and pending requests will appear here once we reconnect.',
+            retryLabel: 'Reload dashboard',
+          }}
+        ><ManagerDashboard /></ScreenBoundary>
+      } />
       <Route path="shifts" element={<ScreenBoundary homeHref="/manager"><ManagerShifts /></ScreenBoundary>} />
       <Route path="team" element={<ScreenBoundary homeHref="/manager"><ManagerTeam /></ScreenBoundary>} />
       <Route path="analytics" element={<ScreenBoundary homeHref="/manager"><ManagerAnalytics /></ScreenBoundary>} />
-      <Route path="requests" element={<ScreenBoundary homeHref="/manager"><ManagerShiftRequests /></ScreenBoundary>} />
+      <Route path="requests" element={
+        <ScreenBoundary
+          homeHref="/manager"
+          errorCopy={{
+            title: 'Requests didn\'t load',
+            description: 'Pending pickups, swaps, and call-offs will appear here once the connection recovers.',
+            retryLabel: 'Reload requests',
+          }}
+        ><ManagerShiftRequests /></ScreenBoundary>
+      } />
       <Route path="notifications" element={<ScreenBoundary homeHref="/manager"><ManagerNotifications /></ScreenBoundary>} />
       <Route path="settings" element={<ScreenBoundary homeHref="/manager"><ManagerSettings /></ScreenBoundary>} />
       <Route path="shifts/auto-fill" element={<ScreenBoundary homeHref="/manager"><ManagerAutoFill /></ScreenBoundary>} />
