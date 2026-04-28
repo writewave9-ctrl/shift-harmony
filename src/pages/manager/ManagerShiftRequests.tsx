@@ -473,13 +473,25 @@ export const ManagerShiftRequests = () => {
                   <p className="text-sm">"{selectedRequest.notes}"</p>
                 </div>
               )}
-              {selectedRequest.status === 'pending' && (
+              {approveSteps && (
+                <StepProgress steps={approveSteps} />
+              )}
+              {selectedRequest.status === 'pending' && !approveSteps && (
                 <div className="flex gap-3 pt-2">
-                  <Button variant="outline" className="flex-1 h-11 rounded-xl shadow-elevated" onClick={handleDecline} disabled={processing}>
-                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><X className="w-4 h-4 mr-2" />Decline</>}
+                  <Button
+                    variant="outline"
+                    className="flex-1 h-11 rounded-xl shadow-elevated"
+                    onClick={() => setShowDeclinePickup(true)}
+                    disabled={processing}
+                  >
+                    <X className="w-4 h-4 mr-2" />Decline
                   </Button>
-                  <Button className="flex-1 h-11 rounded-xl bg-gradient-primary shadow-floating hover:opacity-95" onClick={handleApprove} disabled={processing}>
-                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4 mr-2" />Approve</>}
+                  <Button
+                    className="flex-1 h-11 rounded-xl bg-gradient-primary shadow-floating hover:opacity-95"
+                    onClick={handleApprove}
+                    disabled={processing}
+                  >
+                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4 mr-2" />Approve & Assign</>}
                   </Button>
                 </div>
               )}
