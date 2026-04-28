@@ -186,11 +186,17 @@ export function useShiftRequests() {
 
   const declineRequest = useMutation({
     mutationKey: ['shiftRequests', 'decline'],
-    mutationFn: async (requestId: string) => {
+    mutationFn: async ({ requestId, reason }: { requestId: string; reason?: string }) => {
       if (!profileId) throw new Error('Not signed in');
+      const update: Record<string, unknown> = {
+        status: 'declined',
+        reviewed_by: profileId,
+        reviewed_at: new Date().toISOString(),
+      };
+      if (reason && reason.trim()) update.notes = `[Declined] ${reason.trim()}`;
       const { error } = await supabase
         .from('shift_requests')
-        .update({ status: 'declined', reviewed_by: profileId, reviewed_at: new Date().toISOString() })
+        .update(update)
         .eq('id', requestId);
       if (error) throw error;
     },
@@ -205,9 +211,17 @@ export function useShiftRequests() {
     loading: query.isLoading,
     requestShift: (shiftId: string, notes?: string) =>
       requestShift.mutateAsync({ shiftId, notes }).catch(() => null),
-    approveRequest: (requestId: string, shiftId: string, workerId: string) =>
-      approveRequest.mutateAsync({ requestId, shiftId, workerId }).then(() => true).catch(() => false),
-    declineRequest: (id: string) => declineRequest.mutateAsync(id).then(() => true).catch(() => false),
+    approveRequest: (
+      requestId: string,
+      shiftId: string,
+      workerId: string,
+      onStep?: (step: 'updateRequest' | 'assignWorker' | 'declineOthers', status: 'running' | 'success' | 'error', detail?: string) => void,
+    ) =>
+      approveRequest.mutateAsync({ requestId, shiftId, workerId, onStep })
+        .then((res) => res.ok)
+        .catch(() => false),
+    declineRequest: (id: string, reason?: string) =>
+      declineRequest.mutateAsync({ requestId: id, reason }).then(() => true).catch(() => false),
     refetch: () => query.refetch(),
     pendingRequests: requests.filter(r => r.status === 'pending'),
   };
