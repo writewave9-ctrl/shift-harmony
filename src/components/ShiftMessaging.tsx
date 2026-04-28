@@ -293,20 +293,38 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
                         <span aria-hidden>•</span>
                         <span>{formatTime(msg.createdAt)}</span>
 
-                        {/* Read indicator on own messages: 'Sent' then 'Seen' once a teammate replies after */}
-                        {isOwn && (
-                          <span
-                            className="inline-flex items-center gap-0.5"
-                            aria-label={isLastOwn ? 'Sent' : 'Seen by team'}
-                            title={isLastOwn ? 'Sent' : 'Seen by team'}
-                          >
-                            {isLastOwn ? (
-                              <Check className="w-3 h-3" />
-                            ) : (
-                              <CheckCheck className="w-3 h-3 text-primary" />
-                            )}
-                          </span>
-                        )}
+                        {/* Persistent read indicator on own messages.
+                            ✓  = sent, no teammate has opened the conversation yet
+                            ✓✓ = seen by at least one teammate (count shown when ≥1) */}
+                        {isOwn && (() => {
+                          const seenCount = (msg.readBy?.length ?? 0);
+                          const seen = seenCount > 0;
+                          const label = seen
+                            ? seenCount === 1
+                              ? 'Seen by 1 teammate'
+                              : `Seen by ${seenCount} teammates`
+                            : 'Sent';
+                          return (
+                            <span
+                              className="inline-flex items-center gap-0.5"
+                              aria-label={label}
+                              title={label}
+                            >
+                              {seen ? (
+                                <>
+                                  <CheckCheck className="w-3 h-3 text-primary" />
+                                  {seenCount > 1 && (
+                                    <span className="text-[10px] font-medium text-primary tabular-nums">
+                                      {seenCount}
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <Check className="w-3 h-3" />
+                              )}
+                            </span>
+                          );
+                        })()}
 
                         {!shiftEnded && !isOwn && (
                           <button
