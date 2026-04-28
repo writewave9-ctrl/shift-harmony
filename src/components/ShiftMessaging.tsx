@@ -77,6 +77,19 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
     if (open) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
 
+  // Persist read receipts for messages from others that we haven't yet marked read.
+  // Runs whenever the sheet is open and messages change.
+  useEffect(() => {
+    if (!open || !onMarkRead) return;
+    const unread = messages
+      .filter((m) => m.senderId !== currentUserId && !m.readByMe)
+      .map((m) => m.id);
+    if (unread.length > 0) {
+      // Fire-and-forget — failures are silent (these are background pings).
+      void onMarkRead(unread);
+    }
+  }, [open, messages, currentUserId, onMarkRead]);
+
   const handleSend = () => {
     const trimmed = newMessage.trim();
     if (!trimmed) return;
