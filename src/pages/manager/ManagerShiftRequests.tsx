@@ -500,6 +500,24 @@ export const ManagerShiftRequests = () => {
         </DrawerContent>
       </Drawer>
 
+      {/* Decline pickup confirmation with reason capture */}
+      <ConfirmDestructiveDialog
+        open={showDeclinePickup}
+        onOpenChange={setShowDeclinePickup}
+        title="Decline this pickup request?"
+        description={
+          selectedRequest?.worker?.full_name
+            ? `${selectedRequest.worker.full_name} will be notified. Share a brief reason so they understand.`
+            : 'The worker will be notified. Share a brief reason so they understand.'
+        }
+        requireReason
+        reasonLabel="Reason for declining"
+        reasonPlaceholder="e.g. Already filled by someone else, scheduling conflict…"
+        confirmLabel="Decline request"
+        tone="destructive"
+        onConfirm={handleDecline}
+      />
+
       {/* ============ Swap Drawer (with timeline + confirm step) ============ */}
       <Drawer open={!!selectedSwap} onOpenChange={(o) => !o && closeSwapDrawer()}>
         <DrawerContent className="bg-gradient-surface">
