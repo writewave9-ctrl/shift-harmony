@@ -26,6 +26,8 @@ import { CallOffRequestCard } from '@/components/CallOffRequestCard';
 import { usePlan } from '@/hooks/usePlan';
 import { UpgradePromptCard } from '@/components/UpgradePromptCard';
 import { AlertOctagon } from 'lucide-react';
+import { ConfirmDestructiveDialog } from '@/components/ConfirmDestructiveDialog';
+import { StepProgress, type ProgressStep } from '@/components/StepProgress';
 
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -61,21 +63,52 @@ export const ManagerShiftRequests = () => {
   const [swapFilter, setSwapFilter] = useState<SwapFilter>('pending');
   const [callOffFilter, setCallOffFilter] = useState<SwapFilter>('pending');
   const [confirm, setConfirm] = useState<Confirm>(null);
+  const [showDeclinePickup, setShowDeclinePickup] = useState(false);
+  const [approveSteps, setApproveSteps] = useState<ProgressStep[] | null>(null);
+
+  const initialApproveSteps = (workerName: string): ProgressStep[] => [
+    { id: 'updateRequest', label: 'Approve request', state: 'pending' },
+    { id: 'assignWorker', label: `Assign ${workerName} to shift`, state: 'pending' },
+    { id: 'declineOthers', label: 'Decline competing requests', state: 'pending' },
+  ];
 
   const handleApprove = async () => {
     if (!selectedRequest) return;
+    const steps = initialApproveSteps(selectedRequest.worker?.full_name || 'worker');
+    setApproveSteps(steps);
     setProcessing(true);
-    const success = await approveRequest(selectedRequest.id, selectedRequest.shift_id, selectedRequest.worker_id);
+    const success = await approveRequest(
+      selectedRequest.id,
+      selectedRequest.shift_id,
+      selectedRequest.worker_id,
+      (stepId, status, detail) => {
+        setApproveSteps((prev) =>
+          (prev ?? steps).map((s) =>
+            s.id === stepId ? { ...s, state: status, detail: detail ?? s.detail } : s,
+          ),
+        );
+      },
+    );
     setProcessing(false);
-    if (success) setSelectedRequest(null);
+    if (success) {
+      // Brief delay so user can see the green ✓✓✓ chain before drawer closes
+      setTimeout(() => {
+        setSelectedRequest(null);
+        setApproveSteps(null);
+      }, 900);
+    }
   };
 
-  const handleDecline = async () => {
-    if (!selectedRequest) return;
+  const handleDecline = async (reason: string): Promise<boolean> => {
+    if (!selectedRequest) return false;
     setProcessing(true);
-    const success = await declineRequest(selectedRequest.id);
+    const success = await declineRequest(selectedRequest.id, reason);
     setProcessing(false);
-    if (success) setSelectedRequest(null);
+    if (success) {
+      setShowDeclinePickup(false);
+      setSelectedRequest(null);
+    }
+    return success;
   };
 
   // Race-condition aware swap action
@@ -440,13 +473,25 @@ export const ManagerShiftRequests = () => {
                   <p className="text-sm">"{selectedRequest.notes}"</p>
                 </div>
               )}
-              {selectedRequest.status === 'pending' && (
+              {approveSteps && (
+                <StepProgress steps={approveSteps} />
+              )}
+              {selectedRequest.status === 'pending' && !approveSteps && (
                 <div className="flex gap-3 pt-2">
-                  <Button variant="outline" className="flex-1 h-11 rounded-xl shadow-elevated" onClick={handleDecline} disabled={processing}>
-                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><X className="w-4 h-4 mr-2" />Decline</>}
+                  <Button
+                    variant="outline"
+                    className="flex-1 h-11 rounded-xl shadow-elevated"
+                    onClick={() => setShowDeclinePickup(true)}
+                    disabled={processing}
+                  >
+                    <X className="w-4 h-4 mr-2" />Decline
                   </Button>
-                  <Button className="flex-1 h-11 rounded-xl bg-gradient-primary shadow-floating hover:opacity-95" onClick={handleApprove} disabled={processing}>
-                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4 mr-2" />Approve</>}
+                  <Button
+                    className="flex-1 h-11 rounded-xl bg-gradient-primary shadow-floating hover:opacity-95"
+                    onClick={handleApprove}
+                    disabled={processing}
+                  >
+                    {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4 mr-2" />Approve & Assign</>}
                   </Button>
                 </div>
               )}

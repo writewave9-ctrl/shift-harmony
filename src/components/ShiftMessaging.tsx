@@ -24,6 +24,8 @@ interface ShiftMessagingProps {
   currentUserId: string;
   currentUserName: string;
   onSendMessage: (message: string, replyTo?: ShiftMessage | null) => void;
+  /** Persists "I read these" for the current viewer. Idempotent. */
+  onMarkRead?: (messageIds: string[]) => Promise<unknown> | void;
   /** Optional: when defined, surfaces a "View request context" affordance in the header. */
   onViewRequestContext?: () => void;
   /** Optional label for the request context affordance, e.g. "View swap request". */
@@ -50,6 +52,7 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
   currentUserId,
   currentUserName,
   onSendMessage,
+  onMarkRead,
   onViewRequestContext,
   requestContextLabel = 'View request context',
 }) => {
@@ -73,6 +76,19 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
   useEffect(() => {
     if (open) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
+
+  // Persist read receipts for messages from others that we haven't yet marked read.
+  // Runs whenever the sheet is open and messages change.
+  useEffect(() => {
+    if (!open || !onMarkRead) return;
+    const unread = messages
+      .filter((m) => m.senderId !== currentUserId && !m.readByMe)
+      .map((m) => m.id);
+    if (unread.length > 0) {
+      // Fire-and-forget — failures are silent (these are background pings).
+      void onMarkRead(unread);
+    }
+  }, [open, messages, currentUserId, onMarkRead]);
 
   const handleSend = () => {
     const trimmed = newMessage.trim();
@@ -198,7 +214,6 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
               const isOwn = msg.senderId === currentUserId;
               const { reply, body } = extractReply(msg);
               const showNewDivider = idx === newDividerIndex;
-              const isLastOwn = isOwn && idx === messages.length - 1;
               return (
                 <div key={msg.id}>
                   {showNewDivider && (
@@ -277,20 +292,38 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
                         <span aria-hidden>•</span>
                         <span>{formatTime(msg.createdAt)}</span>
 
-                        {/* Read indicator on own messages: 'Sent' then 'Seen' once a teammate replies after */}
-                        {isOwn && (
-                          <span
-                            className="inline-flex items-center gap-0.5"
-                            aria-label={isLastOwn ? 'Sent' : 'Seen by team'}
-                            title={isLastOwn ? 'Sent' : 'Seen by team'}
-                          >
-                            {isLastOwn ? (
-                              <Check className="w-3 h-3" />
-                            ) : (
-                              <CheckCheck className="w-3 h-3 text-primary" />
-                            )}
-                          </span>
-                        )}
+                        {/* Persistent read indicator on own messages.
+                            ✓  = sent, no teammate has opened the conversation yet
+                            ✓✓ = seen by at least one teammate (count shown when ≥1) */}
+                        {isOwn && (() => {
+                          const seenCount = (msg.readBy?.length ?? 0);
+                          const seen = seenCount > 0;
+                          const label = seen
+                            ? seenCount === 1
+                              ? 'Seen by 1 teammate'
+                              : `Seen by ${seenCount} teammates`
+                            : 'Sent';
+                          return (
+                            <span
+                              className="inline-flex items-center gap-0.5"
+                              aria-label={label}
+                              title={label}
+                            >
+                              {seen ? (
+                                <>
+                                  <CheckCheck className="w-3 h-3 text-primary" />
+                                  {seenCount > 1 && (
+                                    <span className="text-[10px] font-medium text-primary tabular-nums">
+                                      {seenCount}
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <Check className="w-3 h-3" />
+                              )}
+                            </span>
+                          );
+                        })()}
 
                         {!shiftEnded && !isOwn && (
                           <button
