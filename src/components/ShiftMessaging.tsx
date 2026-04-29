@@ -208,6 +208,19 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
                   ? 'This shift ended before any messages were exchanged.'
                   : 'Start the conversation about this shift — coordination, hand-offs, or quick questions.'}
               </p>
+              {!shiftEnded && (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="mt-4 rounded-xl bg-gradient-primary shadow-floating hover:opacity-95"
+                  onClick={() => {
+                    requestAnimationFrame(() => inputRef.current?.focus());
+                  }}
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  Send the first message
+                </Button>
+              )}
             </div>
           ) : (
             messages.map((msg, idx) => {

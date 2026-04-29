@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Check, MapPin, Fingerprint, AlertCircle, ShieldCheck, Clock4 } from 'lucide-react';
+import { Check, MapPin, Fingerprint, AlertCircle, ShieldCheck, Clock4, RotateCw } from 'lucide-react';
 
 export type AttendanceState = 'not_checked_in' | 'present' | 'late' | 'manually_approved';
 
@@ -178,6 +178,30 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
             <span>{requiresProximity ? 'Proximity verified' : 'Check-in complete'}</span>
           </div>
         )}
+
+        {/* Helper text under "Late" — explain what to do next */}
+        {attendanceStatus === 'late' && !isManagerOverride && (
+          <p className="text-[11px] text-warning/90 mt-2 max-w-[18rem] mx-auto leading-snug">
+            You're marked late. Let your manager know if there was a delay — they can adjust your status from the timeline.
+          </p>
+        )}
+
+        {/* Helper text under "Not Checked In" (after a positive override that still shows not_checked_in) */}
+        {attendanceStatus === 'not_checked_in' && (
+          <div className="mt-2 max-w-[18rem] mx-auto">
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              We didn't record a check-in. Tap below to try again — make sure location is enabled if your shift requires proximity.
+            </p>
+            <button
+              type="button"
+              onClick={onCheckIn}
+              className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            >
+              <RotateCw className="w-3 h-3" />
+              Try check-in again
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -238,8 +262,18 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
         <div role="alert" className="mt-3 mx-auto max-w-xs rounded-xl border border-destructive/25 bg-destructive-muted px-3 py-2.5">
           <p className="text-xs font-semibold text-destructive">Out of range</p>
           <p className="text-[11px] text-destructive/85 mt-0.5">
-            You're <span className="font-semibold">{Math.round(distanceMeters)}m</span> away — move closer to check in.
+            You're <span className="font-semibold">{Math.round(distanceMeters)}m</span> away — move closer, then re-verify your location.
           </p>
+          {onCheckLocation && (
+            <button
+              type="button"
+              onClick={onCheckLocation}
+              className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-destructive underline hover:no-underline"
+            >
+              <RotateCw className="w-3 h-3" />
+              Try again
+            </button>
+          )}
         </div>
       ) : showProximitySuccess ? (
         <p className="text-sm text-success mt-1.5 flex items-center justify-center gap-1 font-medium">

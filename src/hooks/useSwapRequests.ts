@@ -119,10 +119,20 @@ export function useSwapRequests() {
 
   const managerDeclineSwap = useMutation({
     mutationKey: ['swaps', 'managerDecline'],
-    mutationFn: async (requestId: string) => {
+    mutationFn: async ({ requestId, reason, originalReason }: { requestId: string; reason?: string; originalReason?: string }) => {
       if (!profile?.id) throw new Error('Not signed in');
+      // Append the decline reason into the existing reason field so it surfaces in the
+      // shift activity timeline (which renders swap_requests.reason as `notes`).
+      const trimmed = (reason || '').trim();
+      const composed = trimmed
+        ? (originalReason && originalReason !== 'Shift swap request'
+            ? `${originalReason}\n[Declined] ${trimmed}`
+            : `[Declined] ${trimmed}`)
+        : originalReason;
+      const update: Record<string, unknown> = { status: 'declined', approved_by: profile.id };
+      if (composed !== undefined) update.reason = composed;
       const { error } = await supabase.from('swap_requests')
-        .update({ status: 'declined', approved_by: profile.id })
+        .update(update)
         .eq('id', requestId);
       if (error) throw error;
     },
@@ -147,7 +157,8 @@ export function useSwapRequests() {
     declineSwap: (id: string) => declineSwap.mutateAsync(id).then(() => true).catch(() => false),
     managerApproveSwap: (r: SwapRequest, newWorkerId: string) =>
       managerApproveSwap.mutateAsync({ request: r, newWorkerId }).then(() => true).catch(() => false),
-    managerDeclineSwap: (id: string) => managerDeclineSwap.mutateAsync(id).then(() => true).catch(() => false),
+    managerDeclineSwap: (id: string, reason?: string, originalReason?: string) =>
+      managerDeclineSwap.mutateAsync({ requestId: id, reason, originalReason }).then(() => true).catch(() => false),
     refetch: () => query.refetch(),
   };
 }
