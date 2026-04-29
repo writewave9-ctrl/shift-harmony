@@ -67,6 +67,21 @@ export const ManagerShiftRequests = () => {
   const [showDeclinePickup, setShowDeclinePickup] = useState(false);
   const [showDeclineSwap, setShowDeclineSwap] = useState(false);
   const [approveSteps, setApproveSteps] = useState<ProgressStep[] | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefreshAll = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchRequests(),
+        refetchSwaps(),
+        callOffsEnabled ? refetchCallOffs() : Promise.resolve(),
+      ]);
+      toast.success('Up to date');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const initialApproveSteps = (workerName: string): ProgressStep[] => [
     { id: 'updateRequest', label: 'Approve request', state: 'pending' },
@@ -229,11 +244,24 @@ export const ManagerShiftRequests = () => {
             </div>
             <h1 className="text-lg font-semibold text-foreground tracking-tight">Requests</h1>
           </div>
-          {totalPending > 0 && (
+          {totalPending > 0 ? (
             <span className="ml-auto text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-1 rounded-full">
               {totalPending} pending
             </span>
+          ) : (
+            <span className="ml-auto text-[11px] font-semibold text-success bg-success-muted border border-success/20 px-2 py-1 rounded-full inline-flex items-center gap-1">
+              <Sparkles className="w-3 h-3" />All clear
+            </span>
           )}
+          <button
+            type="button"
+            onClick={handleRefreshAll}
+            disabled={refreshing}
+            aria-label="Refresh all requests"
+            className="p-2 rounded-lg hover:bg-accent transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <RefreshCw className={cn('w-4 h-4 text-muted-foreground', refreshing && 'animate-spin text-primary')} />
+          </button>
         </div>
       </header>
 
