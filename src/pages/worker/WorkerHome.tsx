@@ -302,12 +302,31 @@ export const WorkerHome = () => {
                 <div className="w-16 h-16 mx-auto rounded-2xl bg-card/80 ring-1 ring-border flex items-center justify-center mb-4 shadow-soft">
                   <Calendar className="w-7 h-7 text-muted-foreground/70" />
                 </div>
-                <p className="font-display text-xl font-semibold text-foreground tracking-tight">No shift today</p>
-                <p className="text-muted-foreground text-sm mt-1">Enjoy your day off.</p>
-                {nextShifts.length > 0 && (
+                <p className="font-display text-xl font-semibold text-foreground tracking-tight">
+                  {nextShifts.length > 0 ? 'No shift today' : 'Your shift will appear here'}
+                </p>
+                <p className="text-muted-foreground text-sm mt-1.5 max-w-xs mx-auto">
+                  {nextShifts.length > 0
+                    ? 'Enjoy your day off — your next scheduled shift is below.'
+                    : "Once your manager schedules you, you'll see today's shift, check-in, and live updates right here."}
+                </p>
+                {nextShifts.length > 0 ? (
                   <p className="text-sm text-primary font-semibold mt-4">
                     Next shift · {formatDate(nextShifts[0].date)}
                   </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      haptics.medium();
+                      setLoading(true);
+                      await fetchData();
+                    }}
+                    className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-card/80 border border-border hover:border-primary/30 text-foreground text-[12px] font-semibold shadow-soft hover:shadow-elevated transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <RefreshCcw className="w-3.5 h-3.5 text-primary" />
+                    Check again
+                  </button>
                 )}
               </div>
             </div>
