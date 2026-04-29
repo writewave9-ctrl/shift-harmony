@@ -64,6 +64,7 @@ export const ManagerShiftRequests = () => {
   const [callOffFilter, setCallOffFilter] = useState<SwapFilter>('pending');
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [showDeclinePickup, setShowDeclinePickup] = useState(false);
+  const [showDeclineSwap, setShowDeclineSwap] = useState(false);
   const [approveSteps, setApproveSteps] = useState<ProgressStep[] | null>(null);
 
   const initialApproveSteps = (workerName: string): ProgressStep[] => [
@@ -115,6 +116,7 @@ export const ManagerShiftRequests = () => {
   const runSwapAction = async (
     swap: SwapRequest,
     action: 'approve' | 'decline',
+    reason?: string,
   ): Promise<boolean> => {
     const { data: fresh, error } = await supabase
       .from('swap_requests')
@@ -141,13 +143,13 @@ export const ManagerShiftRequests = () => {
       if (!swap.requested_worker_id) return false;
       return await managerApproveSwap(swap, swap.requested_worker_id);
     }
-    return await managerDeclineSwap(swap.id);
+    return await managerDeclineSwap(swap.id, reason, swap.reason);
   };
 
-  const handleSwapConfirm = async () => {
-    if (!selectedSwap || !confirm) return;
+  const handleSwapApproveConfirm = async () => {
+    if (!selectedSwap || confirm !== 'approve') return;
     setProcessing(true);
-    const ok = await runSwapAction(selectedSwap, confirm);
+    const ok = await runSwapAction(selectedSwap, 'approve');
     setProcessing(false);
     if (ok) {
       setConfirm(null);
@@ -155,6 +157,18 @@ export const ManagerShiftRequests = () => {
     } else {
       setConfirm(null);
     }
+  };
+
+  const handleSwapDecline = async (reason: string): Promise<boolean> => {
+    if (!selectedSwap) return false;
+    setProcessing(true);
+    const ok = await runSwapAction(selectedSwap, 'decline', reason);
+    setProcessing(false);
+    if (ok) {
+      setShowDeclineSwap(false);
+      setSelectedSwap(null);
+    }
+    return ok;
   };
 
   const closeSwapDrawer = () => {
