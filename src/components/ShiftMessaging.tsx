@@ -182,7 +182,7 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
             <button
               type="button"
               onClick={onViewRequestContext}
-              className="mt-3 w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-accent/60 hover:bg-accent transition-colors text-left ring-1 ring-border/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="mt-3 w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-accent/60 hover:bg-accent transition-colors text-left ring-1 ring-border/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background press"
             >
               <span className="flex items-center gap-2 min-w-0">
                 <Info className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -190,13 +190,13 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
                   {requestContextLabel}
                 </span>
               </span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5" />
             </button>
           )}
         </SheetHeader>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4 scroll-refined">
           {messages.length === 0 ? (
             <div className="empty-state mx-auto max-w-sm bg-transparent border-0 shadow-none">
               <div className="empty-state-icon">
