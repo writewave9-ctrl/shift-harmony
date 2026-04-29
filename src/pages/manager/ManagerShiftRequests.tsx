@@ -41,7 +41,7 @@ const formatDate = (dateStr: string) => {
 
 type SwapFilter = 'pending' | 'history';
 type ShiftFilter = 'pending' | 'history';
-type Confirm = null | 'approve' | 'decline';
+type Confirm = null | 'approve';
 
 export const ManagerShiftRequests = () => {
   const navigate = useNavigate();
