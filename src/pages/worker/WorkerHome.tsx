@@ -5,7 +5,7 @@ import { IncomingSwapsCard } from '@/components/IncomingSwapsCard';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { WorkerHomeSkeleton } from '@/components/PageSkeletons';
 import { MotionCard, MotionSection } from '@/components/MotionWrapper';
-import { Calendar, Bell, ChevronRight, MapPin, Clock, AlertCircle, AlertOctagon } from 'lucide-react';
+import { Calendar, Bell, ChevronRight, MapPin, Clock, AlertCircle, AlertOctagon, RefreshCcw } from 'lucide-react';
 import { CallOffRequestModal } from '@/components/CallOffRequestModal';
 import { CallOffStatusBanner } from '@/components/CallOffStatusBanner';
 import { ShiftActivityTimeline } from '@/components/ShiftActivityTimeline';
