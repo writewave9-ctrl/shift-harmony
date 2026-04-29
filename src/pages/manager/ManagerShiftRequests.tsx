@@ -10,7 +10,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import {
-  ChevronLeft, User, Calendar, MapPin, Check, X, Clock, HandHelping, ArrowLeftRight, Loader2, Inbox,
+  ChevronLeft, User, Calendar, MapPin, Check, X, Clock, HandHelping, ArrowLeftRight, Loader2, Inbox, RefreshCw, Sparkles,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -45,7 +45,7 @@ type Confirm = null | 'approve';
 
 export const ManagerShiftRequests = () => {
   const navigate = useNavigate();
-  const { requests, loading, approveRequest, declineRequest } = useShiftRequests();
+  const { requests, loading, approveRequest, declineRequest, refetch: refetchRequests } = useShiftRequests();
   const {
     pendingForManager, loading: loadingSwaps,
     managerApproveSwap, managerDeclineSwap, requests: allSwaps, refetch: refetchSwaps,
@@ -55,6 +55,7 @@ export const ManagerShiftRequests = () => {
   const {
     requests: allCallOffs, pendingForManager: pendingCallOffs,
     loading: loadingCallOffs, approveCallOff, declineCallOff,
+    refetch: refetchCallOffs,
   } = useCallOffRequests();
   const [selectedRequest, setSelectedRequest] = useState<ShiftRequest | null>(null);
   const [selectedSwap, setSelectedSwap] = useState<SwapRequest | null>(null);
