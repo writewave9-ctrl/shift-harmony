@@ -405,7 +405,7 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
                 size="icon"
                 disabled={!newMessage.trim()}
                 onClick={handleSend}
-                className="h-11 w-11 rounded-xl bg-gradient-primary shadow-floating disabled:shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="h-11 w-11 rounded-xl bg-gradient-primary shadow-floating disabled:shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background press"
                 aria-label="Send message"
               >
                 <Send className="w-4 h-4" />
