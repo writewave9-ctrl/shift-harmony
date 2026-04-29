@@ -68,7 +68,7 @@ export const LandingNav = () => {
           <Button
             size="sm"
             onClick={() => navigate('/auth')}
-            className="rounded-xl text-[13.5px] h-9 px-4 bg-gradient-primary shadow-soft hover:shadow-elevated transition-shadow"
+            className="rounded-xl text-[13.5px] h-9 px-4 bg-gradient-primary shadow-soft hover:shadow-elevated transition-shadow sheen press"
           >
             Get started
           </Button>
