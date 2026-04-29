@@ -252,7 +252,7 @@ export const WorkerHome = () => {
               </div>
               <div className="relative p-5">
                 <div className="text-center mb-5">
-                  <p className="font-display text-[26px] leading-tight font-semibold text-foreground tracking-tight">
+                  <p className="display-tight text-[28px] leading-[1.05] font-semibold text-foreground">
                     {formatTimeRange(todayShift.start_time, todayShift.end_time)}
                   </p>
                   <div className="flex items-center justify-center gap-3 mt-2.5 text-[13px] text-muted-foreground">
