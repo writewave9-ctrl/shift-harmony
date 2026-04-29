@@ -252,7 +252,7 @@ export const WorkerHome = () => {
               </div>
               <div className="relative p-5">
                 <div className="text-center mb-5">
-                  <p className="font-display text-[26px] leading-tight font-semibold text-foreground tracking-tight">
+                  <p className="display-tight text-[28px] leading-[1.05] font-semibold text-foreground">
                     {formatTimeRange(todayShift.start_time, todayShift.end_time)}
                   </p>
                   <div className="flex items-center justify-center gap-3 mt-2.5 text-[13px] text-muted-foreground">
@@ -382,9 +382,10 @@ export const WorkerHome = () => {
                 <MotionCard
                   key={shift.id}
                   className={cn(
-                    "group relative rounded-2xl p-4 bg-card border border-border/50 shadow-soft hover:shadow-elevated hover:border-primary/25 transition-all overflow-hidden",
+                    "group relative rounded-2xl p-4 bg-card border border-border/50 shadow-soft hover:shadow-elevated hover:border-primary/25 transition-all overflow-hidden lift cursor-pointer",
                     index === 0 && "ring-1 ring-primary/20"
                   )}
+                  onClick={() => navigate('/worker/shifts')}
                 >
                   {index === 0 && (
                     <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-primary via-primary/80 to-primary/40" />
@@ -397,7 +398,7 @@ export const WorkerHome = () => {
                       )}>
                         {formatDate(shift.date)}
                       </span>
-                      <p className="font-display font-semibold text-foreground text-[15px] tracking-tight">{formatTimeRange(shift.start_time, shift.end_time)}</p>
+                      <p className="display-tight font-semibold text-foreground text-[15.5px]">{formatTimeRange(shift.start_time, shift.end_time)}</p>
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">{shift.position} · {shift.location}</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />

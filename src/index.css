@@ -500,4 +500,112 @@
   @keyframes shimmer {
     100% { transform: translateX(100%); }
   }
+
+  /* ============================================================
+     Premium polish utilities — micro-interactions & materials
+     ============================================================ */
+
+  /* Subtle lift on hover for cards / pressables. */
+  .lift {
+    @apply transition-all duration-300 ease-out;
+    will-change: transform, box-shadow;
+  }
+  .lift:hover { transform: translateY(-1px); }
+  .lift:active {
+    transform: translateY(0);
+    transition-duration: 80ms;
+  }
+
+  /* Press-down tactile response for buttons. */
+  .press {
+    @apply transition-transform duration-150 ease-out;
+  }
+  .press:active { transform: scale(0.97); }
+
+  /* Gradient sheen on hover — for hero CTAs only. */
+  .sheen {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .sheen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      hsl(0 0% 100% / 0.18) 50%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .sheen:hover::before { transform: translateX(120%); }
+
+  /* Hairline ring for premium card edges. */
+  .ring-hairline {
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.55),
+      inset 0 0 0 1px hsl(var(--border) / 0.6);
+  }
+  .dark .ring-hairline {
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.04),
+      inset 0 0 0 1px hsl(var(--border) / 0.5);
+  }
+
+  /* Compact display-text with optical tightening. */
+  .display-tight {
+    font-family: var(--font-display);
+    letter-spacing: -0.035em;
+    font-feature-settings: 'ss01', 'ss02', 'lnum', 'tnum';
+  }
+
+  /* Tasteful uppercase eyebrow label. */
+  .eyebrow {
+    @apply text-[10.5px] font-bold uppercase tracking-[0.16em] text-muted-foreground;
+  }
+
+  /* Drift-in animation for sequential reveals. */
+  @keyframes drift-in {
+    0% { opacity: 0; transform: translateY(12px); filter: blur(6px); }
+    100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+  .drift-in {
+    animation: drift-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Ambient breathing for accent dots / status pulses. */
+  @keyframes ambient-breath {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.04); }
+  }
+  .ambient-breath { animation: ambient-breath 3.6s ease-in-out infinite; }
+
+  /* Editorial mid-fade hairline divider. */
+  .divider-fade {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--border)) 20%,
+      hsl(var(--border)) 80%,
+      transparent
+    );
+  }
+
+  /* Refined scrollbar — webkit only, falls back gracefully. */
+  .scroll-refined::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scroll-refined::-webkit-scrollbar-track { background: transparent; }
+  .scroll-refined::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+  }
+  .scroll-refined::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
 }
+

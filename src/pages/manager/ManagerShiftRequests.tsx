@@ -301,7 +301,7 @@ export const ManagerShiftRequests = () => {
                 <Card
                   key={request.id}
                   className={cn(
-                    'cursor-pointer hover:bg-accent/30 transition-colors rounded-2xl',
+                    'cursor-pointer hover:bg-accent/30 transition-colors rounded-2xl lift',
                     request.status === 'pending'
                       ? 'shadow-floating border-primary/20 bg-gradient-surface'
                       : 'shadow-elevated border-border/50',
@@ -369,7 +369,7 @@ export const ManagerShiftRequests = () => {
                 <Card
                   key={swap.id}
                   className={cn(
-                    'cursor-pointer hover:bg-accent/30 transition-colors rounded-2xl',
+                    'cursor-pointer hover:bg-accent/30 transition-colors rounded-2xl lift',
                     swap.status === 'pending'
                       ? 'shadow-floating border-primary/20 bg-gradient-surface'
                       : 'shadow-elevated border-border/40',

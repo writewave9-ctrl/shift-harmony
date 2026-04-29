@@ -30,11 +30,11 @@ export const HeroSection = () => {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/20 bg-card/60 backdrop-blur-md text-primary text-xs font-medium mb-9 shadow-soft"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/20 bg-card/60 backdrop-blur-md text-primary text-xs font-medium mb-9 shadow-soft ring-hairline"
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>Built for frontline reliability</span>
-          <span className="w-1 h-1 rounded-full bg-primary/40" />
+          <span className="w-1 h-1 rounded-full bg-primary/40 ambient-breath" />
           <span className="text-foreground/70">v2.0 — call-offs &amp; auto-fill</span>
         </motion.div>
 
@@ -68,10 +68,10 @@ export const HeroSection = () => {
           <Button
             size="lg"
             onClick={() => navigate('/auth')}
-            className="group rounded-xl px-7 h-12 text-[15px] gap-2 bg-gradient-primary shadow-luxe hover:shadow-floating transition-all duration-300"
+            className="group rounded-xl px-7 h-12 text-[15px] gap-2 bg-gradient-primary shadow-luxe hover:shadow-floating transition-all duration-300 sheen press"
           >
             Start free
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 relative z-10" />
           </Button>
           <Button
             variant="ghost"

@@ -380,7 +380,7 @@ export const ManagerDashboard = () => {
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate('/manager/shifts'); }}
-                  className="rounded-2xl bg-card ring-1 ring-warning/25 shadow-card-premium p-4 cursor-pointer hover:ring-warning/50 hover:shadow-floating transition-all"
+                  className="rounded-2xl bg-card ring-1 ring-warning/25 shadow-card-premium p-4 cursor-pointer hover:ring-warning/50 hover:shadow-floating transition-all lift"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
