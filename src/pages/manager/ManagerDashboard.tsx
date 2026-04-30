@@ -3,6 +3,7 @@ import { ManagerDashboardSkeleton } from '@/components/PageSkeletons';
 import { cn } from '@/lib/utils';
 import { formatTimeRange } from '@/lib/formatTime';
 import { StaffingIndicator } from '@/components/StaffingIndicator';
+import { StaffingBreakdown } from '@/components/StaffingBreakdown';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useShifts, DatabaseShift } from '@/hooks/useShifts';
 import { useTeamMembers } from '@/hooks/useTeamMembers';
@@ -260,6 +261,9 @@ export const ManagerDashboard = () => {
       <div className="px-5 lg:px-8 space-y-7">
         {/* Staffing Health */}
         <StaffingIndicator health={staffingHealth} />
+
+        {/* Detailed coverage gap breakdown — which roles/hours are short */}
+        <StaffingBreakdown shifts={todayShifts} />
 
         {/* Live attendance — prominent, airy, clearly separated */}
         <section
