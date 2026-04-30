@@ -263,7 +263,33 @@ export const ManagerDashboard = () => {
         <StaffingIndicator health={staffingHealth} />
 
         {/* Detailed coverage gap breakdown — which roles/hours are short */}
-        <StaffingBreakdown shifts={todayShifts} />
+        <StaffingBreakdown
+          shifts={todayShifts}
+          onAssignReplacement={(gap) => {
+            toast.info(`Pick a worker for ${gap.position}`, {
+              description: `${gap.vacantCount} ${gap.vacantCount === 1 ? 'shift needs' : 'shifts need'} cover today.`,
+            });
+            navigate('/manager/shifts', {
+              state: { intent: 'assign', position: gap.position, shiftIds: gap.vacantShiftIds },
+            });
+          }}
+          onMessageWorkers={(gap) => {
+            toast.success(`Opening ${gap.position} team thread`, {
+              description: 'Reach out to qualified workers in one tap.',
+            });
+            navigate('/manager/team', {
+              state: { intent: 'message', position: gap.position },
+            });
+          }}
+          onCreateOpenShift={(gap) => {
+            toast.success(`Posting an open ${gap.position} shift`, {
+              description: 'Workers in this role will be notified.',
+            });
+            navigate('/manager/shifts', {
+              state: { intent: 'create_open', position: gap.position },
+            });
+          }}
+        />
 
         {/* Live attendance — prominent, airy, clearly separated */}
         <section
