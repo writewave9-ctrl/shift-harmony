@@ -58,6 +58,7 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
 }) => {
   const [newMessage, setNewMessage] = useState('');
   const [replyingTo, setReplyingTo] = useState<ShiftMessage | null>(null);
+  const [sendBurst, setSendBurst] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   // Track which message ids the current user has seen this session.
@@ -96,6 +97,13 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
     onSendMessage(trimmed, replyingTo);
     setNewMessage('');
     setReplyingTo(null);
+    // Visual send pulse + guaranteed scroll-to-latest after send
+    setSendBurst(true);
+    window.setTimeout(() => setSendBurst(false), 420);
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      inputRef.current?.focus();
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -405,10 +413,13 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
                 size="icon"
                 disabled={!newMessage.trim()}
                 onClick={handleSend}
-                className="h-11 w-11 rounded-xl bg-gradient-primary shadow-floating disabled:shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background press"
+                className={cn(
+                  'h-11 w-11 rounded-xl bg-gradient-primary shadow-floating disabled:shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background press transition-transform',
+                  sendBurst && 'animate-[checkin-ripple_0.42s_ease-out] scale-95',
+                )}
                 aria-label="Send message"
               >
-                <Send className="w-4 h-4" />
+                <Send className={cn('w-4 h-4 transition-transform', sendBurst && 'translate-x-0.5 -translate-y-0.5')} />
               </Button>
             </div>
             <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">

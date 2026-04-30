@@ -20,6 +20,8 @@ import type { ShiftRequest } from '@/hooks/useShiftRequests';
 import { SwapStatusPill } from '@/components/SwapStatusPill';
 import { SwapCountdownBadge } from '@/components/SwapCountdownBadge';
 import { SwapTimeline } from '@/components/SwapTimeline';
+import { ShiftActivityTimeline } from '@/components/ShiftActivityTimeline';
+import { useShiftActivity } from '@/hooks/useShiftActivity';
 import { supabase } from '@/integrations/supabase/client';
 import { useCallOffRequests } from '@/hooks/useCallOffRequests';
 import { CallOffRequestCard } from '@/components/CallOffRequestCard';
@@ -191,6 +193,9 @@ export const ManagerShiftRequests = () => {
     setSelectedSwap(null);
     setConfirm(null);
   };
+
+  // Full activity for the selected swap's shift (call-offs, swaps, attendance, overrides)
+  const { events: swapShiftActivity } = useShiftActivity(selectedSwap?.shift_id ?? null);
 
   const reviewedSwaps = useMemo(() => allSwaps.filter(s => s.status !== 'pending'), [allSwaps]);
   const reviewedCallOffs = useMemo(() => allCallOffs.filter(c => c.status !== 'pending'), [allCallOffs]);
@@ -636,6 +641,13 @@ export const ManagerShiftRequests = () => {
                 updatedAt={(selectedSwap as any).updated_at}
                 status={selectedSwap.status}
               />
+
+              {/* Full shift activity history (call-offs, prior swaps, overrides) */}
+              {swapShiftActivity.length > 0 && (
+                <div className="rounded-2xl border border-border/40 bg-card/60 p-3.5 shadow-elevated">
+                  <ShiftActivityTimeline events={swapShiftActivity} />
+                </div>
+              )}
 
               {selectedSwap.status === 'pending' ? (
                 confirm === 'approve' ? (
