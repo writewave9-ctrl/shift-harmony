@@ -318,3 +318,165 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
     </div>
   );
 };
+
+/* -------------------------------------------------------------------------- */
+/* Troubleshooting card — expandable guidance for late / out-of-range states. */
+/* -------------------------------------------------------------------------- */
+
+interface TroubleshootingCardProps {
+  variant: 'late' | 'out_of_range' | 'location_error';
+  onRetry?: () => void;
+  retryLabel?: string;
+  /** Recommended seconds to wait before retrying (used for retry-timing copy). */
+  retryWaitSeconds?: number;
+  className?: string;
+}
+
+const STEPS_LATE = [
+  'Open the shift conversation and tell your team you’re on the way.',
+  'Check in as soon as you arrive — managers can adjust the timestamp later.',
+  'If you can’t reach the venue, request a call-off from the shift screen.',
+];
+
+const STEPS_OUT_OF_RANGE = [
+  'Move closer to the venue — check-in needs you within the radius.',
+  'Make sure phone location is enabled (Settings → Privacy → Location).',
+  'Step outside if you’re indoors — GPS struggles through thick walls.',
+  'Wait ~10 seconds for a fresh fix, then tap “Try again”.',
+];
+
+const STEPS_LOCATION_ERROR = [
+  'Allow location access for this site in your browser settings.',
+  'Toggle Wi-Fi or cellular data off and back on to refresh the signal.',
+  'Reload the page if permissions were denied earlier in this session.',
+  'Wait ~10 seconds, then tap “Try again”.',
+];
+
+export const CheckInTroubleshootingCard: React.FC<TroubleshootingCardProps> = ({
+  variant,
+  onRetry,
+  retryLabel = 'Try again',
+  retryWaitSeconds = 10,
+  className,
+}) => {
+  const [open, setOpen] = useState(false);
+
+  const config = {
+    late: {
+      title: 'Trouble checking in on time?',
+      icon: Clock4,
+      tone: 'warning' as const,
+      steps: STEPS_LATE,
+    },
+    out_of_range: {
+      title: 'Out of range — what to try',
+      icon: MapPin,
+      tone: 'destructive' as const,
+      steps: STEPS_OUT_OF_RANGE,
+    },
+    location_error: {
+      title: 'Location unavailable — what to try',
+      icon: Wifi,
+      tone: 'destructive' as const,
+      steps: STEPS_LOCATION_ERROR,
+    },
+  }[variant];
+
+  const Icon = config.icon;
+  const isWarn = config.tone === 'warning';
+
+  return (
+    <div
+      className={cn(
+        'mx-auto max-w-xs rounded-xl border text-left overflow-hidden',
+        isWarn
+          ? 'border-warning/25 bg-warning-muted/40'
+          : 'border-destructive/20 bg-destructive-muted/40',
+        className,
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className={cn(
+          'w-full flex items-center gap-2 px-3 py-2.5 text-left press',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl',
+        )}
+      >
+        <span className={cn(
+          'inline-flex items-center justify-center w-6 h-6 rounded-lg shrink-0',
+          isWarn ? 'bg-warning/15 text-warning' : 'bg-destructive/15 text-destructive',
+        )}>
+          <Icon className="w-3.5 h-3.5" />
+        </span>
+        <span className={cn(
+          'flex-1 text-[12px] font-semibold tracking-tight',
+          isWarn ? 'text-warning' : 'text-destructive',
+        )}>
+          {config.title}
+        </span>
+        <ChevronDown
+          className={cn(
+            'w-3.5 h-3.5 transition-transform shrink-0',
+            isWarn ? 'text-warning/70' : 'text-destructive/70',
+            open && 'rotate-180',
+          )}
+          aria-hidden
+        />
+      </button>
+
+      {open && (
+        <div className="px-3 pb-3 -mt-0.5">
+          <ol className="space-y-1.5 list-none">
+            {config.steps.map((step, i) => (
+              <li key={i} className="flex items-start gap-2 text-[11px] leading-snug text-foreground/85">
+                <span className={cn(
+                  'inline-flex w-4 h-4 rounded-full text-[9px] font-bold items-center justify-center shrink-0 mt-0.5 tabular-nums',
+                  isWarn ? 'bg-warning/20 text-warning' : 'bg-destructive/15 text-destructive',
+                )}>
+                  {i + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+
+          {variant !== 'late' && (
+            <p className="mt-2 text-[10px] text-muted-foreground flex items-center gap-1">
+              <HelpCircle className="w-3 h-3" />
+              Wait ~{retryWaitSeconds}s between attempts so we can get a fresh location.
+            </p>
+          )}
+
+          {variant === 'location_error' && (
+            <p className="mt-1.5 text-[10px] text-muted-foreground flex items-start gap-1">
+              <Settings className="w-3 h-3 mt-0.5 shrink-0" />
+              <span>
+                Browser address bar: tap the lock icon → Site settings → Location →
+                <span className="font-semibold"> Allow</span>.
+              </span>
+            </p>
+          )}
+
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className={cn(
+                'mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold press',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                isWarn
+                  ? 'bg-warning text-warning-foreground hover:opacity-95'
+                  : 'bg-destructive text-destructive-foreground hover:opacity-95',
+              )}
+            >
+              <RotateCw className="w-3 h-3" />
+              {retryLabel}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
