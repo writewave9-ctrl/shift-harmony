@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatTimeRange } from '@/lib/formatTime';
 import { OnboardingChecklist } from '@/components/OnboardingChecklist';
+import { ShiftChecklist } from '@/components/ShiftChecklist';
 
 interface WorkerShift {
   id: string;
@@ -288,6 +289,19 @@ export const WorkerHome = () => {
                     <AlertOctagon className="w-3.5 h-3.5" />Can't make it?
                   </button>
                 </div>
+
+                {/* Pre-shift checklist — quick confirm of key details. Hidden once checked in. */}
+                {!isCheckedIn && (
+                  <div className="mt-4">
+                    <ShiftChecklist
+                      shiftId={todayShift.id}
+                      position={todayShift.position}
+                      location={todayShift.location}
+                      requiresProximity={requiresProximity}
+                    />
+                  </div>
+                )}
+
                 {activityEvents.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-border/40">
                     <ShiftActivityTimeline events={activityEvents} />
