@@ -58,6 +58,7 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
 }) => {
   const [newMessage, setNewMessage] = useState('');
   const [replyingTo, setReplyingTo] = useState<ShiftMessage | null>(null);
+  const [sendBurst, setSendBurst] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   // Track which message ids the current user has seen this session.
@@ -96,6 +97,13 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
     onSendMessage(trimmed, replyingTo);
     setNewMessage('');
     setReplyingTo(null);
+    // Visual send pulse + guaranteed scroll-to-latest after send
+    setSendBurst(true);
+    window.setTimeout(() => setSendBurst(false), 420);
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      inputRef.current?.focus();
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
