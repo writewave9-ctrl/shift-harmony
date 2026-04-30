@@ -645,7 +645,7 @@ export const ManagerShiftRequests = () => {
               {/* Full shift activity history (call-offs, prior swaps, overrides) */}
               {swapShiftActivity.length > 0 && (
                 <div className="rounded-2xl border border-border/40 bg-card/60 p-3.5 shadow-elevated">
-                  <ShiftActivityTimeline events={swapShiftActivity} />
+                  <ShiftActivityTimeline events={swapShiftActivity} filterable />
                 </div>
               )}
 

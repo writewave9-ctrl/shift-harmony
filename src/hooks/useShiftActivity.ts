@@ -32,7 +32,7 @@ async function fetchActivity(shiftId: string): Promise<ShiftActivityEvent[]> {
   const collected: ShiftActivityEvent[] = [];
 
   if (shiftRes.data?.created_at) {
-    collected.push({ label: 'Shift scheduled', at: shiftRes.data.created_at, tone: 'muted' });
+    collected.push({ label: 'Shift scheduled', at: shiftRes.data.created_at, tone: 'muted', category: 'other' });
   }
 
   const att = attRes.data;
@@ -42,6 +42,7 @@ async function fetchActivity(shiftId: string): Promise<ShiftActivityEvent[]> {
       detail: att.is_proximity_based ? 'Auto via location' : 'Manual',
       at: att.check_in_time,
       tone: 'primary',
+      category: 'attendance',
     });
   }
   if (att?.override_timestamp) {
@@ -52,10 +53,11 @@ async function fetchActivity(shiftId: string): Promise<ShiftActivityEvent[]> {
       reason: parsed.reason ?? undefined,
       notes: parsed.notes ?? undefined,
       tone: 'warning',
+      category: 'override',
     });
   }
   if (att?.check_out_time) {
-    collected.push({ label: 'Checked out', at: att.check_out_time, tone: 'success' });
+    collected.push({ label: 'Checked out', at: att.check_out_time, tone: 'success', category: 'attendance' });
   }
 
   (callOffRes.data || []).forEach((c: any) => {
@@ -68,12 +70,14 @@ async function fetchActivity(shiftId: string): Promise<ShiftActivityEvent[]> {
       notes: c.custom_reason || undefined,
       actor,
       tone: 'warning',
+      category: 'call_off',
     });
     if (c.status !== 'pending' && c.updated_at && c.updated_at !== c.created_at) {
       collected.push({
         label: c.status === 'approved' ? 'Call-off approved · shift opened' : 'Call-off declined',
         at: c.updated_at,
         tone: c.status === 'approved' ? 'success' : 'muted',
+        category: 'call_off',
       });
     }
   });
@@ -87,12 +91,14 @@ async function fetchActivity(shiftId: string): Promise<ShiftActivityEvent[]> {
       actor: requester,
       notes: s.reason || undefined,
       tone: 'primary',
+      category: 'swap',
     });
     if (s.status !== 'pending' && s.updated_at && s.updated_at !== s.created_at) {
       collected.push({
         label: s.status === 'approved' ? 'Swap approved' : 'Swap declined',
         at: s.updated_at,
         tone: s.status === 'approved' ? 'success' : 'muted',
+        category: 'swap',
       });
     }
   });

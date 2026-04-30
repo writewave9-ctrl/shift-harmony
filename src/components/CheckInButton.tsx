@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Check, MapPin, Fingerprint, AlertCircle, ShieldCheck, Clock4, RotateCw } from 'lucide-react';
+import { Check, MapPin, Fingerprint, AlertCircle, ShieldCheck, Clock4, RotateCw, ChevronDown, HelpCircle, Settings, Wifi } from 'lucide-react';
 
 export type AttendanceState = 'not_checked_in' | 'present' | 'late' | 'manually_approved';
 
@@ -179,20 +179,12 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
           </div>
         )}
 
-        {/* Helper text under "Late" — explain what to do next */}
+        {/* Late — expanded troubleshooting w/ step-by-step guidance */}
         {attendanceStatus === 'late' && !isManagerOverride && (
-          <div className="mt-2 max-w-[18rem] mx-auto rounded-xl border border-warning/25 bg-warning-muted/50 px-3 py-2.5 text-left">
-            <p className="text-[11px] font-semibold text-warning flex items-center gap-1.5">
-              <Clock4 className="w-3 h-3" />
-              You're marked late
-            </p>
-            <p className="text-[11px] text-warning/85 mt-1 leading-snug">
-              Find your manager when you arrive — they can adjust your status from the timeline if there was a delay (transport, handover, etc.).
-            </p>
-            <p className="text-[10px] text-muted-foreground mt-1.5 leading-snug">
-              Tip: leave a note in the shift conversation so the team knows you're on the way.
-            </p>
-          </div>
+          <CheckInTroubleshootingCard
+            variant="late"
+            className="mt-3"
+          />
         )}
 
         {/* Helper text under "Not Checked In" (after a positive override that still shows not_checked_in) */}
@@ -272,38 +264,35 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
       </span>
 
       {locationError ? (
-        <div role="alert" className="mt-3 mx-auto max-w-xs rounded-xl border border-destructive/25 bg-destructive-muted px-3 py-2.5 text-left">
-          <p className="text-xs font-semibold text-destructive flex items-center gap-1.5">
-            <AlertCircle className="w-3.5 h-3.5" />
-            Location unavailable
-          </p>
-          <p className="text-[11px] text-destructive/85 mt-1">{locationError}</p>
-          {onCheckLocation && (
-            <button
-              type="button"
-              onClick={onCheckLocation}
-              className="mt-2 text-[11px] font-semibold text-destructive underline hover:no-underline"
-            >
-              Try again
-            </button>
-          )}
+        <div className="mt-3">
+          <div role="alert" className="mx-auto max-w-xs rounded-xl border border-destructive/25 bg-destructive-muted px-3 py-2.5 text-left">
+            <p className="text-xs font-semibold text-destructive flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5" />
+              Location unavailable
+            </p>
+            <p className="text-[11px] text-destructive/85 mt-1">{locationError}</p>
+          </div>
+          <CheckInTroubleshootingCard
+            variant="location_error"
+            onRetry={onCheckLocation}
+            retryLabel="Try check-in again"
+            className="mt-2"
+          />
         </div>
       ) : showProximityWarning && distanceMeters ? (
-        <div role="alert" className="mt-3 mx-auto max-w-xs rounded-xl border border-destructive/25 bg-destructive-muted px-3 py-2.5">
-          <p className="text-xs font-semibold text-destructive">Out of range</p>
-          <p className="text-[11px] text-destructive/85 mt-0.5">
-            You're <span className="font-semibold">{Math.round(distanceMeters)}m</span> away — move closer, then re-verify your location.
-          </p>
-          {onCheckLocation && (
-            <button
-              type="button"
-              onClick={onCheckLocation}
-              className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-destructive underline hover:no-underline"
-            >
-              <RotateCw className="w-3 h-3" />
-              Try again
-            </button>
-          )}
+        <div className="mt-3">
+          <div role="alert" className="mx-auto max-w-xs rounded-xl border border-destructive/25 bg-destructive-muted px-3 py-2.5">
+            <p className="text-xs font-semibold text-destructive">Out of range</p>
+            <p className="text-[11px] text-destructive/85 mt-0.5">
+              You're <span className="font-semibold">{Math.round(distanceMeters)}m</span> away — move closer, then re-verify your location.
+            </p>
+          </div>
+          <CheckInTroubleshootingCard
+            variant="out_of_range"
+            onRetry={onCheckLocation}
+            retryLabel="Re-check my location"
+            className="mt-2"
+          />
         </div>
       ) : showProximitySuccess ? (
         <p className="text-sm text-success mt-1.5 flex items-center justify-center gap-1 font-medium">
@@ -314,6 +303,168 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
         <p className="text-sm text-muted-foreground mt-1.5">Tap to verify location</p>
       ) : (
         <p className="text-sm text-muted-foreground mt-1.5">Tap when you arrive</p>
+      )}
+    </div>
+  );
+};
+
+/* -------------------------------------------------------------------------- */
+/* Troubleshooting card — expandable guidance for late / out-of-range states. */
+/* -------------------------------------------------------------------------- */
+
+interface TroubleshootingCardProps {
+  variant: 'late' | 'out_of_range' | 'location_error';
+  onRetry?: () => void;
+  retryLabel?: string;
+  /** Recommended seconds to wait before retrying (used for retry-timing copy). */
+  retryWaitSeconds?: number;
+  className?: string;
+}
+
+const STEPS_LATE = [
+  'Open the shift conversation and tell your team you’re on the way.',
+  'Check in as soon as you arrive — managers can adjust the timestamp later.',
+  'If you can’t reach the venue, request a call-off from the shift screen.',
+];
+
+const STEPS_OUT_OF_RANGE = [
+  'Move closer to the venue — check-in needs you within the radius.',
+  'Make sure phone location is enabled (Settings → Privacy → Location).',
+  'Step outside if you’re indoors — GPS struggles through thick walls.',
+  'Wait ~10 seconds for a fresh fix, then tap “Try again”.',
+];
+
+const STEPS_LOCATION_ERROR = [
+  'Allow location access for this site in your browser settings.',
+  'Toggle Wi-Fi or cellular data off and back on to refresh the signal.',
+  'Reload the page if permissions were denied earlier in this session.',
+  'Wait ~10 seconds, then tap “Try again”.',
+];
+
+export const CheckInTroubleshootingCard: React.FC<TroubleshootingCardProps> = ({
+  variant,
+  onRetry,
+  retryLabel = 'Try again',
+  retryWaitSeconds = 10,
+  className,
+}) => {
+  const [open, setOpen] = useState(false);
+
+  const config = {
+    late: {
+      title: 'Trouble checking in on time?',
+      icon: Clock4,
+      tone: 'warning' as const,
+      steps: STEPS_LATE,
+    },
+    out_of_range: {
+      title: 'Out of range — what to try',
+      icon: MapPin,
+      tone: 'destructive' as const,
+      steps: STEPS_OUT_OF_RANGE,
+    },
+    location_error: {
+      title: 'Location unavailable — what to try',
+      icon: Wifi,
+      tone: 'destructive' as const,
+      steps: STEPS_LOCATION_ERROR,
+    },
+  }[variant];
+
+  const Icon = config.icon;
+  const isWarn = config.tone === 'warning';
+
+  return (
+    <div
+      className={cn(
+        'mx-auto max-w-xs rounded-xl border text-left overflow-hidden',
+        isWarn
+          ? 'border-warning/25 bg-warning-muted/40'
+          : 'border-destructive/20 bg-destructive-muted/40',
+        className,
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className={cn(
+          'w-full flex items-center gap-2 px-3 py-2.5 text-left press',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl',
+        )}
+      >
+        <span className={cn(
+          'inline-flex items-center justify-center w-6 h-6 rounded-lg shrink-0',
+          isWarn ? 'bg-warning/15 text-warning' : 'bg-destructive/15 text-destructive',
+        )}>
+          <Icon className="w-3.5 h-3.5" />
+        </span>
+        <span className={cn(
+          'flex-1 text-[12px] font-semibold tracking-tight',
+          isWarn ? 'text-warning' : 'text-destructive',
+        )}>
+          {config.title}
+        </span>
+        <ChevronDown
+          className={cn(
+            'w-3.5 h-3.5 transition-transform shrink-0',
+            isWarn ? 'text-warning/70' : 'text-destructive/70',
+            open && 'rotate-180',
+          )}
+          aria-hidden
+        />
+      </button>
+
+      {open && (
+        <div className="px-3 pb-3 -mt-0.5">
+          <ol className="space-y-1.5 list-none">
+            {config.steps.map((step, i) => (
+              <li key={i} className="flex items-start gap-2 text-[11px] leading-snug text-foreground/85">
+                <span className={cn(
+                  'inline-flex w-4 h-4 rounded-full text-[9px] font-bold items-center justify-center shrink-0 mt-0.5 tabular-nums',
+                  isWarn ? 'bg-warning/20 text-warning' : 'bg-destructive/15 text-destructive',
+                )}>
+                  {i + 1}
+                </span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+
+          {variant !== 'late' && (
+            <p className="mt-2 text-[10px] text-muted-foreground flex items-center gap-1">
+              <HelpCircle className="w-3 h-3" />
+              Wait ~{retryWaitSeconds}s between attempts so we can get a fresh location.
+            </p>
+          )}
+
+          {variant === 'location_error' && (
+            <p className="mt-1.5 text-[10px] text-muted-foreground flex items-start gap-1">
+              <Settings className="w-3 h-3 mt-0.5 shrink-0" />
+              <span>
+                Browser address bar: tap the lock icon → Site settings → Location →
+                <span className="font-semibold"> Allow</span>.
+              </span>
+            </p>
+          )}
+
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className={cn(
+                'mt-3 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold press',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                isWarn
+                  ? 'bg-warning text-warning-foreground hover:opacity-95'
+                  : 'bg-destructive text-destructive-foreground hover:opacity-95',
+              )}
+            >
+              <RotateCw className="w-3 h-3" />
+              {retryLabel}
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
