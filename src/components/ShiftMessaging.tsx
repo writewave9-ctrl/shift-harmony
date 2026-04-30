@@ -413,10 +413,13 @@ export const ShiftMessaging: React.FC<ShiftMessagingProps> = ({
                 size="icon"
                 disabled={!newMessage.trim()}
                 onClick={handleSend}
-                className="h-11 w-11 rounded-xl bg-gradient-primary shadow-floating disabled:shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background press"
+                className={cn(
+                  'h-11 w-11 rounded-xl bg-gradient-primary shadow-floating disabled:shadow-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background press transition-transform',
+                  sendBurst && 'animate-[checkin-ripple_0.42s_ease-out] scale-95',
+                )}
                 aria-label="Send message"
               >
-                <Send className="w-4 h-4" />
+                <Send className={cn('w-4 h-4 transition-transform', sendBurst && 'translate-x-0.5 -translate-y-0.5')} />
               </Button>
             </div>
             <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
