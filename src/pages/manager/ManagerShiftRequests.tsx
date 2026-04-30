@@ -20,6 +20,8 @@ import type { ShiftRequest } from '@/hooks/useShiftRequests';
 import { SwapStatusPill } from '@/components/SwapStatusPill';
 import { SwapCountdownBadge } from '@/components/SwapCountdownBadge';
 import { SwapTimeline } from '@/components/SwapTimeline';
+import { ShiftActivityTimeline } from '@/components/ShiftActivityTimeline';
+import { useShiftActivity } from '@/hooks/useShiftActivity';
 import { supabase } from '@/integrations/supabase/client';
 import { useCallOffRequests } from '@/hooks/useCallOffRequests';
 import { CallOffRequestCard } from '@/components/CallOffRequestCard';
