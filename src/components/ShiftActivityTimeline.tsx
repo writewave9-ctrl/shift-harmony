@@ -50,7 +50,25 @@ const toneStyles: Record<NonNullable<ShiftActivityEvent['tone']>, string> = {
  * created → checked-in → manual override → completed.
  * Used in the manager shift drawer and worker history detail.
  */
-export const ShiftActivityTimeline = ({ events, className }: Props) => {
+export const ShiftActivityTimeline = ({ events, className, filterable = false }: Props) => {
+  const [filter, setFilter] = useState<FilterKey>('all');
+
+  const visibleCounts = useMemo(() => {
+    const counts: Record<FilterKey, number> = {
+      all: events.length, attendance: 0, swap: 0, call_off: 0, override: 0, other: 0,
+    };
+    events.forEach((e) => {
+      const c = e.category ?? 'other';
+      counts[c] = (counts[c] ?? 0) + 1;
+    });
+    return counts;
+  }, [events]);
+
+  const filtered = useMemo(() => {
+    if (!filterable || filter === 'all') return events;
+    return events.filter((e) => (e.category ?? 'other') === filter);
+  }, [events, filter, filterable]);
+
   if (!events.length) return null;
 
   return (
@@ -58,10 +76,58 @@ export const ShiftActivityTimeline = ({ events, className }: Props) => {
       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
         <History className="w-3 h-3" /> Activity
       </p>
+
+      {filterable && (
+        <div
+          role="tablist"
+          aria-label="Filter activity"
+          className="-mx-1 flex flex-wrap gap-1.5 pb-0.5"
+        >
+          {FILTER_OPTIONS.map(({ key, label, icon: Icon }) => {
+            const count = visibleCounts[key] ?? 0;
+            const disabled = key !== 'all' && count === 0;
+            const active = filter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                disabled={disabled}
+                onClick={() => setFilter(key)}
+                className={cn(
+                  'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all press',
+                  'ring-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  active
+                    ? 'bg-primary text-primary-foreground ring-primary shadow-sm'
+                    : disabled
+                      ? 'bg-muted/40 text-muted-foreground/50 ring-border/40 cursor-not-allowed'
+                      : 'bg-card text-foreground ring-border hover:bg-accent',
+                )}
+              >
+                <Icon className="w-3 h-3" aria-hidden />
+                <span>{label}</span>
+                <span className={cn(
+                  'tabular-nums text-[10px] font-semibold px-1 rounded',
+                  active ? 'text-primary-foreground/80' : 'text-muted-foreground',
+                )}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground italic px-1 py-2">
+          No matching activity in this category yet.
+        </p>
+      ) : (
       <ol className="relative space-y-3 pl-1">
-        {events.map((e, i) => (
+        {filtered.map((e, i) => (
           <li key={i} className="relative flex gap-3">
-            {i < events.length - 1 && (
+            {i < filtered.length - 1 && (
               <span
                 aria-hidden
                 className="absolute left-[11px] top-6 h-[calc(100%+0.25rem)] w-px bg-border"
