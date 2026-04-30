@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Check, MapPin, Fingerprint, AlertCircle, ShieldCheck, Clock4, RotateCw } from 'lucide-react';
+import { Check, MapPin, Fingerprint, AlertCircle, ShieldCheck, Clock4, RotateCw, ChevronDown, HelpCircle, Settings, Wifi } from 'lucide-react';
 
 export type AttendanceState = 'not_checked_in' | 'present' | 'late' | 'manually_approved';
 
