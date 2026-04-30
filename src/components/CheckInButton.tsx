@@ -181,9 +181,18 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
 
         {/* Helper text under "Late" — explain what to do next */}
         {attendanceStatus === 'late' && !isManagerOverride && (
-          <p className="text-[11px] text-warning/90 mt-2 max-w-[18rem] mx-auto leading-snug">
-            You're marked late. Let your manager know if there was a delay — they can adjust your status from the timeline.
-          </p>
+          <div className="mt-2 max-w-[18rem] mx-auto rounded-xl border border-warning/25 bg-warning-muted/50 px-3 py-2.5 text-left">
+            <p className="text-[11px] font-semibold text-warning flex items-center gap-1.5">
+              <Clock4 className="w-3 h-3" />
+              You're marked late
+            </p>
+            <p className="text-[11px] text-warning/85 mt-1 leading-snug">
+              Find your manager when you arrive — they can adjust your status from the timeline if there was a delay (transport, handover, etc.).
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-1.5 leading-snug">
+              Tip: leave a note in the shift conversation so the team knows you're on the way.
+            </p>
+          </div>
         )}
 
         {/* Helper text under "Not Checked In" (after a positive override that still shows not_checked_in) */}
@@ -195,7 +204,7 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
             <button
               type="button"
               onClick={onCheckIn}
-              className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+              className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded press"
             >
               <RotateCw className="w-3 h-3" />
               Try check-in again
