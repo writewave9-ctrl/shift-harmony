@@ -170,6 +170,7 @@ export const ShiftActivityTimeline = ({ events, className, filterable = false }:
           </li>
         ))}
       </ol>
+      )}
     </div>
   );
 };
