@@ -221,29 +221,50 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
 
   return (
     <div className={cn('text-center', className)}>
-      <button
-        onClick={handleCheckIn}
-        disabled={buttonDisabled}
-        aria-label={showProximityWarning ? 'Out of range — cannot check in' : 'Check in'}
-        aria-disabled={buttonDisabled}
-        className={cn(
-          'w-28 h-28 mx-auto rounded-full bg-primary flex items-center justify-center transition-all duration-300 shadow-floating focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background',
-          !buttonDisabled && 'checkin-glow hover:scale-105 active:scale-95',
-          (isAnimating || checkingLocation) && 'scale-95 opacity-80',
-          showProximityWarning && 'bg-destructive',
+      <div className="relative w-32 h-32 mx-auto">
+        {/* Animated proximity progress ring while checking location */}
+        {checkingLocation && (
+          <svg
+            className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none"
+            viewBox="0 0 100 100"
+            aria-hidden
+          >
+            <circle cx="50" cy="50" r="46" stroke="currentColor" strokeWidth="3"
+              className="text-primary/15" fill="none" />
+            <circle cx="50" cy="50" r="46" stroke="currentColor" strokeWidth="3"
+              strokeLinecap="round" className="text-primary" fill="none"
+              strokeDasharray="289" strokeDashoffset="72"
+              style={{ animation: 'spin 1.4s linear infinite', transformOrigin: '50% 50%' }}
+            />
+          </svg>
         )}
-      >
-        {isAnimating || checkingLocation ? (
-          <div className="w-9 h-9 border-[3px] border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" aria-label="Loading" />
-        ) : showProximityWarning ? (
-          <AlertCircle className="w-11 h-11 text-destructive-foreground" strokeWidth={1.8} />
-        ) : (
-          <Fingerprint className="w-11 h-11 text-primary-foreground" strokeWidth={1.5} />
-        )}
-      </button>
+        <button
+          onClick={handleCheckIn}
+          disabled={buttonDisabled}
+          aria-label={showProximityWarning ? 'Out of range — cannot check in' : 'Check in'}
+          aria-disabled={buttonDisabled}
+          className={cn(
+            // Larger 128px tap target with comfortable hit area
+            'absolute inset-2 mx-auto rounded-full bg-primary flex items-center justify-center transition-all duration-300 shadow-floating focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background',
+            !buttonDisabled && 'checkin-glow hover:scale-[1.04] active:scale-95',
+            (isAnimating || checkingLocation) && 'scale-95 opacity-90',
+            showProximityWarning && 'bg-destructive',
+          )}
+        >
+          {isAnimating ? (
+            <div className="w-10 h-10 border-[3px] border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" aria-label="Loading" />
+          ) : checkingLocation ? (
+            <MapPin className="w-12 h-12 text-primary-foreground animate-pulse" strokeWidth={1.6} />
+          ) : showProximityWarning ? (
+            <AlertCircle className="w-12 h-12 text-destructive-foreground" strokeWidth={1.8} />
+          ) : (
+            <Fingerprint className="w-12 h-12 text-primary-foreground" strokeWidth={1.5} />
+          )}
+        </button>
+      </div>
 
       <p className="font-display text-[19px] font-semibold text-foreground mt-3 tracking-tight">
-        {checkingLocation ? 'Checking location…' : showProximityWarning ? 'Too far away' : 'Tap to check in'}
+        {checkingLocation ? 'Verifying location…' : showProximityWarning ? 'Too far away' : 'Tap to check in'}
       </p>
 
       <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground ring-1 ring-border">
