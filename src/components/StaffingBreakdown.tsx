@@ -1,17 +1,31 @@
 import { cn } from '@/lib/utils';
 import { DatabaseShift } from '@/hooks/useShifts';
-import { Briefcase, Clock, MapPin, AlertTriangle } from 'lucide-react';
+import { Briefcase, Clock, MapPin, AlertTriangle, UserPlus, MessageSquare, PlusCircle } from 'lucide-react';
 import { formatTimeRange } from '@/lib/formatTime';
+
+interface PositionGapAction {
+  position: string;
+  vacantShiftIds: string[];
+  vacantCount: number;
+  vacantHours: number;
+}
 
 interface Props {
   shifts: DatabaseShift[];
   className?: string;
+  /** Open the assign-replacement flow for a vacant role. */
+  onAssignReplacement?: (gap: PositionGapAction) => void;
+  /** Open a contextual message thread to workers in this role. */
+  onMessageWorkers?: (gap: PositionGapAction) => void;
+  /** Create a new open shift for this role. */
+  onCreateOpenShift?: (gap: PositionGapAction) => void;
 }
 
 interface PositionGap {
   position: string;
   vacantCount: number;
   vacantHours: number;
+  vacantShiftIds: string[];
   locations: Set<string>;
   earliest: { start: string; end: string } | null;
 }
