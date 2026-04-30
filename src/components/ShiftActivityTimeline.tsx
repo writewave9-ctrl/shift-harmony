@@ -1,6 +1,14 @@
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
-import { CheckCircle2, Clock, History, Pencil, Tag } from 'lucide-react';
+import { CheckCircle2, Clock, History, Pencil, Tag, RefreshCcw, Repeat, UserCog, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+export type ShiftActivityCategory =
+  | 'attendance'
+  | 'swap'
+  | 'call_off'
+  | 'override'
+  | 'other';
 
 export interface ShiftActivityEvent {
   label: string;
@@ -10,12 +18,25 @@ export interface ShiftActivityEvent {
   at: string; // ISO timestamp
   tone?: 'primary' | 'success' | 'warning' | 'muted';
   actor?: string | null;
+  category?: ShiftActivityCategory;
 }
 
 interface Props {
   events: ShiftActivityEvent[];
   className?: string;
+  /** When true, renders filter chips above the timeline. */
+  filterable?: boolean;
 }
+
+type FilterKey = 'all' | ShiftActivityCategory;
+
+const FILTER_OPTIONS: { key: FilterKey; label: string; icon: React.ElementType }[] = [
+  { key: 'all', label: 'All', icon: Filter },
+  { key: 'call_off', label: 'Call-offs', icon: RefreshCcw },
+  { key: 'swap', label: 'Swaps', icon: Repeat },
+  { key: 'attendance', label: 'Attendance', icon: CheckCircle2 },
+  { key: 'override', label: 'Overrides', icon: UserCog },
+];
 
 const toneStyles: Record<NonNullable<ShiftActivityEvent['tone']>, string> = {
   primary: 'bg-primary/15 text-primary ring-2 ring-primary/20',
