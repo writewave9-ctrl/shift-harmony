@@ -194,6 +194,9 @@ export const ManagerShiftRequests = () => {
     setConfirm(null);
   };
 
+  // Full activity for the selected swap's shift (call-offs, swaps, attendance, overrides)
+  const { events: swapShiftActivity } = useShiftActivity(selectedSwap?.shift_id ?? null);
+
   const reviewedSwaps = useMemo(() => allSwaps.filter(s => s.status !== 'pending'), [allSwaps]);
   const reviewedCallOffs = useMemo(() => allCallOffs.filter(c => c.status !== 'pending'), [allCallOffs]);
 
