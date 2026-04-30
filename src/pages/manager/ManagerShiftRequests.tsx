@@ -642,6 +642,13 @@ export const ManagerShiftRequests = () => {
                 status={selectedSwap.status}
               />
 
+              {/* Full shift activity history (call-offs, prior swaps, overrides) */}
+              {swapShiftActivity.length > 0 && (
+                <div className="rounded-2xl border border-border/40 bg-card/60 p-3.5 shadow-elevated">
+                  <ShiftActivityTimeline events={swapShiftActivity} />
+                </div>
+              )}
+
               {selectedSwap.status === 'pending' ? (
                 confirm === 'approve' ? (
                   <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 space-y-3 shadow-elevated">
