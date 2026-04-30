@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Circle, ListChecks } from 'lucide-react';
+import { CheckCircle2, Circle, ListChecks, Lock, Sparkles } from 'lucide-react';
 import { haptics } from '@/lib/haptics';
 
 interface ChecklistItem {
