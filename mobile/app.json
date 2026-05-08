@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Align",
+    "slug": "align-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "align",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAF8F4"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.align.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Align uses your location to verify you're at your shift site for check-in.",
+        "UIBackgroundModes": ["remote-notification"]
+      }
+    },
+    "android": {
+      "package": "app.align.mobile",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FAF8F4"
+      }
+    },
+    "plugins": [
+      "expo-font",
+      "expo-location",
+      "expo-notifications"
+    ],
+    "extra": {
+      "supabaseUrl": "https://vszzszwcdjuzzyycrbcj.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzenpzendjZGp1enp5eWNyYmNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMTE3MDksImV4cCI6MjA4NTc4NzcwOX0.EOoin6szPqNVqGL6uSO4GhtYtnKbsBgOBgjP4lz4Cuc"
+    }
+  }
+}
