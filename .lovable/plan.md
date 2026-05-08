@@ -1,121 +1,141 @@
+# React Native + NativeWind Mobile Port
 
+Port the existing Align webapp into a true React Native app under `mobile/`, preserving the existing Capacitor PWA wrapper untouched. Targets 1:1 screen parity using NativeWind so the Tailwind-based design system carries over.
 
-## Goal
-Make every line item on the landing-page pricing actually real in the product. Add tier definitions + gating, build the missing features (call-offs, template auto-fill, auto-assign, advanced reports, premium support inbox), and remove "Custom integrations" from the Enterprise tier until there's real demand.
+## Scope (1:1 parity targets)
 
-## Pricing → Reality map
+**Worker screens**
+- Home (today's shift, check-in, checklist, messaging entry)
+- Shifts (upcoming list + detail)
+- Shift History
+- Team Directory
+- Notifications
+- Profile
 
-| Tier | Feature | Status | Action |
-|---|---|---|---|
-| Starter | Up to 5 workers | missing | Add limit + enforcement |
-| Starter | Basic scheduling | done | — |
-| Starter | Push notifications | done | — |
-| Starter | Mobile PWA access | done | — |
-| Pro | Up to 50 workers | missing | Add limit + enforcement |
-| Pro | Shift templates & auto-fill | partial | Build "Generate week from templates" + auto-assign |
-| Pro | GPS check-in verification | done | — |
-| Pro | Analytics dashboard | done | — |
-| Pro | Swap & call-off management | partial | Build call-off UI (table exists) |
-| Enterprise | Unlimited workers | missing | Plan flag |
-| Enterprise | Multi-team support | done | — |
-| Enterprise | Advanced analytics & reports | partial | Add CSV/PDF export + extra report views |
-| Enterprise | Priority support | missing | Build in-app support inbox + priority badge |
-| Enterprise | Custom integrations | dropping | Remove from landing copy |
+**Manager screens**
+- Dashboard (staffing health, command center, requests preview)
+- Shifts (calendar + list, create, templates, auto-fill)
+- Requests (swaps, call-offs, pickups + activity timeline drawer)
+- Team
+- Analytics
+- Notifications
+- Settings + Support
 
-## What gets built
+**Shared**
+- Auth (sign in, sign up, reset password, accept invite)
+- Landing is **not ported** — RN app opens straight to auth. (Landing stays web-only.)
 
-### 1. Plan & limits (foundation)
-- Migration: add `plan` enum (`starter` | `pro` | `enterprise`) + `plan_started_at` to `organizations`. Default `starter`.
-- Migration: SQL helper `get_org_plan(_org_id uuid)` and `get_org_worker_count(_org_id uuid)`.
-- Hook `usePlan()` returns `{ plan, limits, workerCount, canInvite, canUseFeature(key) }`.
-- Limits: Starter 5, Pro 50, Enterprise ∞. Feature flags per tier (`templates_autofill`, `gps_verification`, `analytics`, `call_offs`, `swaps`, `priority_support`, `report_exports`, `multi_team`).
-- `create-worker` edge function rejects with 402 when over limit.
-- Inline upgrade banner component shown when blocked.
-
-### 2. Plan management UI
-- `Settings → Plan` panel: shows current tier, worker count vs limit, feature checklist, "Upgrade" buttons.
-- "Upgrade" buttons currently update `organizations.plan` directly (free toggle) and toast "Billing coming soon — your team is now on Pro." Documented as placeholder so Stripe wiring is one swap later.
-- Landing pricing CTAs route to `/auth?plan=starter|pro|enterprise`; signup stores intended plan and applies it after manager creates org.
-
-### 3. Call-off management
-- Hook `useCallOffRequests()` (mirrors `useSwapRequests` shape). Already-existing `call_off_requests` table.
-- Worker-side: "Call out" button on upcoming shift card → `CallOffModal` with reason picker (sick / family emergency / personal / transportation / other) + custom note.
-- Manager-side: new "Call-offs" tab in `ManagerShiftRequests` alongside Pickups and Swaps. Approve = mark shift `is_vacant=true`, unassign worker, post to open shifts. Decline = keep assigned. Reuses `SwapStatusPill`, `SwapTimeline`, drawer pattern.
-
-### 4. Shift template auto-fill
-- New page `/manager/shifts/auto-fill` (also reachable from a "Generate week" button on `ManagerShifts`).
-- Step 1: pick a week (default = next week).
-- Step 2: shows preview list of shifts that will be created from active templates × matching `days_of_week`. User can toggle individual templates off.
-- Step 3 (optional): "Auto-assign best fit" — for each generated shift, pick worker with best score = `availability fit (must not be 'blocked') × under weekly_hours_target × highest reliability_score`. Worker assignment runs client-side using existing data; ties broken by lowest assigned hours that week.
-- Hook `useShiftAutoFill()` exposes `previewWeek(date)`, `generate({templates, assign})`. Skips dates where a shift from same template+date already exists (idempotent).
-
-### 5. Advanced analytics & reports (Enterprise)
-- New section in `ManagerAnalytics` titled "Reports", visible only when `canUseFeature('report_exports')`.
-- Exports built client-side (no edge function): 
-  - **Shift coverage CSV** (per day: total / filled / vacant / coverage %)
-  - **Attendance CSV** (per worker per period: present / late / absent / on-time rate)
-  - **Payroll-style hours CSV** (per worker: scheduled hours, completed hours, late minutes)
-  - **PDF summary** of the period using `jspdf` + `jspdf-autotable` (charts as images via recharts `ref.toDataURL`)
-- Period filter extended: week / month / quarter / custom range.
-- Existing dashboard stays free — exports + quarter/custom range are gated.
-
-### 6. Priority support (Enterprise)
-- Migration: `support_tickets` table (`id, org_id, opened_by, subject, body, status, priority, created_at, updated_at`) + `support_messages` (`id, ticket_id, sender_id, body, created_at`). RLS: only org members can see their org's tickets; `priority='priority'` auto-set when org plan is Enterprise.
-- Settings → Support page: "Open ticket" form + ticket list with thread view.
-- Worker-visible "Help" link in profile that opens same form (worker tickets attach to their org).
-- For now there's no inbound replies, so the page shows "Average response time: 24h (Enterprise: 2h)" and stores tickets for follow-up.
-
-### 7. Landing-page polish
-- Remove "Custom integrations" from Enterprise list, replace with "Dedicated onboarding".
-- Add a small "What you get" comparison strip below cards highlighting the actually-shipping limits.
-- CTAs: "Get started free" → `/auth?plan=starter`, "Start free trial" → `/auth?plan=pro`, "Contact sales" → opens `mailto:` with subject "Align Enterprise inquiry" (placeholder until support inbox public).
-- Apply existing premium tokens (`shadow-elevated`, `bg-gradient-surface`) to the cards for consistency with the rest of the app.
-
-## Technical layout
+## Architecture
 
 ```text
-DB
-  +- organizations.plan (enum starter|pro|enterprise, default starter)
-  +- organizations.plan_started_at timestamptz
-  +- support_tickets (org-scoped, RLS)
-  +- support_messages (ticket-scoped, RLS)
-  +- get_org_plan(uuid)         -- security definer
-  +- get_org_worker_count(uuid) -- security definer
-
-src
-  hooks/
-    usePlan.ts                  -- {plan, limits, workerCount, canUseFeature, canInvite}
-    useCallOffRequests.ts
-    useShiftAutoFill.ts
-    useSupportTickets.ts
-  components/
-    PlanBadge.tsx
-    UpgradePromptCard.tsx
-    CallOffModal.tsx
-    AutoFillPreview.tsx
-    ReportExportPanel.tsx
-    SupportTicketForm.tsx
-  pages/
-    manager/
-      ManagerPlan.tsx           -- Settings sub-route
-      ManagerAutoFill.tsx
-      ManagerSupport.tsx
-      ManagerShiftRequests.tsx  -- gains Call-offs tab
-      ManagerAnalytics.tsx      -- gains Reports section
-    worker/
-      WorkerShifts.tsx          -- "Call out" button on shift card
-
-edge functions
-  create-worker (edit)          -- enforce plan worker limit
-  generate-report (new, optional) -- only if PDF gets too heavy client-side; default keep client-side
+mobile/
+  app.json                  Expo config (managed workflow)
+  package.json              Separate from web, RN deps only
+  babel.config.js           NativeWind preset
+  metro.config.js           NativeWind + SVG transformer
+  tailwind.config.js        Mirrors web tokens (HSL → rgb conversion)
+  global.css                NativeWind v4 entry
+  tsconfig.json
+  index.ts
+  src/
+    App.tsx                 Providers + navigation root
+    navigation/
+      RootNavigator.tsx     Auth gate + role gate
+      WorkerTabs.tsx        Bottom tabs (Home, Shifts, Team, Notifications, Profile)
+      ManagerTabs.tsx       Bottom tabs (Dashboard, Shifts, Requests, Team, More)
+      types.ts
+    integrations/supabase/
+      client.ts             Same URL/anon key, AsyncStorage instead of localStorage
+      types.ts              Symlinked/copied from web
+    contexts/AuthContext.tsx
+    hooks/                  Ported 1:1 (RN-safe — no DOM)
+    lib/
+      queryClient.ts
+      formatTime.ts
+      haptics.ts            expo-haptics adapter
+      utils.ts              cn()
+    components/
+      ui/                   RN equivalents: Button, Card, Input, Sheet, Dialog, etc.
+      ...feature components
+    screens/
+      auth/                 SignIn, SignUp, ResetPassword, AcceptInvite
+      worker/               Home, Shifts, History, Team, Notifications, Profile
+      manager/              Dashboard, Shifts, Requests, Team, Analytics, Notifications, Settings, Support, AutoFill
+    theme/
+      tokens.ts             Color tokens converted from index.css
+      ThemeProvider.tsx     light/dark/system
 ```
 
-Race conditions: auto-fill uses server-side `INSERT ... ON CONFLICT DO NOTHING` against `(team_id, date, start_time, position)` (new partial unique index added in same migration) so two managers triggering simultaneously is safe. Call-off approval uses the same `select-then-update` status guard already proven in swap flow.
+## Tech choices
 
-## Out of scope (per your answers)
-- Real Stripe checkout — plan is a free toggle for now; one edge function added later.
-- "Custom integrations" / outbound webhooks / public API — removed from Enterprise tier.
+| Concern | Choice | Why |
+|---|---|---|
+| Runtime | **Expo SDK 51 (managed)** | Fast iteration, OTA, no Xcode/Studio for dev |
+| Styling | **NativeWind v4** | Tailwind classes 1:1 with web |
+| Navigation | **React Navigation v7** (native-stack + bottom-tabs) | Mature, matches mobile patterns |
+| Data | `@tanstack/react-query` (same version) + same Supabase client | Reuse hooks |
+| Storage | `@react-native-async-storage/async-storage` | Replaces localStorage in supabase auth + checklist persistence |
+| Forms | `react-hook-form` + `zod` (same as web) | Direct port |
+| Icons | `lucide-react-native` | Same icon set as web |
+| Animations | `react-native-reanimated` v3 + `moti` | Replaces framer-motion |
+| Bottom sheets | `@gorhom/bottom-sheet` | Replaces shadcn Sheet/Drawer |
+| Haptics | `expo-haptics` | Maps to existing `haptics.ts` API |
+| Geolocation (check-in) | `expo-location` | Replaces browser geolocation |
+| Push notifications | `expo-notifications` | Bridges to existing `web_push_*` infra later |
+| Maps/distance | Plain Haversine in `lib/` | No map dep needed |
+| Date | `date-fns` | Same as web |
+| SVG | `react-native-svg` + transformer | For AlignLogo, charts |
+| Charts | `victory-native` | Manager analytics |
 
-## Files touched (estimate)
-~6 new components, 4 new hooks, 3 new pages, 1 migration, 1 edge function edit, 4 page edits, 1 landing edit.
+## Design system migration
 
+- `tailwind.config.js` mirrors web tokens but converts `hsl(var(--x))` → static HSL strings (NativeWind v4 supports CSS vars but RN runtime needs concrete values per theme).
+- Two token sets exported from `theme/tokens.ts`: `lightTokens`, `darkTokens`. ThemeProvider injects via NativeWind's `vars()`.
+- Custom utilities `.lift`, `.press`, `.sheen`, `.display-tight` reimplemented as small RN components (`<Pressable>` wrappers with Reanimated) since CSS pseudo-classes/keyframes don't exist in RN.
+- Fonts (Fraunces display, Inter body) loaded via `expo-font`.
+
+## Component mapping
+
+| Web (shadcn/Radix) | React Native equivalent |
+|---|---|
+| `Button` | Custom `Pressable` with CVA-style variants |
+| `Card` | `View` with rounded-2xl + shadow |
+| `Input`, `Textarea` | `TextInput` |
+| `Sheet`, `Drawer` | `@gorhom/bottom-sheet` modal |
+| `Dialog`, `AlertDialog` | RN `Modal` with backdrop |
+| `Toast`/Sonner | `sonner-native` |
+| `Tabs` | Custom segmented control |
+| `Select`, `DropdownMenu` | `@gorhom/bottom-sheet` action sheet |
+| `Tooltip` | omit on mobile (long-press hint instead) |
+| `framer-motion` | `moti` |
+
+## What stays untouched
+
+- Everything under `src/` (web app)
+- `capacitor.config.ts` if/when added — not modified
+- `vite.config.ts`, PWA service worker
+- Supabase schema, edge functions, RLS
+
+## Hooks portability
+
+All hooks under `src/hooks/` are pure data hooks calling Supabase + React Query. They get **copied verbatim** into `mobile/src/hooks/` with two adjustments:
+1. Any `window.`/`localStorage.`/`document.` usage replaced with RN APIs.
+2. `useGeolocation` rewritten using `expo-location`.
+
+## Out of scope for first cut
+
+- Building/signing iOS+Android binaries (user runs `npx expo start` themselves)
+- Apple/Google push provisioning
+- Landing page (web-only)
+- Capacitor app — left as-is per request
+
+## Deliverables
+
+- Fully scaffolded `mobile/` Expo project that runs with `cd mobile && npm install && npx expo start`
+- All screens listed above implemented with shared visual language
+- README in `mobile/README.md` with run instructions
+- All Supabase data flows working against the same backend as the web app
+
+## Effort note
+
+This is a large port (~40+ screens/components). I will land it in one pass but the resulting `mobile/` directory will contain many new files. The web app is unaffected.
